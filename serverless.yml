@@ -6,6 +6,12 @@ provider:
   region: eu-west-2
 
 functions:
+  calculate_movement_method:
+    handler: calculate_movement_method.lambda_handler
+    environment:
+      my_env_var: somevalue 
+    layers:
+      - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_layer:10
   calculate_means_method:
     handler: calculate_means_method.lambda_handler
     environment:
@@ -16,6 +22,7 @@ functions:
 package:
   include:
     - calculate_means_method.py
+    - calculate_movement_method.py
   exclude:
     - "*" 
     - "**/"
