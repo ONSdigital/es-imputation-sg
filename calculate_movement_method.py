@@ -35,15 +35,15 @@ def lambda_handler(event, context):
 
         for question in questions_list.split():
 
-            # Converted to list due to issues with Numpy dtypes and math operations
+            # Converted to list due to issues with Numpy dtypes and math operations.
             current_list = sorted_current[question].tolist()
             previous_list = sorted_previous[question].tolist()
 
             result_list = []
-            # Length of sorted_current is used so the correct amount of loops is applied for the amount of records.
+            # .Length is used so the correct amount of iterations for the loop.
             for i in range(0, len(sorted_current)):
 
-                # This check is too prevent the DivdebyZeroError
+                # This check is too prevent the DivdebyZeroError.
                 if current_list[i] and previous_list[i] != 0:
                     number = (current_list[i] - previous_list[i]) / current_list[i]
                 else:
