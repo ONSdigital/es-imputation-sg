@@ -1,16 +1,9 @@
 import traceback
 import json
 import boto3
+import pandas as pd
 import os
-
-def _get_clients():
-    # Set up clients
-    lambda_client = boto3.client('lambda')
-    sqs = boto3.client('sqs')
-    return(lambda_client, sqs)
-
-# ENV vars
-queue_url = os.environ.get('queue_url', None)
+import random
 
 
 def _get_traceback(exception):
@@ -35,31 +28,33 @@ def lambda_handler(event, context):
     :param context: Context object
     :return: JSON string
     """
-    lambda_client, sqs = _get_clients()
     try:
+
+        # Clients
+        sqs = boto3.client('sqs', region_name='eu-west-2')
+
+        # ENV vars
+        queue_url = os.environ['queue_url']
+        current_period = os.environ['current_period']
+        previous_period = os.environ['previous_period']
+        questions_list = os.environ['questions_list']
+
+        df = pd.DataFrame(event)
         
-        input_json = event
-    
-        means_df = pd.DataFrame(json.laods(input_json))
+        df.groupby(['region', 'strata'])
         
-        means_df = means_df['Q601_asphalting_sand',
-        'Q602_building_soft_sand',
-        'Q603_concreting_sand',
-        'Q604_bituminous_sand',
-        'Q605_concreting_gravel',
-        'Q606_other_gravel',
-        'Q607_constructional_fill'].mean()
+        q_list = questions_list.split()
         
-        final_output = means_df.to_json(orient='records')
+        # Filter new dataframe on questions
+        movement_current = df.filter(['movement_Q601_asphalting_sand','movement_Q602_building_soft_sand','movement_Q603_concreting_sand','movement_Q604_bituminous_gravel','movement_Q605_concreting_gravel','movement_Q606_other_gravel','movement_Q607_constructional_fill'], axis=1)
+        
+        # Calculate question mean-movement values
+        df['mean_'] = movement_current.mean(axis=1)
+        # print(df['mean_'])
+        
+        final_output = df.to_json(orient='records')
         
     except Exception as exc:
-        # Invoke error handler lambda
-        # lambda_client.invoke(
-        #     FunctionName=error_handler_arn,
-        #     InvocationType='Event',
-        #     Payload=json.loads(_get_traceback(exc))
-        # )
-
         # purge = sqs.purge_queue(
         #   QueueUrl=queue_url
         # )

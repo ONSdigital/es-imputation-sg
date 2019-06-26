@@ -16,6 +16,7 @@ pep8-naming = "*"
 black = "==19.3b0"
 boto3 = "*"
 awscli = "*"
+moto = "*"
 
 [packages]
 pandas = "*"
