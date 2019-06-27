@@ -6,7 +6,6 @@ import pandas as pd
 import boto3
 
 # Set up clients
-s3 = boto3.resource('s3')
 sqs = boto3.client('sqs')
 lambda_client = boto3.client('lambda')
 sns = boto3.client('sns')
@@ -27,6 +26,7 @@ questions = os.environ['questions']
 def _get_traceback(exception):
     """
     Given an exception, returns the traceback as a string.
+
     :param exception: Exception object
     :return: string
     """
@@ -81,6 +81,7 @@ def lambda_handler(event, context):
 def send_sns_message(imputation_run_type, anomalies):
     """
     This function is responsible for sending notifications to the SNS Topic.
+
     :param imputation_run_type: runtype.
     :param anomalies: list of anomalies collected from the method.
     :return: json string
@@ -102,6 +103,7 @@ def send_sns_message(imputation_run_type, anomalies):
 def send_sqs_message(queue_url, message, output_message_id):
     """
     This method is responsible for sending data to the SQS queue.
+
     :param queue_url: The url of the SQS queue. - Type: String.
     :param message: The message/data you wish to send to the SQS queue - Type: String.
     :param output_message_id: The label of the record in the SQS queue - Type: String
