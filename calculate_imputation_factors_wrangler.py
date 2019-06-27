@@ -39,12 +39,21 @@ def _get_traceback(exception):
 
 
 def lambda_handler(event, context):
+    """
+    Prepares data for and calls the Calculate imputation factors method.
+    - adds on the required columns needed by the method.
+
+    :param event: lambda event
+    :param context: lambda context
+    :return: string
+    """
     try:
         response = sqs.receive_message(QueueUrl=queue_url)
         message = response['Messages'][0]
         message_json = json.loads(message['Body'])
         data = pd.DataFrame(message_json)
 
+        # create df columns needed for method
         for question in questions.split(' '):
             data['imputation_factor_' + question] = 0.0
 
@@ -70,6 +79,12 @@ def lambda_handler(event, context):
 
 
 def send_sns_message(imputation_run_type, anomalies):
+    """
+    This function is responsible for sending notifications to the SNS Topic.
+    :param imputation_run_type: runtype.
+    :param anomalies: list of anomalies collected from the method.
+    :return: json string
+    """
     sns_message = {
         "success": True,
         "module": "Imputation Calculate Imputation Factors",
