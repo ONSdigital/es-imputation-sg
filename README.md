@@ -12,6 +12,14 @@ As the correct practice is to seperate out the creation of columns from the meth
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+### Apply Factors Wrangler
+
+This is the final step in the imputation process. This wrangler retrieves factors data from the sqs queue(output from calculate factors) non_responder data from s3(stored in the calculate movements step). Next it retrieves previous period data for the non_responders and joins it on, adding prev_ [question]'s  to each row.
+
+The factors data is merged on to the non responder data next, adding imputation_factor_ [question]'s to each row. At this point the data is prepared in order to send to the method. The merged data is sent to the Apply Factors Method and the result is returned.
+
+The result of the method is imputed values for each non responder, this is joined back onto the responder data(used to calculate factors) and sent to the SQS queue.
+
 ## Methods
 
 ### Calculate Movements Method
