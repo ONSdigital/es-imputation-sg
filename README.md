@@ -65,6 +65,10 @@ An iqrs_*question* column should be created for each question in the data wrangl
 
 **abs(Movement_Q601_Asphalting_Sand - Mean601) - 2 * iqrs601
 
+Following this, if the Atypical value is > 0, we recalculate the movement value to be Null. Otherwise, we set the movement column to itself. eg, using Q601 as an example
+
+**If Atyp601 > 0, then Movement_Q601_Asphalting_Sand = null else Movement_Q601_Asphalting_Sand = Movement_Q601_Asphalting_Sand
+
 **Inputs:** This method will require all of the Movement columns, the Mean columns and the IQRS columns to be on the data which is being sent to the method.
 An atyp_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
