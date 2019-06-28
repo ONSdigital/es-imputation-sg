@@ -44,3 +44,29 @@ The result of the method is imputed values for each non responder, this is joine
 **Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, e.g. **Q601,Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A Json string which contains all the created movements, saved in the respective movement_*question_name* columns.
+
+
+### Calculate IQRS method
+
+**Name of Lambda:** iqrs_method  - This Method will be re-named to be inkeeping with the standards soon_
+
+**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
+
+**Inputs:** This method will require all of the Movement columns to be on the data which is being sent to the method, e.g. **Movement_Q601_Asphalting_Sand, Movement_Q602_Building_Soft_Sand,....**. There is also a requirement that the Mean columns should be on the data. It's not used for the IQRS calculation, but it should be passed through for use by later steps.
+An iqrs_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+
+**Outputs:** A Json string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
+
+## Calculate ATypicals Method
+
+**Name of Lambda:** atypicals_method  - This Method will be re-named to be inkeeping with the standards soon_
+
+**Intro:** The calculate atypical method calculates the atypical value for each row on the dataframe, and for each of the 7 questions, using the following formula (using question 601 as an example)
+
+**abs(Movement_Q601_Asphalting_Sand - Mean601) - 2 * iqrs601
+
+**Inputs:** This method will require all of the Movement columns, the Mean columns and the IQRS columns to be on the data which is being sent to the method.
+An atyp_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+
+**Outputs:** A Json string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
+
