@@ -12,6 +12,19 @@ As the correct practice is to seperate out the creation of columns from the meth
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+### Calculate IQRS Wrangler
+
+This is the third step of the imputation process. The wrangler returns means data from the sqs queue (the output from the calculate means step). It converts this data from JSON format into a dataframe and then adds 7 new IQRS columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
+
+Next, the wrangler calls the method (see below) which populates the IQRS columns and passes the data back to the wrangler. The wrangler passes the data, in JSON format, back to the SQS queue so it can be used by the next process. It also sends data to the BPM via the SNS queue
+
+### Calculate Atypical Values
+
+This is the fourth step of the imputation process. The wrangler returns iqrs data from the sqs queue (the output from the calculate iqrs step). It converts this data from JSON format into a dataframe and then adds 7 new ATypical columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
+
+Next, the wrangler calls the method (see below) which populates the Atypical columns and passes the data back to the wrangler. The wrangler passes the data, in JSON format, back to the SQS queue so it can be used by the next process. It also sends data to the BPM via the SNS queue
+
+
 ### Apply Factors Wrangler
 
 This is the final step in the imputation process. This wrangler retrieves factors data from the sqs queue(output from calculate factors) non_responder data from s3(stored in the calculate movements step). Next it retrieves previous period data for the non_responders and joins it on, adding prev_ [question]'s  to each row.
