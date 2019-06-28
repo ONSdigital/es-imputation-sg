@@ -50,7 +50,12 @@ The result of the method is imputed values for each non responder, this is joine
 
 **Name of Lambda:** iqrs_method  - This Method will be re-named to be inkeeping with the standards soon_
 
-**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
+**Intro:** For each distinct Region/Strata group within the dataset, we want to work out the 25th percentile of each movement column - **eg the 25th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.**
+
+ We also want to calculate the 75% percentile of each movement column of the same groups - **eg the 7
+ 5th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.** 
+ 
+ The iqrs value for each question is calculated as 75th percentile - 25th percentile.
 
 **Inputs:** This method will require all of the Movement columns to be on the data which is being sent to the method, e.g. **Movement_Q601_Asphalting_Sand, Movement_Q602_Building_Soft_Sand,....**. There is also a requirement that the Mean columns should be on the data. It's not used for the IQRS calculation, but it should be passed through for use by later steps.
 An iqrs_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
