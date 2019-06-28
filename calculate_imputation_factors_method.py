@@ -56,18 +56,18 @@ def lambda_handler(event, context):
             """
             if row['region'] == 14:
                 if row['land_or_marine'] == 'L':
-                    if row['movement_' + question + '_count'] < first_threshold:
-                        row['imputation_factor_' + question] = first_imputation_factor
+                    if row['movement_' + question + '_count'] < int(first_threshold):
+                        row['imputation_factor_' + question] = int(first_imputation_factor)
                     else:
                         row['imputation_factor_' + question] = row['mean_' + question]
                 else:
-                    if row['movement_' + question + '_count'] < second_threshold:
-                        row['imputation_factor_' + question] = second_imputation_factor
+                    if row['movement_' + question + '_count'] < int(second_threshold):
+                        row['imputation_factor_' + question] = int(second_imputation_factor)
                     else:
                         row['imputation_factor_' + question] = row['mean_' + question]
             else:
-                if row['movement_' + question + '_count'] < third_threshold:
-                    row['imputation_factor_' + question] = third_imputation_factor
+                if row['movement_' + question + '_count'] < int(third_threshold):
+                    row['imputation_factor_' + question] = int(third_imputation_factor)
                 else:
                     row['imputation_factor_' + question] = row['mean_' + question]
 
