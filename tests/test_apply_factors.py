@@ -6,8 +6,8 @@ import json
 import unittest.mock as mock
 import unittest
 import pandas as pd
-import uk.gov.ons.src.lambda_wrangler_function as lambda_wrangler_function
-import uk.gov.ons.src.lambda_method_function as lambda_method_function
+import uk.gov.ons.src.apply_factors_wrangler as lambda_wrangler_function
+import uk.gov.ons.src.apply_factors_method as lambda_method_function
 import sys
 sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 
@@ -20,7 +20,7 @@ class test_wrangler_handler(unittest.TestCase):
             'arn': 'mike',
             'bucket_name': 'mike',
             'checkpoint': '3',
-            'method_name': 'lambda_method_function',
+            'method_name': 'apply_factors_method',
             'non_responder_file': 'non_responders_output.json',
             'period': '201809',
             'queue_url': 'test-queue',
@@ -69,7 +69,7 @@ class test_wrangler_handler(unittest.TestCase):
             's3_file': 'previous_period_enriched_stratared.json',
             'sqs_messageid_name': 'apply_factors_out'
         }):
-            with mock.patch('uk.gov.ons.src.lambda_wrangler_function.boto3') as mocked:
+            with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3') as mocked:
                 mocked.client.side_effect = Exception('SQS Failure')
                 response = lambda_wrangler_function.lambda_handler("", None)
                 assert 'success' in response
@@ -77,7 +77,7 @@ class test_wrangler_handler(unittest.TestCase):
 
     @mock_s3
     def test_get_data_from_s3(self):
-        with mock.patch('uk.gov.ons.src.lambda_wrangler_function.boto3') as mock_bot:
+        with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3') as mock_bot:
             mock_sthree = mock.Mock()
             mock_bot.resource.return_value = mock_sthree
             mock_object = mock.Mock()
@@ -146,7 +146,7 @@ class test_wrangler_handler(unittest.TestCase):
             'arn': 'mike',
             'bucket_name': 'MIKE',
             'checkpoint': '3',
-            'method_name': 'lambda_method_function',
+            'method_name': 'apply_factors_method',
             'non_responder_file': 'non_responders_output.json',
             'period': '201809',
             'queue_url': queue_url,
@@ -154,12 +154,13 @@ class test_wrangler_handler(unittest.TestCase):
             'sqs_messageid_name': 'apply_factors_out'
         }):
             from botocore.response import StreamingBody
-            with mock.patch('uk.gov.ons.src.lambda_wrangler_function.boto3.client') as mock_client:
+            with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3.client') as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 mock_client_object.receive_message.return_value = {"Messages": [{"Body": message}]}
                 myvar = mock_client_object.send_message.call_args_list
-                with open('non_responders_output.json', "rb") as file:
+                with open('non_responders_return.json', "rb") as file:
+
                     mock_client_object.invoke.return_value = {"Payload": StreamingBody(file, 1317)}
                     response = lambda_wrangler_function.lambda_handler("", None)
                     output = myvar[0][1]['MessageBody']

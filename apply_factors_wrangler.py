@@ -110,10 +110,9 @@ def lambda_handler(event, context):
         #Non responder data should now contain all previous values and 7 imp columns
         imputed_data = lambda_client.invoke(FunctionName=method_name, Payload=non_responders_with_factors.to_json(orient='records'))
 
-        json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
+        json_response = json.loads(imputed_data.get('Payload').read().decode("ascii"))
 
-        imputed_non_responders = pd.DataFrame(json_response)
-
+        imputed_non_responders = pd.read_json(str(json_response).replace("'",'"'))
         current_responders = factors_dataframe[factors_dataframe['period'] == int(current_period)]
 
         final_imputed = pd.concat([current_responders, imputed_non_responders])

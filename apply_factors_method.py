@@ -19,6 +19,7 @@ def _get_traceback(exception):
 
 def lambda_handler(event, context):
     try:
+        print(event)
 
         working_dataframe = pd.DataFrame(event)
 
