@@ -62,7 +62,7 @@ An iqrs_*question* column should be created for each question in the data wrangl
 
 **Outputs:** A Json string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
 
-## Calculate ATypicals Method
+### Calculate ATypicals Method
 
 **Name of Lambda:** atypicals_method  - This Method will be re-named to be inkeeping with the standards soon_
 

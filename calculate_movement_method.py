@@ -21,6 +21,15 @@ def _get_traceback(exception):
 
 
 def lambda_handler(event, context):
+    """
+    This method is responsible for creating the movements for each question and then recording them
+    in the respective columns.
+    :param event: The data in which you are calculating the movements on, this requires the current
+                  and previous period data - Type: JSON
+    :param context: N/A
+    :return: final_output: The input data but now with the correct movements for the respective
+                           question columns - Type: JSON
+    """
     try:
 
         # Declared inside of lambda_handler so that tests work correctly on local.

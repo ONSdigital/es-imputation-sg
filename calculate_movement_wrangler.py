@@ -8,7 +8,6 @@ import random
 # Set up clients
 s3 = boto3.resource('s3')
 sqs = boto3.client('sqs')
-lambda_client = boto3.client('lambda')
 sns = boto3.client('sns')
 
 
@@ -27,16 +26,20 @@ def _get_traceback(exception):
 
 
 def strata_mismatch_detector(data, current_period):
-    # looks only at id and strata columns. Then drops any duplicated rows(keep=false means that if
-    # there is a dupe it'll drop both). If there are any rows in this DataFrame it shows that the
-    # reference-strata combination was unique, and therefore the strata is different between periods
-
+    """
+    Looks only at id and strata columns. Then drops any duplicated rows(keep=false means that if
+    there is a dupe it'll drop both). If there are any rows in this DataFrame it shows that the
+    reference-strata combination was unique, and therefore the strata is different between periods
+    :param data: The data the miss-match detection will be performed on.
+    :param current_period: The current period of the run.
+    :return:
+    """
     time = os.environ['time']  # Currently set as "period"
     reference = os.environ['reference']  # Currently set as "responder_id"
     segmentation = os.environ['segmentation']  # Currently set as "strata"
     stored_segmentation = os.environ['stored_segmentation']  # Currently set as "goodstrata"
     current_time = os.environ['current_time']  # Currently set as "current_period"
-    previous_time = os.environ['previous_time']  # Currently set as "current_period"
+    previous_time = os.environ['previous_time']  # Currently set as "previous_period"
     current_segmentation = os.environ['current_segmentation']  # Currently set as "current_strata"
     previous_segmentation = os.environ['previous_segmentation']  # Currently set as "previous_strata"
 
@@ -73,7 +76,19 @@ def strata_mismatch_detector(data, current_period):
 
 
 def lambda_handler(event, context):
+    """
+    This wrangler is used to prepare the data for the calculate movements statistical method.
+    The method requires a column per question to store the movements, named as follows:
+    'movement_questionNameAndNumber'. The wrangler checks for non response and if everyone has
+    responded the calculate movements is skipped.
+    :param event: N/A
+    :param context: N/A
+    :return: Success - True/False & Checkpoint
+    """
     try:
+        # Setting up clients
+        lambda_client = boto3.client('lambda')
+
         # Setting up environment variables
         s3_file = os.environ['s3_file']
         bucket_name = os.environ['bucket_name']
@@ -92,12 +107,11 @@ def lambda_handler(event, context):
 
         previous_period_json = read_data_from_s3(bucket_name, s3_file)
 
-        # Reads in Data from SQS Queue
         response = get_data_from_sqs(queue_url)
         message = response['Messages'][0]
         message_json = json.loads(message['Body'])
 
-        # Used for clearing the Queue
+        # Used for deleting data from the Queue
         receipt_handle = message['ReceiptHandle']
 
         data = pd.DataFrame(message_json)
@@ -131,35 +145,21 @@ def lambda_handler(event, context):
             imputed_data = lambda_client.invoke(FunctionName=method_name, Payload=json_ordered_data)
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
 
-            # TESTING - To visualise errors for method invokation.
-            print(json_response)
-
             imputation_run_type = "Calculate Movement was ran successfully."
-
-            # MessageDeduplicationId is set to a random hash to overcome de-duplication,
-            # otherwise modules could not be re-run in the space of 5 Minutes.
-            send_sqs_message(queue_url, json_response, sqs_messageid_name)
-
-            # Currently due to POC Code if Imputation is performed just imputed data is sent onwards
-            final_output = json_response
+            send_sqs_message(queue_url, json_response, sqs_messageid_name, receipt_handle)
 
         else:
 
             imputation_run_type = "Imputation was not ran"
-            send_sqs_message(queue_url, message, sqs_messageid_name)
-            final_output = json.loads(message)
-
-        ### COMMENTED OUT FOR TESTING ###
-        # sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+            send_sqs_message(queue_url, message, sqs_messageid_name, receipt_handle)
 
         send_sns_message(imputation_run_type, anomalies)
 
     except Exception as exc:
 
-        ### COMMENTED OUT FOR TESTING ###
-        # purge = sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
+        sqs.purge_queue(
+            QueueUrl=queue_url
+        )
 
         return {
             "success": False,
@@ -207,19 +207,24 @@ def get_data_from_sqs(queue_url):
     return sqs.receive_message(QueueUrl=queue_url)
 
 
-def send_sqs_message(queue_url, message, output_message_id):
+def send_sqs_message(queue_url, message, output_message_id, receipt_handle):
     """
-    This method is responsible for sending data to the SQS queue.
+    This method is responsible for sending data to the SQS queue and deleting the left-over data.
     :param queue_url: The url of the SQS queue. - Type: String.
     :param message: The message/data you wish to send to the SQS queue - Type: String.
     :param output_message_id: The label of the record in the SQS queue - Type: String
+    :param receipt_handle: Received from the sqs payload, used to specify what is to be deleted.
     :return: None
     """
+    # MessageDeduplicationId is set to a random hash to overcome de-duplication,otherwise modules
+    # could not be re-run in the space of 5 Minutes.
     sqs.send_message(QueueUrl=queue_url,
                      MessageBody=message,
                      MessageGroupId=output_message_id,
                      MessageDeduplicationId=str(random.getrandbits(128))
                      )
+
+    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
 
 def send_sns_message(imputation_run_type, anomalies):
@@ -227,7 +232,7 @@ def send_sns_message(imputation_run_type, anomalies):
     This method is responsible for sending a notification to the specified arn, so that it can be
     used to relay information for the BPM to use and handle.
     :param imputation_run_type: A flag to see if imputation ran or not - Type: String.
-    :param anomalies: Any discrepancies that have been detected during processing. - Type: List.
+    :param anomalies: Any discrepancies that have been detected during processing. - Type: DataFrame
     :return: None
     """
     arn = os.environ['arn']
@@ -245,4 +250,3 @@ def send_sns_message(imputation_run_type, anomalies):
         TargetArn=arn,
         Message=json.dumps(sns_message)
     )
-
