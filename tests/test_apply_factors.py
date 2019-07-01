@@ -157,7 +157,7 @@ class test_wrangler_handler(unittest.TestCase):
             with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3.client') as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {"Messages": [{"Body": message}],"ReceiptHandle":"666"}
+                mock_client_object.receive_message.return_value = {"Messages": [{"Body": message, "ReceiptHandle":"666"}]}
                 myvar = mock_client_object.send_message.call_args_list
                 with open('non_responders_return.json', "rb") as file:
 

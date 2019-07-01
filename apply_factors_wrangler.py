@@ -33,7 +33,7 @@ def get_from_sqs(queue_url):
     message_json = json.loads(message['Body'])
     factors_dataframe = pd.DataFrame(message_json)
     # Used for clearing the Queue
-    receipt_handle = response['ReceiptHandle']
+    receipt_handle = message['ReceiptHandle']
 
     return factors_dataframe, receipt_handle
 
