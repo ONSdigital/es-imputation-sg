@@ -21,27 +21,67 @@ def _get_traceback(exception):
 
 
 def get_from_sqs(queue_url):
-    response = recieve_message(queue_url)
+    """
+    Gets and formats data from sqs queue
+    :param queue_url - String: Name of sqs queue
+    :return: factors_dataframe - Dataframe: Data from previous step
+             receipt_handle    - String: The id of the sqs message, used to delete from queue at the end of the process
+    """
+
+    response = receive_message(queue_url)
     message = response['Messages'][0]
     message_json = json.loads(message['Body'])
     factors_dataframe = pd.DataFrame(message_json)
-    return factors_dataframe
+    # Used for clearing the Queue
+    receipt_handle = response['ReceiptHandle']
+
+    return factors_dataframe, receipt_handle
 
 
-def recieve_message(queue_url):
+def receive_message(queue_url):
+    """
+    Gets the raw sqs response.
+    :param queue_url - String: Name of sqs queue
+    :return: response - Dict: unprocessed(raw) sqs message.
+    """
+
     sqs = boto3.client('sqs')
     return sqs.receive_message(QueueUrl=queue_url)
 
+def delete_sqs_message(sqs, queue_url, receipt_handle):
+    """
+    Deletes a specified sqs message from the queue
+    :param sqs - Boto3 client(SQS): SQS client for use in interacting with sqs
+    :param queue_url - String: Name of sqs queue
+    :param receipt_handle    - String: The id of the sqs message, used to delete from queue
+    :return: None
+    """
+    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-def send_sqs_message(queue_url, message, output_message_id):
+
+def send_output_to_sqs(queue_url, message, output_message_id,receipt_handle):
+    """
+        Handles sending output data at end of module, and deleting input data from queue
+        :param queue_url - String: Name of sqs queue
+        :param message - String: Message to send to sqs, string(json) representation of output dataframe
+        :param output_message_id  - String: ID of the message to be sent
+        :param receipt_handle    - String: The id of the sqs message, used to delete from queue
+        :return: None
+    """
+    sqs = boto3.client('sqs')
+    send_sqs_message(sqs, queue_url, message, output_message_id)
+    delete_sqs_message(sqs, queue_url, receipt_handle)
+
+def send_sqs_message(sqs, queue_url, message, output_message_id):
     """
     This method is responsible for sending data to the SQS queue.
+    :param sqs - Boto3 client(SQS): SQS client for use in interacting with sqs
     :param queue_url: The url of the SQS queue. - Type: String.
     :param message: The message/data you wish to send to the SQS queue - Type: String.
     :param output_message_id: The label of the record in the SQS queue - Type: String
     :return: None
     """
-    sqs = boto3.client('sqs')
+
     sqs.send_message(QueueUrl=queue_url,
                      MessageBody=message,
                      MessageGroupId=output_message_id,
@@ -83,7 +123,7 @@ def lambda_handler(event, context):
         #
         # Join imputed data with current period responders
 
-        factors_dataframe = get_from_sqs(queue_url)
+        factors_dataframe,receipt_handle = get_from_sqs(queue_url)
         #using assumption that factors df is granular- unaggregated data
 
         # Reads in non responder data
@@ -119,10 +159,8 @@ def lambda_handler(event, context):
 
         imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient='records')
-        send_sqs_message(queue_url,message,sqs_messageid_name)
-
-        ### COMMENTED OUT FOR TESTING ###
-        # sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+        #send_sqs_message(queue_url,message,sqs_messageid_name,receipt_handle)
+        send_output_to_sqs(queue_url,message,sqs_messageid_name,receipt_handle)
 
         send_sns_message(arn, imputation_run_type, checkpoint)
 
@@ -146,7 +184,13 @@ def lambda_handler(event, context):
 
 
 def send_sns_message(arn, imputation_run_type, checkpoint):
-
+    """
+    This method is responsible for sending a notification to the specified arn, so that it can be
+    used to relay information for the BPM to use and handle.
+    :param imputation_run_type: A flag to see if imputation ran or not - Type: String.
+    :param anomalies: Any discrepancies that have been detected during processing. - Type: List.
+    :return: None
+    """
     sns = boto3.client('sns')
 
     sns_message = {

@@ -19,8 +19,6 @@ def _get_traceback(exception):
 
 def lambda_handler(event, context):
     try:
-        print(event)
-
         working_dataframe = pd.DataFrame(event)
 
         question_columns = ['Q601_asphalting_sand', 'Q602_building_soft_sand', 'Q603_concreting_sand', 'Q604_bituminous_gravel',

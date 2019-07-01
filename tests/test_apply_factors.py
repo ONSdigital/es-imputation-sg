@@ -32,7 +32,7 @@ class test_wrangler_handler(unittest.TestCase):
             sqs.create_queue(QueueName="test-queue")
             queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
-            messages = lambda_wrangler_function.recieve_message(queue_url)
+            messages = lambda_wrangler_function.receive_message(queue_url)
 
             assert len(messages) == 1
 
@@ -41,7 +41,7 @@ class test_wrangler_handler(unittest.TestCase):
         sqs = boto3.resource('sqs', region_name='eu-west-2')
         queue = sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        lambda_wrangler_function.send_sqs_message(queue_url, "", "")
+        lambda_wrangler_function.send_output_to_sqs(queue_url, "","","")
 
         messages = queue.receive_messages()
         assert len(messages) == 1
@@ -124,7 +124,7 @@ class test_wrangler_handler(unittest.TestCase):
         with open('test_data.json', "r") as file:
             testdata = file.read()
 
-            lambda_wrangler_function.send_sqs_message(queue_url, message, "testy")
+            lambda_wrangler_function.send_output_to_sqs(queue_url,message, "testy","")
             #s3 bit
         client = boto3.client(
             "s3",
@@ -157,7 +157,7 @@ class test_wrangler_handler(unittest.TestCase):
             with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3.client') as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {"Messages": [{"Body": message}]}
+                mock_client_object.receive_message.return_value = {"Messages": [{"Body": message}],"ReceiptHandle":"666"}
                 myvar = mock_client_object.send_message.call_args_list
                 with open('non_responders_return.json', "rb") as file:
 
