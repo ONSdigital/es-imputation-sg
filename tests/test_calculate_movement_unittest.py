@@ -1,14 +1,14 @@
 import unittest.mock as mock
 import pandas as pd
 import json
-import imputation_calculate_movement_wrangler
+import calculate_movement_wrangler
 from botocore.response import StreamingBody
 
 class TestClass():
 
     @classmethod
     def setup_class(cls):
-        cls.mock_boto_wrangler_patcher = mock.patch('imputation_calculate_movement_wrangler.boto3')
+        cls.mock_boto_wrangler_patcher = mock.patch('calculate_movement_wrangler.boto3')
         cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
 
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
@@ -41,13 +41,13 @@ class TestClass():
         cls.mock_boto_wrangler_patcher.stop()
         cls.mock_os_patcher.stop()
 
-    @mock.patch('imputation_calculate_movement_wrangler.send_sns_message')
-    @mock.patch('imputation_calculate_movement_wrangler.send_sqs_message')
-    @mock.patch('imputation_calculate_movement_wrangler.boto3.client')
-    @mock.patch('imputation_calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('imputation_calculate_movement_wrangler.save_to_s3')
-    @mock.patch('imputation_calculate_movement_wrangler.get_data_from_sqs')
-    @mock.patch('imputation_calculate_movement_wrangler.read_data_from_s3')
+    @mock.patch('calculate_movement_wrangler.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.send_sqs_message')
+    @mock.patch('calculate_movement_wrangler.boto3.client')
+    @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
+    @mock.patch('calculate_movement_wrangler.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.get_data_from_sqs')
+    @mock.patch('calculate_movement_wrangler.read_data_from_s3')
     def test_wrangler(self, mock_s3_return, mock_sqs_return, mock_s3_save, mock_strata, mock_lambda,
                       mock_send_sqs, mock_sns_message):
         with open('wrangler_input_test_data.json') as file: input_data = json.load(file)
@@ -66,7 +66,7 @@ class TestClass():
 
         with open('method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {"Payload": StreamingBody(file, 13116)}
-            response = imputation_calculate_movement_wrangler.lambda_handler(None, None)
+            response = calculate_movement_wrangler.lambda_handler(None, None)
 
         output = myvar[0][0][1]
 
@@ -76,7 +76,7 @@ class TestClass():
     def test_strata_mismatch_detector(self):
         with open('merged_data_no_missmatch.json') as file: input_data = json.load(file)
 
-        (response1, response2) = imputation_calculate_movement_wrangler.strata_mismatch_detector(pd.DataFrame(input_data), 201809)
+        (response1, response2) = calculate_movement_wrangler.strata_mismatch_detector(pd.DataFrame(input_data), 201809)
 
         print(response2)
 
