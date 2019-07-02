@@ -41,7 +41,7 @@ class TestStringMethods(unittest.TestCase):
 
         with mock.patch.dict(calculate_movement_method.os.environ, {
             "arn": topic_arn,
-            "Checkpoint": "3"
+            "checkpoint": "3"
         }):
 
             calculate_movement_wrangler.send_sns_message("Imputation was run example!", pd.DataFrame())

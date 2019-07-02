@@ -41,7 +41,8 @@ def strata_mismatch_detector(data, current_period):
     current_time = os.environ['current_time']  # Currently set as "current_period"
     previous_time = os.environ['previous_time']  # Currently set as "previous_period"
     current_segmentation = os.environ['current_segmentation']  # Currently set as "current_strata"
-    previous_segmentation = os.environ['previous_segmentation']  # Currently set as "previous_strata"
+    previous_segmentation = os.environ[
+        'previous_segmentation']  # Currently set as "previous_strata"
 
     data_anomalies = data[[reference, segmentation, time]]
 
@@ -49,7 +50,8 @@ def strata_mismatch_detector(data, current_period):
 
     if data_anomalies.size > 0:
         # Filter so we only have current period stuff
-        fix_data = data_anomalies[data_anomalies[time] == int(current_period)][[reference, segmentation]]
+        fix_data = data_anomalies[data_anomalies[time] == int(current_period)][
+            [reference, segmentation]]
         fix_data = fix_data.rename(columns={segmentation: stored_segmentation})
 
         # Now merge these so that the fix_data strata is added as an extra column to the input data
@@ -85,6 +87,7 @@ def lambda_handler(event, context):
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """
+    to_be_imputed = True
     try:
         # Setting up clients
         lambda_client = boto3.client('lambda')
@@ -150,6 +153,7 @@ def lambda_handler(event, context):
 
         else:
 
+            to_be_imputed = False
             imputation_run_type = "Imputation was not ran"
             send_sqs_message(queue_url, message, sqs_messageid_name, receipt_handle)
 
@@ -169,7 +173,8 @@ def lambda_handler(event, context):
 
     return {
         "success": True,
-        "checkpoint": checkpoint
+        "checkpoint": checkpoint,
+        "Impute": to_be_imputed
     }
 
 
@@ -236,7 +241,7 @@ def send_sns_message(imputation_run_type, anomalies):
     :return: None
     """
     arn = os.environ['arn']
-    checkpoint = os.environ['Checkpoint']
+    checkpoint = os.environ['checkpoint']
 
     sns_message = {
         "success": True,
