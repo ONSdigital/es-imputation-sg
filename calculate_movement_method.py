@@ -3,7 +3,7 @@ import boto3
 import os
 import pandas as pd
 
-lambda_client = boto3.client('lambda')
+lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')
 
 

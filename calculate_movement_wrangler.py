@@ -7,8 +7,8 @@ import random
 
 # Set up clients
 s3 = boto3.resource('s3')
-sqs = boto3.client('sqs')
-sns = boto3.client('sns')
+sqs = boto3.client('sqs', region_name='eu-west-2')
+sns = boto3.client('sns', region_name='eu-west-2')
 
 
 def _get_traceback(exception):
@@ -157,9 +157,9 @@ def lambda_handler(event, context):
 
     except Exception as exc:
 
-        sqs.purge_queue(
-            QueueUrl=queue_url
-        )
+        # sqs.purge_queue(
+        #     QueueUrl=queue_url
+        # )
 
         return {
             "success": False,

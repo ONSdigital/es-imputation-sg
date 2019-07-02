@@ -1,10 +1,15 @@
 import unittest.mock as mock
+import unittest
 import pandas as pd
 import json
-import calculate_movement_wrangler
+import os
+import sys
 from botocore.response import StreamingBody
+sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
+import calculate_movement_wrangler
 
-class TestClass():
+
+class TestClass(unittest.TestCase):
 
     @classmethod
     def setup_class(cls):
@@ -22,9 +27,9 @@ class TestClass():
             'method_name': 'method_name_here',
             'time': 'period',
             'response_type': 'response_type',
-            'questions_List': 'Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand '
-                             'Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel '
-                             'Q607_constructional_fill',
+            'questions_list': 'Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand '
+                              'Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel '
+                              'Q607_constructional_fill',
             'output_file': 'output_file.json',
             'reference': 'responder_id',
             'segmentation': 'strata',
@@ -50,10 +55,10 @@ class TestClass():
     @mock.patch('calculate_movement_wrangler.read_data_from_s3')
     def test_wrangler(self, mock_s3_return, mock_sqs_return, mock_s3_save, mock_strata, mock_lambda,
                       mock_send_sqs, mock_sns_message):
-        with open('wrangler_input_test_data.json') as file: input_data = json.load(file)
-        with open('method_output_compare_result.json') as file: method_output = json.load(file)
-        with open('s3_previous_period_data.json') as file: previous_data = json.load(file)
-        with open('merged_data.json') as file: merged_data = json.load(file)
+        with open('tests/wrangler_input_test_data.json') as file: input_data = json.load(file)
+        with open('tests/method_output_compare_result.json') as file: method_output = json.load(file)
+        with open('tests/s3_previous_period_data.json') as file: previous_data = json.load(file)
+        with open('tests/merged_data.json') as file: merged_data = json.load(file)
 
         mock_s3_return.return_value = previous_data
 
@@ -64,7 +69,7 @@ class TestClass():
 
         myvar = mock_send_sqs.call_args_list
 
-        with open('method_output_compare_result.json', "rb") as file:
+        with open('tests/method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {"Payload": StreamingBody(file, 13116)}
             response = calculate_movement_wrangler.lambda_handler(None, None)
 
@@ -74,10 +79,8 @@ class TestClass():
         assert output == method_output
 
     def test_strata_mismatch_detector(self):
-        with open('merged_data_no_missmatch.json') as file: input_data = json.load(file)
+        with open('tests/merged_data_no_missmatch.json') as file: input_data = json.load(file)
 
         (response1, response2) = calculate_movement_wrangler.strata_mismatch_detector(pd.DataFrame(input_data), 201809)
-
-        print(response2)
 
         assert response2.shape[0] <= 0
