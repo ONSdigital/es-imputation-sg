@@ -5,10 +5,8 @@ import pandas as pd
 import os
 import random
 
-# Set up clients
-sqs = boto3.client('sqs', region_name='eu-west-2')
-sns = boto3.client('sns', region_name='eu-west-2')
-lambda_client = boto3.client('lambda', region_name='eu-west-2')
+
+
 
 def _get_traceback(exception):
     """
@@ -23,74 +21,57 @@ def _get_traceback(exception):
     )
 
 
-def send_sns_message(arn, imputation_run_type, anomalies):
-    sns_message = {
-        "success": True,
-        "module": "Imputation",
-        "checkpoint": "3",
-        "anomalies": anomalies,
-        "message": imputation_run_type
-    }
-
-    sns.publish(
-        TargetArn=arn,
-        Message=json.dumps(sns_message)
-    )
-
-
-def _get_sqs_message():
-    # Reads in Data from SQS Queue
-    response = sqs.receive_message(QueueUrl=queue_url)
-    message = response['Messages'][0]
-    message_json = json.loads(message['Body'])
-    receipt_handle = message['ReceiptHandle']
-
-    return message_json, receipt_handle
-
-
-def send_sqs_message(queue_url, message, message_group_id, message_dedup_id):
-    # MessageDeduplicationId is set to a random hash to overcome de-duplication,
-    # otherwise modules could not be re-run in the space of 5 Minutes.
-    sqs.send_message(QueueUrl=queue_url, MessageBody=message,
-                        MessageGroupId=message_group_id, MessageDeduplicationId=message_dedup_id)
-
-    
 def lambda_handler(event, context):
-    try:
-        
-        # ENV vars
-        error_handler_arn = os.environ['error_handler_arn']
-        queue_url = os.environ['queue_url']
-        checkpoint = os.environ['checkpoint']
-        function_name = os.environ['function_name']
-        questions_list = os.environ['questions_list']
-        sqs_messageid_name = os.environ['sqs_messageid_name']
+    # Set up clients
+    sqs = boto3.client('sqs')
+    lambda_client = boto3.client('lambda')
+    sns = boto3.client('sns')
 
-        message_json, receipt_handle = _get_sqs_message()
-        
+    # ENV vars
+    error_handler_arn = os.environ['error_handler_arn']
+    queue_url = os.environ['queue_url']
+    checkpoint = os.environ['checkpoint']
+    function_name = os.environ['function_name']
+    questions_list = os.environ['questions_list']
+    sqs_messageid_name = os.environ['sqs_messageid_name']
+    arn = os.environ['arn']
+    try:
+
+        # Reads in Data from SQS Queue
+        response = sqs.receive_message(QueueUrl=queue_url)
+        message = response['Messages'][0]
+        message_json = json.loads(message['Body'])
+
+        receipt_handle = message['ReceiptHandle']
+
         data = pd.DataFrame(message_json)
-         
+
         # Add means columns
-        for question in questions_list:
-                data['mean_' + question] = 0.0
-                
+        for question in questions_list.split(' '):
+            data[question] = 0.0
+
         data_json = data.to_json(orient='records')
 
-        returned_data = lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(message_json))
+        returned_data = lambda_client.invoke(FunctionName=function_name, Payload=data_json)
         json_response = returned_data.get('Payload').read().decode("UTF-8")
-        
-        random_id = str(random.getrandbits(128))
-        send_sqs_message(queue_url, json_response, sqs_messageid_name, random_id)
-        
-        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-        
-        # imputation_run_type = "Calculate Means was run successfully."
 
-        # send_sns_message(arn, imputation_run_type, "No anomalies.")
-        
+        # TESING
+
+        # MessageDeduplicationId is set to a random hash to overcome de-duplication,
+        # otherwise modules could not be re-run in the space of 5 Minutes
+        sqs.send_message(QueueUrl=queue_url, MessageBody=json.loads(json_response),
+                         MessageGroupId=sqs_messageid_name, MessageDeduplicationId=str(random.getrandbits(128)))
+
+        ### COMMENTED OUT FOR TESTING ###
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+
+        imputation_run_type = "Calculate Means was run successfully."
+
+        send_sns_message(imputation_run_type,checkpoint,sns,arn)
+
         # Currently due to POC Code if Imputation is performed just imputed data is sent onwards
         final_output = json_response
-        
+
     except Exception as exc:
         ### COMMENTED OUT FOR TESTING ###
         # purge = sqs.purge_queue(
@@ -107,3 +88,17 @@ def lambda_handler(event, context):
         "success": True,
         "checkpoint": checkpoint
     }
+
+
+def send_sns_message(imputation_run_type,checkpoint,sns,arn):
+    sns_message = {
+        "success": True,
+        "module": "Imputation",
+        "checkpoint": checkpoint,
+        "message": imputation_run_type
+    }
+
+    sns.publish(
+        TargetArn=arn,
+        Message=json.dumps(sns_message)
+    )
