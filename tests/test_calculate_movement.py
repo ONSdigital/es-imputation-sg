@@ -2,8 +2,8 @@ from moto import mock_sns, mock_sqs, mock_s3
 import json
 import boto3
 import pandas as pd
-import imputation_calculate_movement
-import imputation_calculate_movement_wrangler
+import calculate_movement_method
+import calculate_movement_wrangler
 import unittest
 import unittest.mock as mock
 
@@ -11,7 +11,7 @@ import unittest.mock as mock
 class TestStringMethods(unittest.TestCase):
 
     def test_lambda_handler_movement_method(self):
-        with mock.patch.dict(imputation_calculate_movement.os.environ, {
+        with mock.patch.dict(calculate_movement_method.os.environ, {
             'current_period': '201809',
             'previous_period': '201806',
             'questions_list': 'Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand '
@@ -25,7 +25,7 @@ class TestStringMethods(unittest.TestCase):
             string_result = json.dumps(result)
             striped_string = string_result.replace(" ", "")
 
-            response = imputation_calculate_movement.lambda_handler(input_data, None)
+            response = calculate_movement_method.lambda_handler(input_data, None)
 
         assert response == striped_string
 
@@ -39,12 +39,12 @@ class TestStringMethods(unittest.TestCase):
         created = sns.create_topic(Name="some-topic")
         topic_arn = created['TopicArn']
 
-        with mock.patch.dict(imputation_calculate_movement.os.environ, {
+        with mock.patch.dict(calculate_movement_method.os.environ, {
             "arn": topic_arn,
             "checkpoint": "3"
         }):
 
-            imputation_calculate_movement_wrangler.send_sns_message("Imputation was run example!", pd.DataFrame())
+            calculate_movement_wrangler.send_sns_message("Imputation was run example!", pd.DataFrame())
 
         mock.stop()
 
@@ -62,7 +62,7 @@ class TestStringMethods(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         sqs_send.send_message(QueueUrl=queue_url, MessageBody=test_message)
 
-        messages = imputation_calculate_movement_wrangler.get_data_from_sqs(queue_url)
+        messages = calculate_movement_wrangler.get_data_from_sqs(queue_url)
 
         # Response is a list if there is a message in the queue and a dict if no message is present.
         assert messages['Messages'][0]['Body'] == test_message
@@ -74,8 +74,8 @@ class TestStringMethods(unittest.TestCase):
         queue = sqs.create_queue(QueueName="test_queue_test.fifo", Attributes={'FifoQueue': 'true'})
         queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
 
-        imputation_calculate_movement_wrangler.send_sqs_message(queue_url, "{}", "test_group_id")
+        calculate_movement_wrangler.send_sqs_message(queue_url, "{}", "test_group_id")
 
         messages = queue.receive_messages()
-        #messages = imputation_calculate_movement_wrangler.get_data_from_sqs(queue_url)
+        #messages = calculate_movement_wrangler.get_data_from_sqs(queue_url)
         assert type(messages) == list
