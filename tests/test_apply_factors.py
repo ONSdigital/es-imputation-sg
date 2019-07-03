@@ -6,11 +6,10 @@ import json
 import unittest.mock as mock
 import unittest
 import pandas as pd
-import uk.gov.ons.src.apply_factors_wrangler as lambda_wrangler_function
-import uk.gov.ons.src.apply_factors_method as lambda_method_function
 import sys
 sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
-
+import apply_factors_wrangler as lambda_wrangler_function
+import apply_factors_method as lambda_method_function
 
 class test_wrangler_handler(unittest.TestCase):
 
@@ -69,7 +68,7 @@ class test_wrangler_handler(unittest.TestCase):
             's3_file': 'previous_period_enriched_stratared.json',
             'sqs_messageid_name': 'apply_factors_out'
         }):
-            with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3') as mocked:
+            with mock.patch('apply_factors_wrangler.boto3') as mocked:
                 mocked.client.side_effect = Exception('SQS Failure')
                 response = lambda_wrangler_function.lambda_handler("", None)
                 assert 'success' in response
@@ -77,12 +76,12 @@ class test_wrangler_handler(unittest.TestCase):
 
     @mock_s3
     def test_get_data_from_s3(self):
-        with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3') as mock_bot:
+        with mock.patch('apply_factors_wrangler.boto3') as mock_bot:
             mock_sthree = mock.Mock()
             mock_bot.resource.return_value = mock_sthree
             mock_object = mock.Mock()
             mock_sthree.Object.return_value = mock_object
-            with open('test_data.json', "r") as file:
+            with open('tests/test_data.json', "r") as file:
                 mock_content = file.read()
             mock_object.get.return_value.read = mock_content
             data = pd.DataFrame(json.loads(mock_content))
@@ -103,7 +102,7 @@ class test_wrangler_handler(unittest.TestCase):
             aws_secret_access_key="fake_secret_key",
         )
         client.create_bucket(Bucket="MIKE")
-        client.upload_file(Filename="factorsdata.json", Bucket="MIKE", Key="123")
+        client.upload_file(Filename="tests/factorsdata.json", Bucket="MIKE", Key="123")
 
         object = s3.Object("MIKE", "123")
         content = object.get()['Body'].read()
@@ -119,9 +118,9 @@ class test_wrangler_handler(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
         message = ''
         testdata = ''
-        with open('factorsdata.json', "r") as file:
+        with open('tests/factorsdata.json', "r") as file:
             message = file.read()
-        with open('test_data.json', "r") as file:
+        with open('tests/test_data.json', "r") as file:
             testdata = file.read()
 
             lambda_wrangler_function.send_output_to_sqs(queue_url,message, "testy","")
@@ -139,8 +138,8 @@ class test_wrangler_handler(unittest.TestCase):
             aws_secret_access_key="fake_secret_key",
         )
         client.create_bucket(Bucket="MIKE")
-        client.upload_file(Filename="test_data.json", Bucket="MIKE", Key="previous_period_enriched_stratared.json")
-        client.upload_file(Filename="non_responders_output.json", Bucket="MIKE", Key="non_responders_output.json")
+        client.upload_file(Filename="tests/test_data.json", Bucket="MIKE", Key="previous_period_enriched_stratared.json")
+        client.upload_file(Filename="tests/non_responders_output.json", Bucket="MIKE", Key="non_responders_output.json")
 
         with mock.patch.dict(lambda_wrangler_function.os.environ, {
             'arn': 'mike',
@@ -154,12 +153,12 @@ class test_wrangler_handler(unittest.TestCase):
             'sqs_messageid_name': 'apply_factors_out'
         }):
             from botocore.response import StreamingBody
-            with mock.patch('uk.gov.ons.src.apply_factors_wrangler.boto3.client') as mock_client:
+            with mock.patch('apply_factors_wrangler.boto3.client') as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 mock_client_object.receive_message.return_value = {"Messages": [{"Body": message, "ReceiptHandle":"666"}]}
                 myvar = mock_client_object.send_message.call_args_list
-                with open('non_responders_return.json', "rb") as file:
+                with open('tests/non_responders_return.json', "rb") as file:
 
                     mock_client_object.invoke.return_value = {"Payload": StreamingBody(file, 1317)}
                     response = lambda_wrangler_function.lambda_handler("", None)
@@ -172,7 +171,7 @@ class test_wrangler_handler(unittest.TestCase):
                     assert response['success'] is True
 
     def test_method(self):
-        input = pd.read_csv('inputtomethod.csv')
+        input = pd.read_csv('tests/inputtomethod.csv')
         response = lambda_method_function.lambda_handler(input, None)
         outputdf = pd.DataFrame(json.loads(response))
         valuetotest = outputdf['Q602_building_soft_sand'].to_list()[0]

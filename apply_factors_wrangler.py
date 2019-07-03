@@ -45,7 +45,7 @@ def receive_message(queue_url):
     :return: response - Dict: unprocessed(raw) sqs message.
     """
 
-    sqs = boto3.client('sqs')
+    sqs = boto3.client('sqs', region_name='eu-west-2')
     return sqs.receive_message(QueueUrl=queue_url)
 
 def delete_sqs_message(sqs, queue_url, receipt_handle):
@@ -68,7 +68,7 @@ def send_output_to_sqs(queue_url, message, output_message_id,receipt_handle):
         :param receipt_handle    - String: The id of the sqs message, used to delete from queue
         :return: None
     """
-    sqs = boto3.client('sqs')
+    sqs = boto3.client('sqs', region_name='eu-west-2')
     send_sqs_message(sqs, queue_url, message, output_message_id)
     delete_sqs_message(sqs, queue_url, receipt_handle)
 
@@ -112,7 +112,7 @@ def lambda_handler(event, context):
 
         s3_file = os.environ['s3_file']
         arn = os.environ['arn']
-        lambda_client = boto3.client('lambda')
+        lambda_client = boto3.client('lambda', region_name='eu-west-2')
 
         # get imputation factors from queue
 
@@ -191,7 +191,7 @@ def send_sns_message(arn, imputation_run_type, checkpoint):
     :param anomalies: Any discrepancies that have been detected during processing. - Type: List.
     :return: None
     """
-    sns = boto3.client('sns')
+    sns = boto3.client('sns', region_name='eu-west-2')
 
     sns_message = {
         "success": True,
@@ -213,7 +213,7 @@ def read_data_from_s3(bucket_name, s3_file):
     :param s3_file: The file you wish to import.
     :return: json_file - Type: JSON.
     """
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource('s3', region_name='eu-west-2')
     object = s3.Object(bucket_name, s3_file)
     content = object.get()['Body'].read()
     json_file = json.loads(content)
