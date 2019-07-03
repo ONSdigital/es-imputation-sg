@@ -12,6 +12,16 @@ As the correct practice is to seperate out the creation of columns from the meth
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+### Calculate Means Wrangler
+
+This is the second step in the imputation process. The wrangler ingests data from the movements step, checks for anomalies (TBC),
+and formats the data to be passed through to the method.
+
+Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method
+to be added to.
+
+Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
+
 ### Calculate IQRS Wrangler
 
 This is the third step of the imputation process. The wrangler returns means data from the sqs queue (the output from the calculate means step). It converts this data from JSON format into a dataframe and then adds 7 new IQRS columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
@@ -44,6 +54,17 @@ The result of the method is imputed values for each non responder, this is joine
 **Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, e.g. **Q601,Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A Json string which contains all the created movements, saved in the respective movement_*question_name* columns.
+
+
+### Calculate Means Method
+
+**Name of Lambda:** imputation_calculate_means_method
+
+**Intro:** The calculate means method takes the movement values of each question, grouped by region and strata, and calculates the mean of each movement value. The result is then stored in a new means column.
+
+**Inputs:** This method will require all of the Questions columns and movement columns to be on the data which is being sent to the method, e.g. **Q601,Q602...**. A means_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+
+**Outputs:** A JSON string which contains all the created means values, saved in the respective means_*question_name* columns.
 
 
 ### Calculate IQRS method
