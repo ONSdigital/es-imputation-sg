@@ -12,6 +12,15 @@ As the correct practice is to seperate out the creation of columns from the meth
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+### Calculate Imputation Factors Wangler
+
+This step is a combination of both calculate gb and non gb factors.
+
+Data is retrieved from the previous step from SQS, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
+
+Once this has been calculated then the data is sent back to the SQS queue to be used by the next method.
+
+
 ## Methods
 
 ### Calculate Movements Method
@@ -23,3 +32,13 @@ Like every wrangler, it is responsible for dealing with sending data to the SQS 
 **Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, e.g. **Q601,Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A Json string which contains all the created movements, saved in the respective movement_*question_name* columns.
+
+### Calculate Imputation Factors Method
+
+**Name of Lambda:** imputation_calculate_imputation_factors_method.
+
+**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region,Land or Marine,Count of refs within cell. 
+
+**Inputs:** JSON string from wrangler with the needed columns.
+
+**Outputs:** JSON string containing imputation factors for each question in each aggregated group. 
