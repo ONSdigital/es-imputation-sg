@@ -3,10 +3,6 @@ import os
 import pandas as pd
 import boto3
 
-# set up clients
-sns = boto3.client('sns')
-lambda_client = boto3.client('lambda')
-
 
 def _get_traceback(exception):
     """
@@ -30,6 +26,11 @@ def lambda_handler(event, context):
     :param context: lambda context
     :return: json dataset
     """
+
+    # set up clients
+    sqs = boto3.client('sqs')
+
+
     try:
         # set up variables
         questions = os.environ['questions']
@@ -45,7 +46,7 @@ def lambda_handler(event, context):
         def calculate_imputation_factors(row, question):
             """
             Calculates the imputation factors for the DataFrame on row by row basis.
-            - Calculates imputation factor for each question, in each aggregated group, determined by:
+            - Calculates imputation factor for each question, in each aggregated group, by:
                 Region
                 Land or Marine
                 Count of refs within cell
