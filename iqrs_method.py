@@ -38,13 +38,6 @@ def lambda_handler(event, context):
 
     except Exception as exc:
 
-        # Invoke error handler lambda
-        lambda_client.invoke(
-            FunctionName=error_handler_arn,
-            InvocationType='Event',
-            Payload=json.dumps({'test': 'ccow'})
-        )
-
         return {
             "success": False,
             "error": "Unexpected exception {}".format(_get_traceback(exc))

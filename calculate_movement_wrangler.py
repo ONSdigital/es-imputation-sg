@@ -155,11 +155,9 @@ def lambda_handler(event, context):
         send_sns_message(imputation_run_type, anomalies)
 
     except Exception as exc:
-
-        ### COMMENTED OUT FOR TESTING ###
-        # purge = sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
+        purge = sqs.purge_queue(
+            QueueUrl=queue_url
+        )
 
         return {
             "success": False,

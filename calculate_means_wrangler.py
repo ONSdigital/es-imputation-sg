@@ -6,8 +6,6 @@ import os
 import random
 
 
-
-
 def _get_traceback(exception):
     """
     Given an exception, returns the traceback as a string.
@@ -55,14 +53,11 @@ def lambda_handler(event, context):
         returned_data = lambda_client.invoke(FunctionName=function_name, Payload=data_json)
         json_response = returned_data.get('Payload').read().decode("UTF-8")
 
-        # TESING
-
         # MessageDeduplicationId is set to a random hash to overcome de-duplication,
         # otherwise modules could not be re-run in the space of 5 Minutes
         sqs.send_message(QueueUrl=queue_url, MessageBody=json.loads(json_response),
                          MessageGroupId=sqs_messageid_name, MessageDeduplicationId=str(random.getrandbits(128)))
 
-        ### COMMENTED OUT FOR TESTING ###
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
         imputation_run_type = "Calculate Means was run successfully."
@@ -73,10 +68,9 @@ def lambda_handler(event, context):
         final_output = json_response
 
     except Exception as exc:
-        ### COMMENTED OUT FOR TESTING ###
-        # purge = sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
+        purge = sqs.purge_queue(
+            QueueUrl=queue_url
+        )
 
         return {
             "success": False,
