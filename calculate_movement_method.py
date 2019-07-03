@@ -53,8 +53,8 @@ def lambda_handler(event, context):
             for i in range(0, len(sorted_current)):
 
                 # This check is too prevent the DivdebyZeroError.
-                if current_list[i] and previous_list[i] != 0:
-                    number = (current_list[i] - previous_list[i]) / current_list[i]
+                if previous_list[i] != 0:
+                    number = (current_list[i] - previous_list[i]) / previous_list[i]
                 else:
                     number = 0.0
 

@@ -161,10 +161,6 @@ def lambda_handler(event, context):
 
     except Exception as exc:
 
-        # sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
-
         return {
             "success": False,
             "checkpoint": checkpoint,

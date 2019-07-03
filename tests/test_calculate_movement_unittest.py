@@ -70,7 +70,7 @@ class TestClass(unittest.TestCase):
         myvar = mock_send_sqs.call_args_list
 
         with open('tests/method_output_compare_result.json', "rb") as file:
-            mock_lambda.return_value.invoke.return_value = {"Payload": StreamingBody(file, 13116)}
+            mock_lambda.return_value.invoke.return_value = {"Payload": StreamingBody(file, 13123)}
             response = calculate_movement_wrangler.lambda_handler(None, None)
 
         output = myvar[0][0][1]
