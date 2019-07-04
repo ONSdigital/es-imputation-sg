@@ -5,8 +5,6 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import calculate_imputation_factors_wrangler
 import calculate_imputation_factors_method
-import ipdb
-
 
 
 class test_wrangler_and_method(unittest.TestCase):
@@ -88,11 +86,10 @@ class test_wrangler_and_method(unittest.TestCase):
 
         """
         # load json file.
-        input_file = "tests/recalculate_means_output.json"
 
         method_input_file = "tests/calculate_imputation_factors_method_input_data.json"
 
-        with open(input_file, "r") as file:
+        with open(method_input_file, "r") as file:
             json_content = json.loads(file.read())
 
         # invoke method lambda
@@ -135,8 +132,6 @@ class test_wrangler_and_method(unittest.TestCase):
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
 
-        ipdb.set_trace()
-
         output_file = calculate_imputation_factors_method.lambda_handler(json_content, None)
 
         # final output match
@@ -148,7 +143,8 @@ class test_wrangler_and_method(unittest.TestCase):
         expected_output_dataframe = pd.DataFrame(expected_dataframe)
         print(actual_outcome_dataframe)
         print(expected_output_dataframe)
-        assert_frame_equal(actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str))
+        assert_frame_equal(actual_outcome_dataframe.astype(str),
+                           expected_output_dataframe.astype(str))
 
 
         def test_wrangler_exception_handling(self):
@@ -186,4 +182,3 @@ class test_wrangler_and_method(unittest.TestCase):
                 print(mock_json.dumps.call_args)
                 assert mock_json.dumps.call_args[0][0]['success']
                 assert response
-
