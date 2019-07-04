@@ -67,7 +67,7 @@ def lambda_handler(event, context):
         send_sqs_message(queue_url, json.loads(json_response), sqs_messageid_name)
 
         ### COMMENTED OUT FOR TESTING ###
-        # sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
     except Exception as exc:
 
