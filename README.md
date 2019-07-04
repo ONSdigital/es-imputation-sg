@@ -12,6 +12,12 @@ As the correct practice is to seperate out the creation of columns from the meth
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+## Recalculate Means Wrangler
+
+This wrangler recalculates the means of movement after the atypical values have been removed.
+
+This uses the same method as calculate means.
+
 ## Methods
 
 ### Calculate Movements Method
