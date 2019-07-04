@@ -83,12 +83,11 @@ def lambda_handler(event, context):
     }
 
 
-def send_sns_message(imputation_run_type, anomalies):
+def send_sns_message(imputation_run_type):
     """
     This function is responsible for sending notifications to the SNS Topic.
 
     :param imputation_run_type: runtype.
-    :param anomalies: list of anomalies collected from the method.
     :return: json string
     """
 
@@ -100,7 +99,6 @@ def send_sns_message(imputation_run_type, anomalies):
         "success": True,
         "module": "Imputation Calculate Imputation Factors",
         "checkpoint": checkpoint,
-        "anomalies": anomalies.to_json(orient='records'),
         "message": imputation_run_type
     }
 
