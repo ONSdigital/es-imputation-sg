@@ -32,10 +32,14 @@ def lambda_handler(event, context):
 
     except Exception as exc:
         print(exc)
+        import boto3
+        import os
+        queue_url = os.environ['queue_url']
+        sqs = boto3.client('sqs', region_name='eu-west-2')
         ### COMMENTED OUT FOR TESTING ###
-        # purge = sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
+        purge = sqs.purge_queue(
+             QueueUrl=queue_url
+        )
 
         return {
             "success": False,

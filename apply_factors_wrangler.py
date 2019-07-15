@@ -159,17 +159,18 @@ def lambda_handler(event, context):
 
         imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient='records')
-        #send_sqs_message(queue_url,message,sqs_messageid_name,receipt_handle)
+
         send_output_to_sqs(queue_url,message,sqs_messageid_name,receipt_handle)
 
         send_sns_message(arn, imputation_run_type, checkpoint)
 
     except Exception as exc:
         print(_get_traceback(exc))
-        ### COMMENTED OUT FOR TESTING ###
-        # purge = sqs.purge_queue(
-        #     QueueUrl=queue_url
-        # )
+        sqs = boto3.client('sqs', region_name='eu-west-2')
+
+        purge = sqs.purge_queue(
+             QueueUrl=queue_url
+        )
 
         return {
             "success": False,

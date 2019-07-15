@@ -55,7 +55,11 @@ class test_wrangler_handler(unittest.TestCase):
             lambda_wrangler_function.send_sns_message(topic_arn,"Gyargh",3)
 
     # Testing SQS functionality - Method
+    @mock_sqs
     def test_catch_exception(self):
+        sqs = boto3.resource('sqs', region_name='eu-west-2')
+        queue = sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(lambda_wrangler_function.os.environ, {
             'arn': 'mike',
@@ -64,12 +68,12 @@ class test_wrangler_handler(unittest.TestCase):
             'method_name': 'lambda_method_function',
             'non_responder_file': 'non_responders_output.json',
             'period': '201809',
-            'queue_url': 'test-queue',
+            'queue_url': queue_url,
             's3_file': 'previous_period_enriched_stratared.json',
             'sqs_messageid_name': 'apply_factors_out'
         }):
-            with mock.patch('apply_factors_wrangler.boto3') as mocked:
-                mocked.client.side_effect = Exception('SQS Failure')
+            with mock.patch('apply_factors_wrangler.get_from_sqs') as mocked:
+                mocked.side_effect = Exception('SQS Failure')
                 response = lambda_wrangler_function.lambda_handler("", None)
                 assert 'success' in response
                 assert response['success'] is False
