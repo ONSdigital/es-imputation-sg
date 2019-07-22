@@ -21,6 +21,18 @@ def _get_traceback(exception):
     )
 
 
+def get_environment_variable(variable):
+    """
+    obtains the environment variables and tests collection.
+    :param variable:
+    :return: output = varaible name
+    """
+    output = os.environ.get(variable, None)
+    if output is None:
+        raise ValueError(str(variable)+" config parameter missing.")
+    return output
+
+
 def lambda_handler(event, context):
     """
     Prepares data for and calls the Calculate imputation factors method.
@@ -33,14 +45,14 @@ def lambda_handler(event, context):
     # environment variables
     sqs = boto3.client('sqs')
     lambda_client = boto3.client('lambda')
-    checkpoint = os.environ['checkpoint']
+    checkpoint = get_environment_variable('checkpoint')
 
-    queue_url = os.environ['queue_url']
-    sqs_messageid_name = os.environ['sqs_messageid_name']
+    queue_url = get_environment_variable('queue_url')
+    sqs_messageid_name = get_environment_variable('sqs_messageid_name')
 
-    current_period = os.environ['period']
-    method_name = os.environ['method_name']
-    questions = os.environ['questions']
+    current_period = get_environment_variable('period')
+    method_name = get_environment_variable('method_name')
+    questions = get_environment_variable('questions')
 
     try:
         # read in data from the sqs queue
@@ -92,7 +104,7 @@ def send_sns_message(imputation_run_type):
     """
 
     arn = os.environ['arn']
-    checkpoint = os.environ['checkpoint']
+    checkpoint = get_environment_variable('checkpoint')
     sns = boto3.client('sns')
 
     sns_message = {

@@ -18,6 +18,18 @@ def _get_traceback(exception):
     )
 
 
+def get_environment_variable(variable):
+    """
+    obtains the environment variables and tests collection.
+    :param variable:
+    :return: output = varaible name
+    """
+    output = os.environ.get(variable, None)
+    if output is None:
+        raise ValueError(str(variable)+" config parameter missing.")
+    return output
+
+
 def lambda_handler(event, context):
     """
     Calculates the imputation factors, called by the Calculate imputation factors wrangler.
@@ -30,16 +42,15 @@ def lambda_handler(event, context):
     # set up clients
     sqs = boto3.client('sqs')
 
-
     try:
         # set up variables
-        questions = os.environ['questions']
-        first_threshold = os.environ['first_threshold']
-        second_threshold = os.environ['second_threshold']
-        third_threshold = os.environ['third_threshold']
-        first_imputation_factor = os.environ['first_imputation_factor']
-        second_imputation_factor = os.environ['second_imputation_factor']
-        third_imputation_factor = os.environ['third_imputation_factor']
+        questions = get_environment_variable('questions')
+        first_threshold = get_environment_variable('first_threshold')
+        second_threshold = get_environment_variable('second_threshold')
+        third_threshold = get_environment_variable('third_threshold')
+        first_imputation_factor = get_environment_variable('first_imputation_factor')
+        second_imputation_factor = get_environment_variable('second_imputation_factor')
+        third_imputation_factor = get_environment_variable('third_imputation_factor')
 
         df = pd.DataFrame(event)
 
