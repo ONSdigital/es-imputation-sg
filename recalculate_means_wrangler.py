@@ -19,6 +19,18 @@ def _get_traceback(exception):
     )
 
 
+def get_environment_variable(variable):
+    """
+    obtains the environment variables and tests collection.
+    :param variable:
+    :return: output = varaible name
+    """
+    output = os.environ.get(variable, None)
+    if output is None:
+        raise ValueError(str(variable)+" config parameter missing.")
+    return output
+
+
 def lambda_handler(event, context):
     # Set up clients
     sqs = boto3.client('sqs', 'eu-west-2')
@@ -26,12 +38,12 @@ def lambda_handler(event, context):
     lambda_client = boto3.client('lambda', 'eu-west-2')
 
     # ENV vars
-    error_handler_arn = os.environ['error_handler_arn']
-    queue_url = os.environ['queue_url']
-    checkpoint = os.environ['checkpoint']
-    function_name = os.environ['function_name']
-    questions_list = os.environ['questions_list']
-    sqs_messageid_name = os.environ['sqs_messageid_name']
+    error_handler_arn = get_environment_variable('error_handler_arn')
+    queue_url = get_environment_variable('queue_url')
+    checkpoint = get_environment_variable('checkpoint')
+    function_name = get_environment_variable('function_name')
+    questions_list = get_environment_variable('questions_list')
+    sqs_messageid_name = get_environment_variable('sqs_messageid_name')
 
     try:
 
@@ -90,7 +102,7 @@ def send_sns_message(imputation_run_type, anomalies):
     """
 
     arn = os.environ['arn']
-    checkpoint = os.environ['checkpoint']
+    checkpoint = get_environment_variable('checkpoint')
     sns = boto3.client('sns')
 
     sns_message = {
