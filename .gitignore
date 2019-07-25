@@ -1,53 +1,53 @@
 # Byte-compiled / optimized / DLL files
- __pycache__/
- *.py[cod]
- *$py.class
+__pycache__/
+*.py[cod]
+*$py.class
 
 # C extensions
- *.so
+*.so
 
- # Installer logs
- pip-log.txt
- pip-delete-this-directory.txt
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
- # Unit test / coverage reports
- htmlcov/
- .tox/
- .coverage
- .coverage.*
- .cache
- nosetests.xml
- coverage.xml
- *.cover
- .hypothesis/
- .pytest_cache/
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
- # pyenv
- .python-version
+# pyenv
+.python-version
 
- # Environments
- .env
- .envrc
- .venv
- env/
- venv/
- ENV/
- env.bak/
- venv.bak/
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
- # mypy
- .mypy_cache/
+# mypy
+.mypy_cache/
 
- # Emacs
- \#*
- *~
+# Emacs
+\#*
+*~
 
- # Other editors
- .idea
- .vscode
+# Other editors
+.idea
+.vscode
 
- # Meta files
- *.DS_Store
+# Meta files
+*.DS_Store
 
 # deployment / artifacts
 .serverless/
