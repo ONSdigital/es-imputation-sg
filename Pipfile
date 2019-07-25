@@ -17,6 +17,7 @@ black = "==19.3b0"
 boto3 = "*"
 awscli = "*"
 moto = "*"
+marshmallow = "*"
 
 [packages]
 pandas = "*"
