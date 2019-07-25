@@ -21,8 +21,6 @@ def _get_traceback(exception):
 
 
 def lambda_handler(event, context):
-    # Set up clients
-    # s3 = boto3.resource('s3')
     sqs = boto3.client('sqs')
     lambda_client = boto3.client('lambda')
     sns = boto3.client('sns')
@@ -72,7 +70,6 @@ def lambda_handler(event, context):
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-        # send_to_s3(bucket_name, json_response)
         send_sns_message(arn, sns, checkpoint)
 
     except Exception as exc:
@@ -100,29 +97,3 @@ def send_sns_message(arn, sns, checkpoint):
         TargetArn=arn,
         Message=json.dumps(sns_message)
     )
-
-
-def send_to_s3(bucket_name, message):
-    try:
-
-        s3 = boto3.resource('s3')
-
-        encoded_string = message.encode("utf-8")
-
-        bucket = s3.Bucket(bucket_name)
-
-        file_name = "atypicals_result.json"
-
-        with open('/tmp/' + file_name, 'w') as data:
-
-            data.write(message)
-
-        key = 'atypicals_result.json'
-
-        bucket.upload_file('/tmp/' + file_name, key)
-
-        return file_name
-
-    except Exception as error:
-        return str(error)
-

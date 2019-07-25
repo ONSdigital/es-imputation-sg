@@ -5,9 +5,6 @@ import pandas as pd
 import os
 import random
 
-# Set up clients
-# s3 = boto3.resource('s3')
-
 
 def _get_traceback(exception):
     """
@@ -73,7 +70,6 @@ def lambda_handler(event, context):
                          MessageDeduplicationId=str(random.getrandbits(128)))
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-        # send_to_s3(json_response)
         send_sns_message(checkpoint,sns,arn)
 
     except Exception as exc:
@@ -100,29 +96,3 @@ def send_sns_message(checkpoint,sns,arn):
         TargetArn=arn,
         Message=json.dumps(sns_message)
     )
-
-
-def send_to_s3(message):
-    try:
-
-        s3 = boto3.resource('s3')
-
-        encoded_string = message.encode("utf-8")
-
-        bucket = s3.Bucket(bucket_name)
-
-        file_name = "iqrs_result.json"
-
-        with open('/tmp/' + file_name, 'w') as data:
-
-            data.write(message)
-
-        key = 'iqrs_result.json'
-
-        bucket.upload_file('/tmp/' + file_name, key)
-
-        return file_name
-
-    except Exception as error:
-        return str(error)
-

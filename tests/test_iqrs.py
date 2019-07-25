@@ -2,7 +2,8 @@ import unittest
 import unittest.mock as mock
 import json
 import pandas as pd
-import iqrs_wrangler, iqrs_method
+import iqrs_wrangler
+import iqrs_method
 from pandas.util.testing import assert_frame_equal
 
 
