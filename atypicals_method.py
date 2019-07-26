@@ -1,9 +1,17 @@
 import traceback
 import json
-import boto3
 import os
 import pandas as pd
 import numpy as np
+import marshmallow
+
+
+class InputSchema(marshmallow.Schema):
+    atypical_columns = marshmallow.fields.Str(required=True)
+    iqrs_columns = marshmallow.fields.Str(required=True)
+    movement_columns = marshmallow.fields.Str(required=True)
+    mean_columns = marshmallow.fields.Str(required=True)
+
 
 def _get_traceback(exception):
     """
@@ -20,20 +28,21 @@ def _get_traceback(exception):
 
 def lambda_handler(event, context):
 
-    # Set up clients
-    lambda_client = boto3.client('lambda')
-
-    error_handler_arn = os.environ['error_handler_arn']
-    atypical_columns = os.environ['atypical_columns']
-    iqrs_columns = os.environ['iqrs_columns']
-    movement_columns = os.environ['movement_columns']
-    mean_columns = os.environ['mean_columns']
-
+    # env vars
+    config, errors = InputSchema().load(os.environ)
+    if errors:
+        raise ValueError(f"Error validating environment params: {errors}")
 
     try:
         input_data = pd.read_json(event)
 
-        atypicals_df = calc_atypicals(input_data, atypical_columns.split(','), movement_columns.split(','), iqrs_columns.split(','),mean_columns.split(','))
+        atypicals_df = calc_atypicals(
+            input_data,
+            config['atypical_columns'].split(','),
+            config['movement_columns'].split(','),
+            config['iqrs_columns'].split(','),
+            config['mean_columns'].split(',')
+        )
 
         json_out = atypicals_df.to_json(orient='records')
 
@@ -52,14 +61,14 @@ def lambda_handler(event, context):
 def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):
 
     for i in range(0, len(iqrs_col)):
-        input_table[atyp_col[i]] = abs(input_table[move_col[i]] - input_table[mean_col[i]]) - 2 * input_table[iqrs_col[i]]
+        input_table[atyp_col[i]] = abs(input_table[move_col[i]] - input_table[mean_col[i]]) - 2 * input_table[iqrs_col[i]]  # noqa: E501
         input_table[atyp_col[i]] = input_table[atyp_col[i]].round(8)
 
-
     for j in range(0, len(iqrs_col)):
-        input_table[move_col[j]] = np.where((input_table[atyp_col[j]] > 0), None,
-                                              input_table[move_col[j]])
+        input_table[move_col[j]] = np.where(
+            (input_table[atyp_col[j]] > 0),
+            None,
+            input_table[move_col[j]]
+        )
 
     return input_table
-
-

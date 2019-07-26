@@ -1,6 +1,12 @@
 import traceback
 import pandas as pd
 import os
+import marshmallow
+
+
+class InputSchema(marshmallow.Schema):
+    movement_cols = marshmallow.fields.Str(required=True)
+    questions_list = marshmallow.fields.Str(required=True)
 
 
 def _get_traceback(exception):
@@ -26,13 +32,14 @@ def lambda_handler(event, context):
     :return: JSON string
     """
     # env vars
-    movement_cols = os.environ["movement_columns"]
-    questions_list = os.environ["questions_list"]
+    config, errors = InputSchema().load(os.environ)
+    if errors:
+        raise ValueError(f"Error validating environment params: {errors}")
 
     try:
         df = pd.DataFrame(event)
 
-        workingdf = df[movement_cols.split(" ")]
+        workingdf = df[config['movement_cols'].split(" ")]
 
         counts = workingdf.groupby(["region", "strata"]).count()
         # Rename columns to fit naming standards
@@ -77,7 +84,7 @@ def lambda_handler(event, context):
         # join on movements and counts on region& strata to df
         df = pd.merge(df, moves, on=["region", "strata"], how="left")
 
-        for question in questions_list.split():
+        for question in config['questions_list'].split():
             df["mean_" + question] = df.apply(
                 lambda x: x["movement_" + question + "_sum"]
                 / x["movement_" + question + "_count"],

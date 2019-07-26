@@ -4,6 +4,16 @@ import boto3
 import pandas as pd
 import os
 import random
+import marshmallow
+
+
+class InputSchema(marshmallow.Schema):
+    queue_url = marshmallow.fields.Str(required=True)
+    checkpoint = marshmallow.fields.Str(required=True)
+    function_name = marshmallow.fields.Str(required=True)
+    questions_list = marshmallow.fields.Str(required=True)
+    sqs_messageid_name = marshmallow.fields.Str(required=True)
+    arn = marshmallow.fields.Str(required=True)
 
 
 def _get_traceback(exception):
@@ -26,17 +36,14 @@ def lambda_handler(event, context):
     sns = boto3.client("sns")
 
     # ENV vars
-    # error_handler_arn = os.environ['error_handler_arn']
-    queue_url = os.environ["queue_url"]
-    checkpoint = os.environ["checkpoint"]
-    function_name = os.environ["function_name"]
-    questions_list = os.environ["questions_list"]
-    sqs_messageid_name = os.environ["sqs_messageid_name"]
-    arn = os.environ["arn"]
+    config, errors = InputSchema().load(os.environ)
+    if errors:
+        raise ValueError(f"Error validating environment params: {errors}")
+
     try:
 
         # Reads in Data from SQS Queue
-        response = sqs.receive_message(QueueUrl=queue_url)
+        response = sqs.receive_message(QueueUrl=config['queue_url'])
         message = response["Messages"][0]
         message_json = json.loads(message["Body"])
 
@@ -45,30 +52,30 @@ def lambda_handler(event, context):
         data = pd.DataFrame(message_json)
 
         # Add means columns
-        for question in questions_list.split(" "):
+        for question in config['questions_list'].split(" "):
             data[question] = 0.0
 
         data_json = data.to_json(orient="records")
 
         returned_data = lambda_client.invoke(
-            FunctionName=function_name, Payload=data_json
+            FunctionName=config['function_name'], Payload=data_json
         )
         json_response = returned_data.get("Payload").read().decode("UTF-8")
 
         # MessageDeduplicationId is set to a random hash to overcome de-duplication,
         # otherwise modules could not be re-run in the space of 5 Minutes
         sqs.send_message(
-            QueueUrl=queue_url,
+            QueueUrl=config['queue_url'],
             MessageBody=json.loads(json_response),
-            MessageGroupId=sqs_messageid_name,
+            MessageGroupId=config['sqs_messageid_name'],
             MessageDeduplicationId=str(random.getrandbits(128)),
         )
 
-        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+        sqs.delete_message(QueueUrl=config['queue_url'], ReceiptHandle=receipt_handle)
 
         imputation_run_type = "Calculate Means was run successfully."
 
-        send_sns_message(imputation_run_type, checkpoint, sns, arn)
+        send_sns_message(imputation_run_type, config['checkpoint'], sns, config['arn'])
 
         # Currently due to POC Code if Imputation is performed,
         # just imputed data is sent onwards.
@@ -77,11 +84,11 @@ def lambda_handler(event, context):
     except Exception as exc:
         return {
             "success": False,
-            "checkpoint": checkpoint,
+            "checkpoint": config['checkpoint'],
             "error": "Unexpected exception {}".format(_get_traceback(exc)),
         }
 
-    return {"success": True, "checkpoint": checkpoint}
+    return {"success": True, "checkpoint": config['checkpoint']}
 
 
 def send_sns_message(imputation_run_type, checkpoint, sns, arn):

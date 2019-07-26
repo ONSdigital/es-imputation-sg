@@ -1,11 +1,15 @@
 import traceback
 import json
-import boto3
 import os
 import pandas as pd
 import numpy as np
+import marshmallow
 
-# Set up clients
+
+class InputSchema(marshmallow.Schema):
+    iqrs_columns = marshmallow.fields.Str(required=True)
+    movement_columns = marshmallow.fields.Str(required=True)
+
 
 def _get_traceback(exception):
     """
@@ -21,17 +25,20 @@ def _get_traceback(exception):
 
 
 def lambda_handler(event, context):
-    lambda_client = boto3.client('lambda')
 
-    error_handler_arn = os.environ['error_handler_arn']
-
-    iqrs_columns = os.environ['iqrs_columns']
-    movement_columns = os.environ['movement_columns']
+    # env vars
+    config, errors = InputSchema().load(os.environ)
+    if errors:
+        raise ValueError(f"Error validating environment params: {errors}")
 
     try:
         input_data = pd.read_json(event)
 
-        iqrs_df = calc_iqrs(input_data, movement_columns.split(','), iqrs_columns.split(','))
+        iqrs_df = calc_iqrs(
+            input_data,
+            config['movement_columns'].split(','),
+            config['iqrs_columns'].split(',')
+        )
 
         json_out = iqrs_df.to_json(orient='records')
         final_output = json.loads(json_out)
@@ -49,15 +56,16 @@ def lambda_handler(event, context):
 def calc_iqrs(input_table, move_cols, iqrs_cols):
     distinct_strata_region = input_table[['region', 'strata']].drop_duplicates()
     for row in distinct_strata_region.values:
-        iqr_filter = (input_table["region"] == row[0]) & (input_table["strata"] == row[1])
+        iqr_filter = (input_table["region"] == row[0]) & (input_table["strata"] == row[1])  # noqa: E501
         filtered_iqr = input_table[iqr_filter]
         # Pass the question number and region and strata groupping to the
         # iqr_sum function.
         for i in range(0, len(iqrs_cols)):
             val_one = iqr_sum(filtered_iqr, move_cols[i])
             input_table[iqrs_cols[i]] = np.where(
-                ((input_table["region"] == row[0]) & (input_table["strata"] == row[1])), val_one,
-                input_table[iqrs_cols[i]])
+                ((input_table["region"] == row[0]) & (input_table["strata"] == row[1])), val_one,  # noqa: E501
+                input_table[iqrs_cols[i]]
+            )
     return input_table
 
 
@@ -77,23 +85,21 @@ def iqr_sum(df, quest):
     # df=dfTest
     df = df[quest]
 
-    # df=pd.Series(df)
-    dfSize = df.size
+    df_size = df.size
     import math
-    # df=df.apply(unneg)
-    if (dfSize % 2 == 0):
+    if (df_size % 2 == 0):
 
-        sortedDF = df.sort_values()
-        df = sortedDF.reset_index(drop=True)
-        dfbottom = df[0:math.ceil(int(dfSize / 2))].median()
-        dftop = df[math.ceil(int(dfSize / 2)):].median()
+        sorted_df = df.sort_values()
+        df = sorted_df.reset_index(drop=True)
+        dfbottom = df[0:math.ceil(int(df_size / 2))].median()
+        dftop = df[math.ceil(int(df_size / 2)):].median()
         iqr = dftop - dfbottom
         # iqr = quantile75 - quantile25
     else:
-        sortedDF = df.sort_values()
-        df = sortedDF.reset_index(drop=True)
-        q1 = df[(math.ceil(0.25 * (dfSize + 1))) - 1]
-        q3 = df[(math.floor(0.75 * (dfSize + 1))) - 1]
+        sorted_df = df.sort_values()
+        df = sorted_df.reset_index(drop=True)
+        q1 = df[(math.ceil(0.25 * (df_size + 1))) - 1]
+        q3 = df[(math.floor(0.75 * (df_size + 1))) - 1]
         iqr = q3 - q1
 
     return iqr

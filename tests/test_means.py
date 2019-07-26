@@ -8,7 +8,7 @@ import calculate_means_method
 from pandas.util.testing import assert_frame_equal
 
 
-class test_means(unittest.TestCase):
+class TestMeans(unittest.TestCase):
     @classmethod
     def setup_class(cls):
         cls.mock_os_patcher = mock.patch.dict(
@@ -60,7 +60,6 @@ class test_means(unittest.TestCase):
         new_cols = payload_df[required_cols]
         self.assertFalse(new_cols.isnull().values.any())
 
-    
     def test_method(self):
         mean_col = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa: E501
         sorting_cols = ["responder_id", "region", "strata"]

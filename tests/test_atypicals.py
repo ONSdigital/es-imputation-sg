@@ -1,13 +1,9 @@
 import unittest.mock as mock
-import atypicals_wrangler, atypicals_method
-import os
-from botocore.response import StreamingBody
+import atypicals_wrangler
+import atypicals_method
 import pandas as pd
 import json
-import pytest
 from pandas.util.testing import assert_frame_equal
-import sys
-import io
 
 
 class TestClass():
@@ -16,8 +12,8 @@ class TestClass():
         cls.mock_boto_wrangler_patcher = mock.patch('atypicals_wrangler.boto3')
         cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
 
-        cls.mock_boto_method_patcher = mock.patch('atypicals_method.boto3')
-        cls.mock_boto_method = cls.mock_boto_method_patcher.start()
+        # cls.mock_boto_method_patcher = mock.patch('atypicals_method.boto3')
+        # cls.mock_boto_method = cls.mock_boto_method_patcher.start()
 
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'queue_url': '213456',
@@ -25,7 +21,7 @@ class TestClass():
             'checkpoint': '0',
             'atypical_columns': 'atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607',
             'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
-            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',
+            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
             'mean_columns': 'mean601,mean602,mean603,mean604,mean605,mean606,mean607',
             'method_name': 'mock_method_name',
             'sqs_messageid_name': 'mock_sqs_message_name',
@@ -38,16 +34,16 @@ class TestClass():
     @classmethod
     def teardown_class(cls):
         cls.mock_boto_wrangler_patcher.stop()
-        cls.mock_boto_method_patcher.stop()
+        # cls.mock_boto_method_patcher.stop()
         cls.mock_os_patcher.stop()
 
     def test_integration(self):
-        FILE_NAME_IN = "atypical_input.json"
-        MOVEMENT_COL = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'
-        SORTING_COLS = ['responder_id', 'region', 'strata']
-        SELECTED_COLS = MOVEMENT_COL.split(',')
+        file_name_in = "atypical_input.json"
+        movement_col = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
+        sorting_cols = ['responder_id', 'region', 'strata']
+        selected_cols = movement_col.split(',')
 
-        with open(FILE_NAME_IN, "r") as file:
+        with open(file_name_in, "r") as file:
             json_content = json.loads(file.read())
 
         mocked_client = mock.Mock()
@@ -61,21 +57,21 @@ class TestClass():
         payload = mocked_client.call_args[1]['Payload']
         response = atypicals_method.lambda_handler(json.loads(payload), None)
 
-        responseDF = pd.DataFrame(response).sort_values(SORTING_COLS).reset_index()[SELECTED_COLS]
+        response_df = pd.DataFrame(response).sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
 
-        expectedDF = pd.read_json('atypical_scala_output.json').sort_values(SORTING_COLS).reset_index()[SELECTED_COLS]
+        expected_df = pd.read_json('atypical_scala_output.json').sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
 
-        responseDF = responseDF.round(5)
-        expectedDF = expectedDF.round(5)
+        response_df = response_df.round(5)
+        expected_df = expected_df.round(5)
 
-        assert_frame_equal(responseDF, expectedDF)
+        assert_frame_equal(response_df, expected_df)
 
     def test_wrangler_exception_handling(self):
         response = atypicals_wrangler.lambda_handler(None, None)
         assert not response['success']
 
     def test_method_exception_handling(self):
-        json_content ='[{"movement_Q601_asphalting_sand":0.0},{"movement_Q601_asphalting_sand":0.857614899}]'
+        json_content = '[{"movement_Q601_asphalting_sand":0.0},{"movement_Q601_asphalting_sand":0.857614899}]'  # noqa: E501
 
         response = atypicals_method.lambda_handler(json_content, None)
         assert not response['success']
