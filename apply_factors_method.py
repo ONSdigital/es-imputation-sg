@@ -2,6 +2,7 @@ import traceback
 import pandas as pd
 import os
 
+
 def _get_traceback(exception):
     """
     Given an exception, returns the traceback as a string.

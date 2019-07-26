@@ -8,8 +8,8 @@ import pandas as pd
 import sys
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import apply_factors_wrangler as lambda_wrangler_function
-import apply_factors_method as lambda_method_function
+import apply_factors_wrangler as lambda_wrangler_function # noqa E402
+import apply_factors_method as lambda_method_function # noqa E402
 
 
 class test_wrangler_handler(unittest.TestCase):
@@ -59,7 +59,7 @@ class test_wrangler_handler(unittest.TestCase):
     @mock_sqs
     def test_catch_wrangler_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
-        queue = sqs.create_queue(QueueName="test_queue")
+        sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
@@ -85,12 +85,12 @@ class test_wrangler_handler(unittest.TestCase):
     @mock_sqs
     def test_catch_method_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
-        queue = sqs.create_queue(QueueName="test_queue")
+        sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(lambda_wrangler_function.os.environ,
-            {
+        {
                 "queue_url": queue_url
-            }):
+        }):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = lambda_method_function.lambda_handler("", None)
@@ -125,7 +125,8 @@ class test_wrangler_handler(unittest.TestCase):
             aws_secret_access_key="fake_secret_key",
         )
         client.create_bucket(Bucket="MIKE")
-        client.upload_file(Filename="tests/fixtures/factorsdata.json", Bucket="MIKE", Key="123")
+        client.upload_file(Filename="tests/fixtures/factorsdata.json",
+                           Bucket="MIKE", Key="123")
 
         object = s3.Object("MIKE", "123")
         content = object.get()["Body"].read()
@@ -154,12 +155,7 @@ class test_wrangler_handler(unittest.TestCase):
             aws_access_key_id="fake_access_key",
             aws_secret_access_key="fake_secret_key",
         )
-        s3 = boto3.resource(
-            "s3",
-            region_name="eu-west-1",
-            aws_access_key_id="fake_access_key",
-            aws_secret_access_key="fake_secret_key",
-        )
+
         client.create_bucket(Bucket="MIKE")
         client.upload_file(
             Filename="tests/fixtures/test_data.json",
@@ -229,7 +225,7 @@ class test_wrangler_handler(unittest.TestCase):
     @mock_sqs
     def test_marshmallow_raises_method_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
-        queue = sqs.create_queue(QueueName="test_queue")
+        sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
@@ -237,13 +233,13 @@ class test_wrangler_handler(unittest.TestCase):
                 {
                     "queue_url": queue_url
                 }):
-            response = lambda_method_function.lambda_handler(input, None)
+            lambda_method_function.lambda_handler(input, None)
             self.assertRaises(ValueError)
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
-        queue = sqs.create_queue(QueueName="test_queue")
+        sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
@@ -252,5 +248,5 @@ class test_wrangler_handler(unittest.TestCase):
                     "checkpoint": "1",
                     "queue_url": queue_url
                 }):
-            response = lambda_wrangler_function.lambda_handler(input, None)
+            lambda_wrangler_function.lambda_handler(input, None)
             self.assertRaises(ValueError)
