@@ -75,8 +75,8 @@ class TestClass(unittest.TestCase):
 
         mock_s3_return.return_value = previous_data
 
-        mock_sqs_return.return_value = {"Messages":[{"Body":json.dumps(input_data),
-                                                     "ReceiptHandle":"String"}]}
+        mock_sqs_return.return_value = {"Messages": [{"Body": json.dumps(input_data),
+                                                     "ReceiptHandle": "String"}]}
 
         mock_strata.return_value = pd.DataFrame(merged_data), pd.DataFrame()
 
@@ -92,7 +92,7 @@ class TestClass(unittest.TestCase):
 
         output = myvar[0][0][1]
 
-        assert response['success'] == True
+        assert response['success']
         assert output == method_output
 
     def test_strata_mismatch_detector(self):
@@ -140,7 +140,7 @@ class TestClass(unittest.TestCase):
 
         mock_s3_return.return_value = previous_data
 
-        mock_sqs_return.return_value = {"Messages": [{"Body":json.dumps(input_data),
+        mock_sqs_return.return_value = {"Messages": [{"Body": json.dumps(input_data),
                                                       "ReceiptHandle": "String"}]}
 
         response = calculate_movement_wrangler.lambda_handler(
@@ -149,5 +149,5 @@ class TestClass(unittest.TestCase):
 
         mock_send_sqs.call_args_list
 
-        assert response["success"] == True
-        assert response["Impute"] == False
+        assert response["success"]
+        assert !response["Impute"]

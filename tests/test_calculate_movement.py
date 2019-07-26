@@ -66,7 +66,6 @@ class TestStringMethods(unittest.TestCase):
         # queue and a dict if no message is present.
         assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
 
-
     @mock_sqs
     @mock_lambda
     def test_wrangler_catch_exception(self):
