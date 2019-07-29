@@ -1,14 +1,19 @@
+"""
+Recalculate Means Wrangler.
+"""
 import traceback
 import json
 import random
 import os
 import boto3
 import pandas as pd
+import marshmallow
 
 
 def _get_traceback(exception):
     """
     Given an exception, returns the traceback as a string.
+
     :param exception: Exception object
     :return: string
     """
@@ -22,8 +27,9 @@ def _get_traceback(exception):
 def get_environment_variable(variable):
     """
     obtains the environment variables and tests collection.
+
     :param variable:
-    :return: output = varaible name
+    :return: output = variable name
     """
     output = os.environ.get(variable, None)
     if output is None:
@@ -31,23 +37,49 @@ def get_environment_variable(variable):
     return output
 
 
-def lambda_handler(event, context):
-    # Set up clients
-    sqs = boto3.client('sqs', 'eu-west-2')
-    sns = boto3.client('sns', 'eu-west-2')
-    lambda_client = boto3.client('lambda', 'eu-west-2')
+class EnvironSchema(marshmallow.Schema):
+    """
+    Class to set up the environment variables schema.
+    """
+    arn = marshmallow.fields.Str(required=True)
+    queue_url = marshmallow.fields.Str(required=True)
+    checkpoint = marshmallow.fields.Str(required=True)
+    method_name = marshmallow.fields.Str(required=True)
+    questions_list = marshmallow.fields.Str(required=True)
+    sqs_messageid_name = marshmallow.fields.Str(required=True)
 
-    # ENV vars
-    error_handler_arn = get_environment_variable('error_handler_arn')
-    queue_url = get_environment_variable('queue_url')
-    checkpoint = get_environment_variable('checkpoint')
-    function_name = get_environment_variable('function_name')
-    questions_list = get_environment_variable('questions_list')
-    sqs_messageid_name = get_environment_variable('sqs_messageid_name')
+
+def lambda_handler(event, context):
+    """
+    prepares the data for the Means method.
+    - Read in data from the SQS queue.
+    - Invokes the Mean Method.
+    - Send data received back from the Mean method to the SQS queue.
+
+    :param event:
+    :param context:
+    :return: Outcome Message - Type: Json String.
+    """
 
     try:
+        # Set up clients
+        sqs = boto3.client('sqs', 'eu-west-2')
+        lambda_client = boto3.client('lambda', 'eu-west-2')
 
-        response = sqs.receive_message(QueueUrl=queue_url)
+        # Set up Environment variables Schema.
+        schema = EnvironSchema()
+        config, errors = schema.load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment parameters: {errors}")
+
+        # Set up environment variables
+        arn = config["arn"]
+        queue_url = config["queue_url"]
+        checkpoint = config["checkpoint"]
+        method_name = config["method_name"]
+        questions_list = config["questions_list"]
+        sqs_messageid_name = config["sqs_messageid_name"]
+        response = get_sqs_message(queue_url)
         message = response['Messages'][0]
         message_json = json.loads(message['Body'])
 
@@ -65,21 +97,18 @@ def lambda_handler(event, context):
 
         data_json = data.to_json(orient='records')
 
-        returned_data = lambda_client.invoke(FunctionName=function_name, Payload=data_json)
+        returned_data = lambda_client.invoke(FunctionName=method_name, Payload=data_json)
         json_response = returned_data.get('Payload').read().decode("UTF-8")
 
-        # MessageDeduplicationId is set to a random hash to overcome de-duplication,
-        # otherwise modules could not be re-run in the space of 5 Minutes.
-        sqs.send_message(QueueUrl=queue_url, MessageBody=json.loads(json_response),
-                         MessageGroupId=sqs_messageid_name,
-                         MessageDeduplicationId=str(random.getrandbits(128)))
+        send_sqs_message(queue_url, json_response, sqs_messageid_name)
+        imputation_run_type = "Data Imputated"
+        send_sns_message(arn, imputation_run_type, checkpoint)
 
         ### COMMENTED OUT FOR TESTING ###
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-        final_output = json_response
-
     except Exception as exc:
+        checkpoint = config["checkpoint"]
         print("Unexpected exception {}".format(_get_traceback(exc)))
         return {
             "success": False,
@@ -93,23 +122,23 @@ def lambda_handler(event, context):
     }
 
 
-def send_sns_message(imputation_run_type, anomalies):
+def send_sns_message(arn, imputation_run_type, checkpoint):
     """
     This function is responsible for sending notifications to the SNS Topic.
-    :param imputation_run_type: runtype.
-    :param anomalies: list of anomalies collected from the method.
-    :return: json string
+    Notifications will be used to relay information to the BPM.
+
+    :param arn: The Address of the SNS topic - Type: String.
+    :param imputation_run_type: Imputation ran flag. - Type: String.
+    :param checkpoint: Location of process - Type: String.
+    :return: None.
     """
 
-    arn = os.environ['arn']
-    checkpoint = get_environment_variable('checkpoint')
-    sns = boto3.client('sns')
+    sns = boto3.client('sns', region_name='eu-west-2')
 
     sns_message = {
         "success": True,
         "module": "Imputation ReCalculate Means",
         "checkpoint": checkpoint,
-        "anomalies": anomalies.to_json(orient='records'),
         "message": imputation_run_type
     }
 
@@ -122,14 +151,29 @@ def send_sns_message(imputation_run_type, anomalies):
 def send_sqs_message(queue_url, message, output_message_id):
     """
     This method is responsible for sending data to the SQS queue.
+
     :param queue_url: The url of the SQS queue. - Type: String.
     :param message: The message/data you wish to send to the SQS queue - Type: String.
     :param output_message_id: The label of the record in the SQS queue - Type: String
     :return: None
     """
-    sqs = boto3.client('sqs')
+    # sqs = boto3.client('sqs')
+    sqs = boto3.client('sqs', region_name='eu-west-2')
 
+    # MessageDeduplicationId is set to a random hash to overcome de-duplication,
+    # otherwise modules could not be re-run in the space of 5 Minutes.
     sqs.send_message(QueueUrl=queue_url,
                      MessageBody=message,
                      MessageGroupId=output_message_id,
                      MessageDeduplicationId=str(random.getrandbits(128)))
+
+
+def get_sqs_message(queue_url):
+    """
+    Retrieves message from the SQS queue.
+
+    :param queue_url: The url of the SQS queue. - Type: String.
+    :return: Message from queue - Type: String.
+    """
+    sqs = boto3.client('sqs', region_name='eu-west-2')
+    return sqs.receive_message(QueueUrl=queue_url)

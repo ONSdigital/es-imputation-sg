@@ -5,6 +5,8 @@ import unittest
 from unittest import mock
 import json
 import pandas as pd
+import boto3
+from moto import mock_sns, mock_sqs
 import recalculate_means_wrangler
 
 
@@ -23,7 +25,7 @@ class Test_Recalculate_Means(unittest.TestCase):
             'os.environ', {
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
-                'function_name': 'mock_method',
+                'method_name': 'mock_method',
                 'queue_url': 'mock_queue',
                 'questions_list': 'Q601_asphalting_sand Q602_building_soft_sand '
                                   + 'Q603_concreting_sand Q604_bituminous_gravel '
@@ -39,10 +41,10 @@ class Test_Recalculate_Means(unittest.TestCase):
     def teardown_class(cls):
         """
         stops the wrangler, method and os patchers.
+
         :return: None.
         """
         cls.mock_os_wrangler_patcher.stop()
-
 
     @mock.patch('recalculate_means_wrangler.boto3.client')
     def test_wrangler(self, mock_lambda):
@@ -86,8 +88,67 @@ class Test_Recalculate_Means(unittest.TestCase):
     def test_wrangler_exception_handling(self):
         """
         testing the exception handler works within the wrangler.
+
         :param self:
         :return: mock response
         """
         response = recalculate_means_wrangler.lambda_handler(None, None)
         assert not response['success']
+
+    @mock_sqs
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+
+        :return:
+        """
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+                recalculate_means_wrangler.os.environ,
+                {
+                    "checkpoint": "",
+                    "queue_url": queue_url
+                }
+        ):
+            # Removing the checkpoint to allow for test of missing parameter
+            recalculate_means_wrangler.os.environ.pop("questions_list")
+            response = recalculate_means_wrangler.lambda_handler(
+                {"RuntimeVariables":
+                     {"checkpoint": 123}}, None)
+            # self.assertRaises(ValueError)
+            assert(response['error'].__contains__(
+                """ValueError: Error validating environment parameters:"""))
+
+    @mock_sns
+    def test_sns_messages(self):
+        """
+        Test sending sns messages to the queue.
+
+        :return: None.
+        """
+        with mock.patch.dict(recalculate_means_wrangler.os.environ, {"arn": "test_arn"}):
+            sns = boto3.client("sns", region_name="eu-west-2")
+            topic = sns.create_topic(Name="test_topic")
+            topic_arn = topic["TopicArn"]
+            recalculate_means_wrangler.send_sns_message(topic_arn,
+                                                        "test_runtype",
+                                                        "test_checkpoint")
+
+    @mock_sqs
+    def test_sqs_send_message(self):
+        """
+        Tests sending of sqs messages to the queue.
+
+        :return: None.
+        """
+        sqs = boto3.resource('sqs', region_name='eu-west-2')
+        sqs.create_queue(QueueName="test_queue_test.fifo",
+                         Attributes={'FifoQueue': 'true'})
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
+
+        recalculate_means_wrangler.send_sqs_message(queue_url,
+                                                    "{'Test': 'Message'}",
+                                                    "test_group_id")
+        messages = recalculate_means_wrangler.get_sqs_message(queue_url)
+        assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
