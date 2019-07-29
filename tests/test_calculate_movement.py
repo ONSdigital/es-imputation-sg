@@ -1,14 +1,11 @@
 from moto import mock_sns, mock_sqs, mock_lambda
+import calculate_movement_method
+import calculate_movement_wrangler
 import json
 import boto3
 import pandas as pd
-import sys
-import os
 import unittest
 import unittest.mock as mock
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
-import calculate_movement_method
-import calculate_movement_wrangler
 
 
 class TestStringMethods(unittest.TestCase):

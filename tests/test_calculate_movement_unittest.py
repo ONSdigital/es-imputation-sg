@@ -1,13 +1,10 @@
+import calculate_movement_wrangler
+import calculate_movement_method
 import unittest.mock as mock
 import unittest
 import pandas as pd
 import json
-import os
-import sys
 from botocore.response import StreamingBody
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
-import calculate_movement_wrangler
-import calculate_movement_method
 
 
 class TestClass(unittest.TestCase):
@@ -130,7 +127,8 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.send_sqs_message')
     @mock.patch('calculate_movement_wrangler.get_data_from_sqs')
     @mock.patch('calculate_movement_wrangler.read_data_from_s3')
-    def test_full_response(self, mock_s3_return, mock_sqs_return, mock_send_sqs, mock_sns_message):
+    def test_full_response(self, mock_s3_return, mock_sqs_return,
+                           mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data_full_response.json') as file:
             input_data = json.load(file)
@@ -149,5 +147,5 @@ class TestClass(unittest.TestCase):
 
         mock_send_sqs.call_args_list
 
-        assert response["success"]
-        assert !response["Impute"]
+        self.assertTrue(response["success"])
+        self.assertFalse(response["Impute"])
