@@ -1,6 +1,5 @@
 import traceback
 import pandas as pd
-import os
 
 
 def _get_traceback(exception):
