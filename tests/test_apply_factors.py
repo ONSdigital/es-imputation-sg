@@ -1,4 +1,4 @@
-import os
+import os  # noqa F401
 from moto import mock_sqs, mock_sns, mock_s3, mock_lambda
 import boto3
 import json
@@ -8,11 +8,11 @@ import pandas as pd
 import sys
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import apply_factors_wrangler as lambda_wrangler_function # noqa E402
-import apply_factors_method as lambda_method_function # noqa E402
+import apply_factors_wrangler as lambda_wrangler_function  # noqa E402
+import apply_factors_method as lambda_method_function  # noqa E402
 
 
-class test_wrangler_handler(unittest.TestCase):
+class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     def test_get_sqs(self):
         with mock.patch.dict(
@@ -88,9 +88,9 @@ class test_wrangler_handler(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(lambda_wrangler_function.os.environ,
-        {
+                             {
                 "queue_url": queue_url
-        }):
+                }):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = lambda_method_function.lambda_handler("", None)
@@ -140,12 +140,9 @@ class test_wrangler_handler(unittest.TestCase):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
-        message = ""
-        testdata = ""
+
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
-        with open("tests/fixtures/test_data.json", "r") as file:
-            testdata = file.read()
 
             lambda_wrangler_function.send_output_to_sqs(queue_url, message, "testy", "")
             # s3 bit
