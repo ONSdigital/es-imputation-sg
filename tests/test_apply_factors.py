@@ -219,19 +219,6 @@ class TestApplyFactors(unittest.TestCase):
         traceback = lambda_wrangler_function._get_traceback(Exception("Mike"))
         assert traceback == "Exception: Mike\n"
 
-    @mock_sqs
-    def test_marshmallow_raises_method_exception(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        # Method
-        with mock.patch.dict(
-                lambda_method_function.os.environ,
-                {
-                    "queue_url": queue_url
-                }):
-            lambda_method_function.lambda_handler(input, None)
-            self.assertRaises(ValueError)
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
@@ -245,5 +232,8 @@ class TestApplyFactors(unittest.TestCase):
                     "checkpoint": "1",
                     "queue_url": queue_url
                 }):
-            lambda_wrangler_function.lambda_handler(input, None)
+            out = lambda_wrangler_function.lambda_handler(
+                {"RuntimeVariables":
+                     {"checkpoint": 666}}, None)
             self.assertRaises(ValueError)
+            assert(out['error'].__contains__("""ValueError: Error validating environment params:"""))
