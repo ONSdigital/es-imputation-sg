@@ -1,7 +1,9 @@
 import traceback
 import os
 import pandas as pd
-import boto3
+import boto3  # noqa F401
+
+from marshmallow import Schema, fields
 
 
 def _get_traceback(exception):
@@ -11,23 +13,21 @@ def _get_traceback(exception):
     :param exception: Exception object
     :return: string
     """
-    return ''.join(
+    return "".join(
         traceback.format_exception(
             etype=type(exception), value=exception, tb=exception.__traceback__
         )
     )
 
 
-def get_environment_variable(variable):
-    """
-    obtains the environment variables and tests collection.
-    :param variable:
-    :return: output = varaible name
-    """
-    output = os.environ.get(variable, None)
-    if output is None:
-        raise ValueError(str(variable)+" config parameter missing.")
-    return output
+class EnvironSchema(Schema):
+    questions = fields.Str(required=True)
+    first_threshold = fields.Str(required=True)
+    second_threshold = fields.Str(required=True)
+    third_threshold = fields.Str(required=True)
+    first_imputation_factor = fields.Str(required=True)
+    second_imputation_factor = fields.Str(required=True)
+    third_imputation_factor = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -39,18 +39,20 @@ def lambda_handler(event, context):
     :return: json dataset
     """
 
-    # set up clients
-    sqs = boto3.client('sqs')
-
     try:
+        schema = EnvironSchema()
+        config, errors = schema.load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+
         # set up variables
-        questions = get_environment_variable('questions')
-        first_threshold = get_environment_variable('first_threshold')
-        second_threshold = get_environment_variable('second_threshold')
-        third_threshold = get_environment_variable('third_threshold')
-        first_imputation_factor = get_environment_variable('first_imputation_factor')
-        second_imputation_factor = get_environment_variable('second_imputation_factor')
-        third_imputation_factor = get_environment_variable('third_imputation_factor')
+        questions = config["questions"]
+        first_threshold = config["first_threshold"]
+        second_threshold = config["second_threshold"]
+        third_threshold = config["third_threshold"]
+        first_imputation_factor = config["first_imputation_factor"]
+        second_imputation_factor = config["second_imputation_factor"]
+        third_imputation_factor = config["third_imputation_factor"]
 
         df = pd.DataFrame(event)
 
@@ -66,39 +68,40 @@ def lambda_handler(event, context):
             :param question: question
             :return: row of DataFrame
             """
-            if row['region'] == 14:
-                if row['land_or_marine'] == 'L':
-                    if row['movement_' + question + '_count'] < int(first_threshold):
-                        row['imputation_factor_' + question] = int(first_imputation_factor)
+            if row["region"] == 14:
+                if row["land_or_marine"] == "L":
+                    if row["movement_" + question + "_count"] < int(first_threshold):
+                        row["imputation_factor_" + question] = int(
+                            first_imputation_factor
+                        )
                     else:
-                        row['imputation_factor_' + question] = row['mean_' + question]
+                        row["imputation_factor_" + question] = row["mean_" + question]
                 else:
-                    if row['movement_' + question + '_count'] < int(second_threshold):
-                        row['imputation_factor_' + question] = int(second_imputation_factor)
+                    if row["movement_" + question + "_count"] < int(second_threshold):
+                        row["imputation_factor_" + question] = int(
+                            second_imputation_factor
+                        )
                     else:
-                        row['imputation_factor_' + question] = row['mean_' + question]
+                        row["imputation_factor_" + question] = row["mean_" + question]
             else:
-                if row['movement_' + question + '_count'] < int(third_threshold):
-                    row['imputation_factor_' + question] = int(third_imputation_factor)
+                if row["movement_" + question + "_count"] < int(third_threshold):
+                    row["imputation_factor_" + question] = int(third_imputation_factor)
                 else:
-                    row['imputation_factor_' + question] = row['mean_' + question]
+                    row["imputation_factor_" + question] = row["mean_" + question]
 
             return row
 
-        for question in questions.split(' '):
+        for question in questions.split(" "):
             df = df.apply(lambda x: calculate_imputation_factors(x, question), axis=1)
         factors_dataframe = df
 
     except Exception as exc:
-        # purge = sqs.purge_queue(
-        #  QueueUrl=queue_url
-        # )
 
         return {
             "success": False,
-            "error": "Unexpected method exception {}".format(_get_traceback(exc))
+            "error": "Unexpected method exception {}".format(_get_traceback(exc)),
         }
 
-    final_output = factors_dataframe.to_json(orient='records')
+    final_output = factors_dataframe.to_json(orient="records")
 
     return final_output
