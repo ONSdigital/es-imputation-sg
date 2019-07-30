@@ -4,16 +4,15 @@ Tests for Recalculate Means Wrangler.
 import unittest
 from unittest import mock
 import json
-import pandas as pd
-import boto3
 import os
 import sys
+import pandas as pd
+import boto3
 from moto import mock_sns, mock_sqs
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 import recalculate_means_wrangler
+sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 
-
-class Test_Recalculate_Means(unittest.TestCase):
+class TestRecalculateMeans(unittest.TestCase):
     """
     Test Class Recalculate Means Wrangler.
     """

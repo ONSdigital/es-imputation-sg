@@ -24,19 +24,6 @@ def _get_traceback(exception):
     )
 
 
-def get_environment_variable(variable):
-    """
-    obtains the environment variables and tests collection.
-
-    :param variable:
-    :return: output = variable name
-    """
-    output = os.environ.get(variable, None)
-    if output is None:
-        raise ValueError(str(variable)+" config parameter missing.")
-    return output
-
-
 class EnvironSchema(marshmallow.Schema):
     """
     Class to set up the environment variables schema.
