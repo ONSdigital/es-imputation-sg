@@ -6,7 +6,10 @@ from unittest import mock
 import json
 import pandas as pd
 import boto3
+import os
+import sys
 from moto import mock_sns, mock_sqs
+sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 import recalculate_means_wrangler
 
 
