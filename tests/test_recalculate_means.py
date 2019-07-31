@@ -9,8 +9,9 @@ import sys
 import pandas as pd
 import boto3
 from moto import mock_sns, mock_sqs
-import recalculate_means_wrangler
 sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
+import recalculate_means_wrangler
+
 
 class TestRecalculateMeans(unittest.TestCase):
     """
@@ -57,9 +58,9 @@ class TestRecalculateMeans(unittest.TestCase):
         - retrieve the payload from the method.
         :return: None.
         """
-        with open('tests/recalculate_means_input.json') as file:
+        with open('tests/fixtures/recalculate_means_input.json') as file:
             input_data = json.load(file)
-        with open('tests/recalculate_means_method_output.json', "rb") as file:
+        with open('tests/fixtures/recalculate_means_method_output.json', "rb") as file:
             method_output = json.load(file)
 
         with mock.patch('json.loads')as json_loads:
