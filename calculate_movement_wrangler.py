@@ -316,7 +316,4 @@ def send_sns_message(imputation_run_type, anomalies, arn, checkpoint):
         "message": imputation_run_type
     }
 
-    sns.publish(
-        TargetArn=arn,
-        Message=json.dumps(sns_message)
-    )
+    return sns.publish(TargetArn=arn, Message=json.dumps(sns_message))

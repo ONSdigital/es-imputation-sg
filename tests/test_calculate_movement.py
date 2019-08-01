@@ -42,8 +42,10 @@ class TestStringMethods(unittest.TestCase):
         created = sns.create_topic(Name="some-topic")
         topic_arn = created['TopicArn']
 
-        calculate_movement_wrangler.send_sns_message("Imputation was run example!",
+        out = calculate_movement_wrangler.send_sns_message("Imputation was run example!",
                                                      pd.DataFrame(), topic_arn, "3")
+
+        assert (out['ResponseMetadata']['HTTPStatusCode'] == 200)
 
     @mock_sqs
     def test_sqs_messages(self):
