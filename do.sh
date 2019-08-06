@@ -4,7 +4,7 @@ COLUMNS="`tput cols`"
 LINES="`tput lines`"
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
-HUID=`id -u`
+
 DOCKER_COMPOSE="docker-compose -f docker-compose.yml"
 
 if [[ -e "docker-compose.override.yml" ]]; then
@@ -39,7 +39,7 @@ _requires() {
 }
 
 build() {
-    $DOCKER_COMPOSE build --force-rm --build-arg huid=${HUID} "$@"
+    $DOCKER_COMPOSE build --force-rm "${@:3}"
 }
 
 compose() {
@@ -47,26 +47,11 @@ compose() {
 }
 
 init() {
-   echo Setting up pre-commit hooks
-   run python pre-commit install
-   mv .git/hooks/pre-commit .git/hooks/pre-commit-docker.py
-   chmod -x .git/hooks/pre-commit-docker.py
-   cat << EOF >> .git/hooks/pre-commit
-#!/bin/sh
-DOPATH=$( cd "$(dirname "$0")"; cd ../..; pwd -P )
-./do.sh run python python /usr/src/app/.git/hooks/pre-commit-docker.py 
-EOF
-  chmod +x .git/hooks/pre-commit
-  run python pre-commit install-hooks
+   run serverless serverless create "$@" 
 }
-
 
 test() {
    run -e PYTHONPATH=/usr/src/app python py.test "$@" 
-}
-
-lint() {
-   run python flake8 "$@"
 }
 
 shell() {
@@ -82,7 +67,7 @@ exec() {
 }
 
 run() {
-    $DOCKER_COMPOSE run --rm -e HUID=$HUID -w //usr/src/app "$@"
+    $DOCKER_COMPOSE run --rm -e uid=$UID -w //usr/src/app "$@"
 }
 
 serverless() {

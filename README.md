@@ -45,6 +45,17 @@ The result of the method is imputed values for each non responder, this is joine
 
 **Outputs:** A Json string which contains all the created movements, saved in the respective movement_*question_name* columns.
 
+### Apply Factors Method
+
+**Name of Lambda:** imputation_apply_factors_method 
+
+**Intro:** The apply factors method takes in a dataframe containing current period data, previous period data, and imputation factors, all on one row. It then performs as a row-by-row apply method the calculation: - current_value = prev_value * imputation_factor for each of the value columns. Finally drops the previous period data and imputation factor from the processed dataframe
+
+**Inputs:** This method requires all question value columns for current period, question_value columns for previous period, and imputation factors for each question value column. Note: Method recieves rows that have not responded in current period but did in previous.
+
+**Outputs:** A Json string which represents the input - (prev_question_columns & imputation_factor columns) . Current question value columns are now imputed.
+
+
 
 ### Calculate IQRS method
 
