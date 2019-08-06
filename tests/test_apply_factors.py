@@ -1,15 +1,13 @@
-import os  # noqa F401
-from moto import mock_sqs, mock_sns, mock_s3, mock_lambda
-import boto3
 import json
-import unittest.mock as mock
 import unittest
-import pandas as pd
-import sys
+import unittest.mock as mock
 
-sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import apply_factors_wrangler as lambda_wrangler_function  # noqa E402
-import apply_factors_method as lambda_method_function  # noqa E402
+import boto3
+import pandas as pd
+from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
+
+import apply_factors_method as lambda_method_function
+import apply_factors_wrangler as lambda_wrangler_function
 
 
 class TestApplyFactors(unittest.TestCase):
@@ -125,8 +123,10 @@ class TestApplyFactors(unittest.TestCase):
             aws_secret_access_key="fake_secret_key",
         )
         client.create_bucket(Bucket="MIKE")
-        client.upload_file(Filename="tests/fixtures/factorsdata.json",
-                           Bucket="MIKE", Key="123")
+        client.upload_file(
+            Filename="tests/fixtures/factorsdata.json",
+            Bucket="MIKE", Key="123"
+        )
 
         object = s3.Object("MIKE", "123")
         content = object.get()["Body"].read()
@@ -219,7 +219,6 @@ class TestApplyFactors(unittest.TestCase):
         traceback = lambda_wrangler_function._get_traceback(Exception("Mike"))
         assert traceback == "Exception: Mike\n"
 
-
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
@@ -233,7 +232,10 @@ class TestApplyFactors(unittest.TestCase):
                     "queue_url": queue_url
                 }):
             out = lambda_wrangler_function.lambda_handler(
-                {"RuntimeVariables":
-                     {"checkpoint": 666}}, None)
+                {
+                    "RuntimeVariables": {"checkpoint": 666}
+                },
+                None
+            )
             self.assertRaises(ValueError)
-            assert(out['error'].__contains__("""ValueError: Error validating environment params:"""))
+            assert "ValueError: Error validating environment params:" in out['error']
