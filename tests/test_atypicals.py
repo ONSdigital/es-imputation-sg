@@ -1,9 +1,11 @@
-import unittest.mock as mock
-import atypicals_wrangler
-import atypicals_method
-import pandas as pd
 import json
+import unittest.mock as mock
+
+import pandas as pd
 from pandas.util.testing import assert_frame_equal
+
+import atypicals_method
+import atypicals_wrangler
 
 
 class TestClass():

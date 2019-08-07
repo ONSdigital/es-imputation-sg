@@ -1,11 +1,13 @@
-from unittest import mock
+import json
 import os
 import unittest
-import json
+from unittest import mock
+
 import pandas as pd
-import calculate_means_wrangler
-import calculate_means_method
 from pandas.util.testing import assert_frame_equal
+
+import calculate_means_method
+import calculate_means_wrangler
 
 
 class TestMeans(unittest.TestCase):
