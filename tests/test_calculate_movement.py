@@ -1,4 +1,5 @@
-from moto import mock_sns, mock_sqs, mock_lambda
+from botocore.response import StreamingBody
+from moto import mock_sns, mock_sqs, mock_lambda, mock_s3
 import calculate_movement_method
 import calculate_movement_wrangler
 import json
@@ -31,7 +32,8 @@ class TestStringMethods(unittest.TestCase):
             string_result = json.dumps(result)
             striped_string = string_result.replace(" ", "")
 
-            response = calculate_movement_method.lambda_handler(input_data, None)
+            response = calculate_movement_method.lambda_handler(input_data,
+                                                                {"aws_request_id": "666"})
 
         assert response == striped_string
 
@@ -43,7 +45,7 @@ class TestStringMethods(unittest.TestCase):
         topic_arn = created['TopicArn']
 
         out = calculate_movement_wrangler.send_sns_message("Imputation was run example!",
-                                                     pd.DataFrame(), topic_arn, "3")
+                                                           pd.DataFrame(), topic_arn, "3")
 
         assert (out['ResponseMetadata']['HTTPStatusCode'] == 200)
 
@@ -103,7 +105,7 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, None)
+                    {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"})
 
                 assert 'success' in response
                 assert response['success'] is False
@@ -127,7 +129,165 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_method.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, None)
+                    {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"})
 
                 assert 'success' in response
                 assert response['success'] is False
+
+    @mock_sqs
+    @mock_s3
+    def test_marshmallow_raises_method_exception(self):
+        """
+        Testing the marshmallow raises an exception in method.
+        :return: None.
+        """
+        with mock.patch.dict(calculate_movement_method.os.environ, {
+            'current_period': '201809',
+            'previous_period': '201806',
+            'questions_list': 'Q601_asphalting_sand '
+                              'Q602_building_soft_sand '
+                              'Q603_concreting_sand '
+                              'Q604_bituminous_gravel '
+                              'Q605_concreting_gravel '
+                              'Q606_other_gravel '
+                              'Q607_constructional_fill'
+            }
+        ):
+            # Removing the previous_period to allow for test of missing parameter
+            calculate_movement_method.os.environ.pop("previous_period")
+
+            response = calculate_movement_method.lambda_handler({"RuntimeVariables":
+                                                                {"period": "201809"}},
+                                                                {"aws_request_id": "666"})
+
+            assert (response['error'].__contains__("""Parameter validation error"""))
+
+    @mock_sqs
+    @mock_s3
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+        Testing the marshmallow raises an exception in wrangler.
+        :return: None.
+        """
+        with mock.patch.dict(calculate_movement_wrangler.os.environ, {
+            'arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
+            's3_file': 'file_to_get_from_s3.json',
+            'bucket_name': 'some-bucket-name',
+            'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
+                         '82618934671237/SomethingURL.fifo',
+            'sqs_messageid_name': 'output_something_something',
+            'checkpoint': '3',
+            'method_name': 'method_name_here',
+            'time': 'period',
+            'response_type': 'response_type',
+            'questions_list': 'Q601_asphalting_sand '
+                              'Q602_building_soft_sand '
+                              'Q603_concreting_sand '
+                              'Q604_bituminous_gravel '
+                              'Q605_concreting_gravel '
+                              'Q606_other_gravel '
+                              'Q607_constructional_fill',
+            'output_file': 'output_file.json',
+            'reference': 'responder_id',
+            'segmentation': 'strata',
+            'stored_segmentation': 'goodstrata',
+            'current_time': 'current_period',
+            'previous_time': 'previous_period',
+            'current_segmentation': 'current_strata',
+            'previous_segmentation': 'previous_strata'
+            }
+        ):
+            # Removing the previous_period to allow for test of missing parameter
+            calculate_movement_wrangler.os.environ.pop("checkpoint")
+
+            response = calculate_movement_wrangler.lambda_handler({
+                "RuntimeVariables":{"period": "201809"}}, {"aws_request_id": "666"}
+            )
+
+            assert (response['error'].__contains__("""Parameter validation error"""))
+
+    @mock_sqs
+    def test_no_data_in_queue(self):
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_url(QueueName="test_queue")['QueueUrl']
+
+        with mock.patch.dict(calculate_movement_wrangler.os.environ, {
+                    'arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
+                    's3_file': 'file_to_get_from_s3.json',
+                    'bucket_name': 'some-bucket-name',
+                    'queue_url': queue_url,
+                    'sqs_messageid_name': 'output_something_something',
+                    'checkpoint': '3',
+                    'method_name': 'method_name_here',
+                    'time': 'period',
+                    'response_type': 'response_type',
+                    'questions_list': 'Q601_asphalting_sand '
+                                      'Q602_building_soft_sand '
+                                      'Q603_concreting_sand '
+                                      'Q604_bituminous_gravel '
+                                      'Q605_concreting_gravel '
+                                      'Q606_other_gravel '
+                                      'Q607_constructional_fill',
+                    'output_file': 'output_file.json',
+                    'reference': 'responder_id',
+                    'segmentation': 'strata',
+                    'stored_segmentation': 'goodstrata',
+                    'current_time': 'current_period',
+                    'previous_time': 'previous_period',
+                    'current_segmentation': 'current_strata',
+                    'previous_segmentation': 'previous_strata'
+            }
+        ):
+            with mock.patch("calculate_movement_wrangler.read_data_from_s3") as mock_s3:
+
+                with open("tests/fixtures/movements_output.json", "r") as file:
+                    mock_content = file.read()
+
+                mock_s3.return_value = mock_content
+
+                response = calculate_movement_wrangler.lambda_handler(
+                    {"RuntimeVariables": {"period": 201809}},
+                    {"aws_request_id": "666"}
+                )
+
+            assert "success" in response
+            assert response["success"] is False
+            assert (response['error'].__contains__("""There was no data in sqs queue"""))
+
+    @mock_sqs
+    def test_wrangler_fail_to_get_from_sqs(self):
+        with mock.patch.dict(calculate_movement_wrangler.os.environ, {
+                'arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
+                's3_file': 'file_to_get_from_s3.json',
+                'bucket_name': 'some-bucket-name',
+                'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
+                             '82618934671237/SomethingURL.fifo',
+                'sqs_messageid_name': 'output_something_something',
+                'checkpoint': '3',
+                'method_name': 'method_name_here',
+                'time': 'period',
+                'response_type': 'response_type',
+                'questions_list': 'Q601_asphalting_sand '
+                                  'Q602_building_soft_sand '
+                                  'Q603_concreting_sand '
+                                  'Q604_bituminous_gravel '
+                                  'Q605_concreting_gravel '
+                                  'Q606_other_gravel '
+                                  'Q607_constructional_fill',
+                'output_file': 'output_file.json',
+                'reference': 'responder_id',
+                'segmentation': 'strata',
+                'stored_segmentation': 'goodstrata',
+                'current_time': 'current_period',
+                'previous_time': 'previous_period',
+                'current_segmentation': 'current_strata',
+                'previous_segmentation': 'previous_strata'
+            },
+        ):
+            response = calculate_movement_wrangler.lambda_handler(
+                {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert response["error"].__contains__("""AWS Error""")
