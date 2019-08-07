@@ -1,6 +1,7 @@
-import traceback
-import boto3
 import os
+import traceback
+
+import boto3
 import pandas as pd
 from marshmallow import Schema, fields
 

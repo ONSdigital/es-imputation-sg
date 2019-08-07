@@ -1,11 +1,13 @@
-from moto import mock_sns, mock_sqs, mock_lambda
-import calculate_movement_method
-import calculate_movement_wrangler
 import json
-import boto3
-import pandas as pd
 import unittest
 import unittest.mock as mock
+
+import boto3
+import pandas as pd
+from moto import mock_lambda, mock_sns, mock_sqs
+
+import calculate_movement_method
+import calculate_movement_wrangler
 
 
 class TestStringMethods(unittest.TestCase):
