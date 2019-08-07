@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 
@@ -11,7 +11,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
+htmlcov
 .tox/
 .coverage
 .coverage.*
@@ -19,8 +19,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-.hypothesis/
-.pytest_cache/
+.hypothesis
+.pytest_cache
 
 # pyenv
 .python-version
@@ -29,14 +29,14 @@ coverage.xml
 .env
 .envrc
 .venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+env
+venv
+ENV
+env.bak
+venv.bak
 
 # mypy
-.mypy_cache/
+.mypy_cache
 
 # Emacs
 \#*
