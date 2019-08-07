@@ -1,24 +1,12 @@
 import json
 import boto3
-import traceback
 import pandas as pd
 import os
 import random
+import logging
 from marshmallow import Schema, fields
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-    :param exception: Exception object
-    :return: string
-    """
-
-    return "".join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
+from botocore.exceptions import ClientError
+from botocore.exceptions import IncompleteReadError
 
 
 def get_from_sqs(queue_url):
@@ -31,6 +19,8 @@ def get_from_sqs(queue_url):
     """
 
     response = receive_message(queue_url)
+    if "Messages" not in response:
+        raise NoDataInQueueError("No Messages in queue")
     message = response["Messages"][0]
     message_json = json.loads(message["Body"])
     factors_dataframe = pd.DataFrame(message_json)
@@ -109,19 +99,29 @@ class EnvironSchema(Schema):
     sqs_messageid_name = fields.Str(required=True)
 
 
+class NoDataInQueueError(Exception):
+    pass
+
+
 def lambda_handler(event, context):
+    current_module = "Apply Factors - Wrangler"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("Apply")
+    logger.setLevel(10)
     try:
+        logger.info("Apply Factors Wrangler Begun")
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
+        logger.info("Validated params")
+
         # Set up clients
         # # S3
         bucket_name = config["bucket_name"]
-        non_responder_data_file = config[
-            "non_responder_file"
-        ]
+        non_responder_data_file = config["non_responder_file"]
         # Sqs
         queue_url = config["queue_url"]
         sqs_messageid_name = config["sqs_messageid_name"]
@@ -136,27 +136,18 @@ def lambda_handler(event, context):
         arn = config["arn"]
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        # get imputation factors from queue
-
-        # run get non responders to get a dataframe of all those that did not respond
-        #
-        # Join imputation factors to non-responder data
-        # [[Matching on region,county,strata]]
-        # Apply factors to non-responder data
-        #
-        # Join imputed data with current period responders
-
         factors_dataframe, receipt_handle = get_from_sqs(queue_url)
-        # using assumption that factors df is granular- unaggregated data
+        logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
         non_responder_dataframe = pd.DataFrame(
             read_data_from_s3(bucket_name, non_responder_data_file)
         )
+        logger.info("Successfully retrieved non-responder data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = pd.DataFrame(read_data_from_s3(bucket_name, s3_file))
-
+        logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
@@ -184,7 +175,7 @@ def lambda_handler(event, context):
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
             )
-
+        logger.info("Successfully renamed previous period data")
         # Join prev data so we have those who responded in prev but not in current
 
         non_responder_dataframe = pd.merge(
@@ -192,7 +183,7 @@ def lambda_handler(event, context):
             prev_period_data[prev_question_columns],
             on="responder_id",
         )
-
+        logger.info("Successfully merged previous period data with non-responder df")
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
@@ -212,6 +203,7 @@ def lambda_handler(event, context):
             on=["region", "strata"],
             how="inner",
         )
+        logger.info("Successfully merged non-responders with factors")
         # Non responder data should now contain all previous values and 7 imp columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,
@@ -219,30 +211,102 @@ def lambda_handler(event, context):
         )
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
+        logger.info("Successfully invoked lambda")
 
+        # This bit will want a fix
         imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
         current_responders = factors_dataframe[
             factors_dataframe["period"] == int(current_period)
         ]
 
         final_imputed = pd.concat([current_responders, imputed_non_responders])
-
+        logger.info("Successfully joined imputed data with responder data")
         imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient="records")
 
         send_output_to_sqs(queue_url, message, sqs_messageid_name, receipt_handle)
-
+        logger.info("Successfully sent to sqs")
         send_sns_message(arn, imputation_run_type, checkpoint)
-
-    except Exception as exc:
-        checkpoint = config["checkpoint"]
-        return {
-            "success": False,
-            "checkpoint": checkpoint,
-            "error": "Unexpected exception {}".format(_get_traceback(exc)),
-        }
-
-    return {"success": True, "checkpoint": checkpoint}
+        logger.info("Successfully sent to sns")
+    except NoDataInQueueError as e:
+        error_message = (
+            "There was no data in sqs queue in:  "
+            + current_module
+            + " |-  | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except TypeError as e:
+        error_message = (
+            "Bad data type encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ValueError as e:
+        error_message = (
+            "Parameter validation error"
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ClientError as e:
+        error_message = (
+            "AWS Error ("
+            + str(e.response["Error"]["Code"])
+            + ") "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except IncompleteReadError as e:
+        error_message = (
+            "Incomplete Lambda response encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return {"success": True, "checkpoint": checkpoint}
 
 
 def send_sns_message(arn, imputation_run_type, checkpoint):
