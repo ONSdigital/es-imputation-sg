@@ -1,9 +1,11 @@
-import calculate_movement_wrangler
-import unittest.mock as mock
-import unittest
-import pandas as pd
 import json
+import unittest
+import unittest.mock as mock
+
+import pandas as pd
 from botocore.response import StreamingBody
+
+import calculate_movement_wrangler
 
 
 class TestClass(unittest.TestCase):

@@ -1,11 +1,10 @@
-import boto3
 import os
+
+import boto3
 import pandas as pd
 import logging
 from marshmallow import Schema, fields
-from json.decoder import JSONDecodeError
 from botocore.exceptions import IncompleteReadError
-from botocore.exceptions import ClientError
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')
