@@ -4,13 +4,49 @@ import unittest.mock as mock
 
 import boto3
 import pandas as pd
-from moto import mock_lambda, mock_sns, mock_sqs
+from moto import mock_lambda, mock_sns, mock_sqs, mock_s3
 
 import calculate_movement_method
 import calculate_movement_wrangler
 
 
 class TestStringMethods(unittest.TestCase):
+
+    @mock_s3
+    def test_get__and_save_data_from_to_s3(self):
+        # Tests both the save and get from s3 by putting a file in using one method
+        # and retrieving it with another
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+        s3 = boto3.resource(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="MIKE")
+        with open("tests/fixtures/test_data.json", "rb") as file:
+            calculate_movement_wrangler.save_to_s3("MIKE","123", file)
+
+        response = calculate_movement_wrangler.read_data_from_s3("MIKE","123")
+        assert response
+
+    def test_value_error_method(self):
+        response = calculate_movement_method.lambda_handler("", None)
+        assert 'success' in response
+        assert response['success'] is False
+        assert response['error'].__contains__("""Error validating environment params""")
+
+    def test_value_error_wrangles(self):
+        response = calculate_movement_wrangler.lambda_handler("", None)
+        assert 'success' in response
+        assert response['success'] is False
+        assert response['error'].__contains__("""Error validating environment params""")
 
     def test_lambda_handler_movement_method(self):
         with mock.patch.dict(calculate_movement_method.os.environ, {
@@ -45,7 +81,7 @@ class TestStringMethods(unittest.TestCase):
         topic_arn = created['TopicArn']
 
         out = calculate_movement_wrangler.send_sns_message("Imputation was run example!",
-                                                     pd.DataFrame(), topic_arn, "3")
+                                                           pd.DataFrame(), topic_arn, "3")
 
         assert (out['ResponseMetadata']['HTTPStatusCode'] == 200)
 
