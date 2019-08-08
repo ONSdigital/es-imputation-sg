@@ -1,13 +1,15 @@
 import json
+import sys
 import os
 import unittest
-from unittest import mock
-
+import unittest.mock as mock
+import boto3
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
-
 import calculate_means_method
 import calculate_means_wrangler
+from pandas.util.testing import assert_frame_equal
+from moto import mock_sqs, mock_sns, mock_lambda
+from botocore.response import StreamingBody
 
 
 class TestMeans(unittest.TestCase):
@@ -37,70 +39,143 @@ class TestMeans(unittest.TestCase):
         # Stop the mocking of the os stuff
         cls.mock_os_patcher.stop()
 
-    @mock.patch("calculate_means_wrangler.boto3")
-    def test_wrangler(self, mock_boto):
-        # patch boto3 environ on second_mean_method
-        with open("means_input.json", "r") as file:
-            json_content = json.loads(file.read())
-        with mock.patch("json.loads") as json_loads:
-            json_loads.return_value = json_content
-            calculate_means_wrangler.lambda_handler(None, None)
-        payload = mock_boto.client.return_value.invoke.call_args[1]["Payload"]
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_happy_path(self):
+        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("means_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 5894)
+                    }
+                    msgbody = '{"period":"201809"}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = calculate_means_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
 
-        with open("mean_input_with_columns.json", "w+") as file:
-            file.write(payload)
-
-        payload_df = pd.read_json(payload, orient="records")
-
-        required_cols = set(os.environ["questions_list"].split(" "))
-
-        self.assertTrue(
-            required_cols.issubset(set(payload_df.columns)),
-            "Means columns are not in the DataFrame",
-        )
-
-        new_cols = payload_df[required_cols]
-        self.assertFalse(new_cols.isnull().values.any())
-
+                    print(response)
+                    assert "success" in response
+                    assert response["success"] is True
+  
     def test_method(self):
-        mean_col = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa: E501
-        sorting_cols = ["responder_id", "region", "strata"]
-        selected_cols = mean_col.split(",")
         input_file = "mean_input_with_columns.json"
+        with open(input_file, "r") as file:
+            mean_col = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa: E501
+            sorting_cols = ["responder_id", "region", "strata"]
+            selected_cols = mean_col.split(",")
+            
+            json_content = json.loads(file.read())
+            output = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
 
+            expected_df = (
+                pd.read_csv("means_output.csv")
+                .sort_values(sorting_cols)
+                .reset_index()[selected_cols]
+            )
+
+            response_df = (
+                pd.read_json(output).sort_values(sorting_cols).reset_index()[selected_cols]
+            )
+
+            response_df = response_df.round(5)
+            expected_df = expected_df.round(5)
+
+            assert_frame_equal(response_df, expected_df)
+
+    @mock.patch("calculate_means_wrangler.boto3")
+    def test_wrangler_general_exception(self, mock_boto):
+        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("means_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 5894)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    with mock.patch("calculate_means_wrangler.pd.DataFrame") as mocked:
+                        mocked.side_effect = Exception("General exception")
+                        response = calculate_means_wrangler.lambda_handler(
+                            {"RuntimeVariables": {"checkpoint": 666}}, 
+                            {"aws_request_id": "666"}
+                        )
+
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert response["error"].__contains__("""General exception""")
+
+    def test_method_general_exception(self):
+        input_file = "mean_input_with_columns.json"
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
-        output = calculate_means_method.lambda_handler(json_content, None)
+            with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
+                mocked.side_effect = Exception("General exception")
+                response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
 
-        expected_df = (
-            pd.read_csv("means_output.csv")
-            .sort_values(sorting_cols)
-            .reset_index()[selected_cols]
+                assert "success" in response
+                assert response["success"] is False
+                assert response["error"].__contains__("""General exception""")
+
+    def test_method_key_error(self):
+        # pass none value to trigger key index error
+        response = calculate_means_method.lambda_handler(None, {"aws_request_id": "666"})
+        assert response["error"].__contains__(
+                """Key Error in"""
+            )
+
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+        Testing the marshmallow raises an exception in wrangler.
+        :return: None.
+        """
+        # Removing the strata_column to allow for test of missing parameter
+        calculate_means_method.os.environ.pop("function_name")
+        response = calculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})
+        calculate_means_method.os.environ["function_name"] = "calculate_means_method"
+        assert response["error"].__contains__(
+            """Error validating environment params:"""
         )
 
-        response_df = (
-            pd.read_json(output).sort_values(sorting_cols).reset_index()[selected_cols]
-        )
+    def test_marshmallow_raises_method_exception(self):
+        """
+        Testing the marshmallow raises an exception in method.
+        :return: None.
+        """
+        input_file = "mean_input_with_columns.json"
+        with open(input_file, "r") as file:
+            json_content = json.loads(file.read())
+            # Removing the strata_column to allow for test of missing parameter
+            calculate_means_method.os.environ.pop("movement_columns")
+            response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
+            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata"
+            assert response["error"].__contains__(
+                """Error validating environment params:"""
+            )
 
-        response_df = response_df.round(5)
-        expected_df = expected_df.round(5)
-
-        assert_frame_equal(response_df, expected_df)
-
-    @mock.patch("calculate_means_wrangler.boto3")
-    def test_wrangler_exception_handling(self, mock_boto):
-        response = calculate_means_wrangler.lambda_handler(None, None)
-        assert not response["success"]
-
-    def test_method_exception_handling(self):
-        json_content = '[{"movement_Q601_asphalting_sand":0.0},{"movement_Q601_asphalting_sand":0.857614899}]'  # noqa: E501
-
-        response = calculate_means_method.lambda_handler(json_content, None)
-        assert not response["success"]
-
-    @mock.patch("calculate_means_wrangler.boto3")
-    def test_wrangler_success_responses(self, mock_boto):
-        with mock.patch("calculate_means_wrangler.json") as mock_json:
-            response = calculate_means_wrangler.lambda_handler(None, None)
-            assert mock_json.dumps.call_args[0][0]["success"]
-            assert response
+    @mock_sqs
+    def test_no_data_in_queue(self):
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
+        with mock.patch.dict(
+            calculate_means_wrangler.os.environ,
+            {
+                "queue_url": queue_url
+            },
+        ):
+            response = calculate_means_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            print(response["error"])
+            assert response["error"].__contains__("""There was no data in sqs queue in""")

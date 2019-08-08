@@ -1,26 +1,13 @@
 import os
 import traceback
-
 import marshmallow
 import pandas as pd
+import logging
 
 
 class InputSchema(marshmallow.Schema):
-    movement_cols = marshmallow.fields.Str(required=True)
+    movement_columns = marshmallow.fields.Str(required=True)
     questions_list = marshmallow.fields.Str(required=True)
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-    :param exception: Exception object
-    :return: string
-    """
-    return "".join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
 
 
 def lambda_handler(event, context):
@@ -32,15 +19,26 @@ def lambda_handler(event, context):
     :param context: Context object
     :return: JSON string
     """
-    # env vars
-    config, errors = InputSchema().load(os.environ)
-    if errors:
-        raise ValueError(f"Error validating environment params: {errors}")
-
+    current_module = "Means - Method"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("Means")
     try:
+
+        logger.info("Means Method Begun")
+
+        # env vars
+        config, errors = InputSchema().load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+
+        logger.info("Validated params.")
+
         df = pd.DataFrame(event)
 
-        workingdf = df[config['movement_cols'].split(" ")]
+        logger.info("Succesfully retrieved data from event.")
+
+        workingdf = df[config['movement_columns'].split(" ")]
 
         counts = workingdf.groupby(["region", "strata"]).count()
         # Rename columns to fit naming standards
@@ -92,10 +90,43 @@ def lambda_handler(event, context):
                 axis=1,
             )
 
-    except Exception as exc:
-        return {
-            "success": False,
-            "error": "Unexpected exception {}".format(_get_traceback(exc)),
-        }
+        logger.info("Succesfully calculated means.")
+
+    except ValueError as e:
+        error_message = (
+            "Input Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
 
     return df.to_json(orient="records")
