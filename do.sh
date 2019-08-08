@@ -51,7 +51,7 @@ init() {
 }
 
 test() {
-   run python py.test "$@" 
+   run -e PYTHONPATH=/usr/src/app python py.test "$@" 
 }
 
 shell() {

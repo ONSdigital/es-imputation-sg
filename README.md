@@ -21,6 +21,14 @@ Data is retrieved from the previous step from SQS, then the data set is prepared
 Once this has been calculated then the data is sent back to the SQS queue to be used by the next method.
 
 
+### Apply Factors Wrangler
+
+This is the final step in the imputation process. This wrangler retrieves factors data from the sqs queue(output from calculate factors) non_responder data from s3(stored in the calculate movements step). Next it retrieves previous period data for the non_responders and joins it on, adding prev_ [question]'s  to each row.
+
+The factors data is merged on to the non responder data next, adding imputation_factor_ [question]'s to each row. At this point the data is prepared in order to send to the method. The merged data is sent to the Apply Factors Method and the result is returned.
+
+The result of the method is imputed values for each non responder, this is joined back onto the responder data(used to calculate factors) and sent to the SQS queue.
+
 ## Methods
 
 ### Calculate Movements Method
@@ -42,3 +50,13 @@ Once this has been calculated then the data is sent back to the SQS queue to be 
 **Inputs:** JSON string from wrangler with the needed columns.
 
 **Outputs:** JSON string containing imputation factors for each question in each aggregated group. 
+### Apply Factors Method
+
+**Name of Lambda:** imputation_apply_factors_method 
+
+**Intro:** The apply factors method takes in a dataframe containing current period data, previous period data, and imputation factors, all on one row. It then performs as a row-by-row apply method the calculation: - current_value = prev_value * imputation_factor for each of the value columns. Finally drops the previous period data and imputation factor from the processed dataframe
+
+**Inputs:** This method requires all question value columns for current period, question_value columns for previous period, and imputation factors for each question value column. Note: Method recieves rows that have not responded in current period but did in previous.
+
+**Outputs:** A Json string which represents the input - (prev_question_columns & imputation_factor columns) . Current question value columns are now imputed.
+
