@@ -4,7 +4,7 @@ import unittest.mock as mock
 
 import boto3
 import pandas as pd
-from moto import mock_lambda, mock_sns, mock_sqs, mock_s3
+from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 
 import calculate_movement_method
 import calculate_movement_wrangler
