@@ -7,6 +7,8 @@ import sys
 import os
 from moto import mock_sqs, mock_sns
 import boto3
+from botocore.response import StreamingBody
+from botocore.exceptions import ClientError
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 import calculate_imputation_factors_wrangler  # noqa E402
@@ -45,7 +47,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand "
+                "questions": "Q601_asphalting_sand Q602_building_soft_sand "
+                             "Q603_concreting_sand "
                 + "Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel"
                 + " Q607_constructional_fill",
                 "queue_url": "mock_queue",
@@ -62,7 +65,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "first_imputation_factor": str(1),
                 "first_threshold": str(7),
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand "
+                "questions": "Q601_asphalting_sand Q602_building_soft_sand "
+                             "Q603_concreting_sand "
                 + "Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel "
                 + "Q607_constructional_fill",
                 "queue_url": "mock_queue",
@@ -87,6 +91,8 @@ class TestWranglerAndMethod(unittest.TestCase):
         cls.mock_os_wrangler_patcher.stop()
         cls.mock_os_method_patcher.stop()
 
+    @mock_sns
+    @mock_sqs
     def test_wrangler(self):
         """
         mocks functionality of the wrangler:
@@ -98,41 +104,41 @@ class TestWranglerAndMethod(unittest.TestCase):
         """
         # load json file.
 
-        method_input_file = "tests/fixtures/calculate_imputation_factors_method_input_data.json"
-
-        with open(method_input_file, "r") as file:
-            json_content = json.loads(file.read())
-
-        # invoke method lambda
-        with mock.patch("json.loads") as mock_json:
-            mock_json.return_value = json_content
-            mocked_client = mock.Mock()
-            self.mock_boto_wrangler.client.return_value.invoke = mocked_client
-            # retrieve payload from method lambda
-            calculate_imputation_factors_wrangler.lambda_handler(None, None)
-
-        with open(method_input_file, "r") as file:
-            payload_method = json.load(file)
-        # check the output file contains the expected columns and non null values
-        payload_dataframe = pd.DataFrame(payload_method)
-        required_columns = {
-            "imputation_factor_Q601_asphalting_sand",
-            "imputation_factor_Q602_building_soft_sand",
-            "imputation_factor_Q603_concreting_sand",
-            "imputation_factor_Q604_bituminous_gravel",
-            "imputation_factor_Q605_concreting_gravel",
-            "imputation_factor_Q606_other_gravel",
-            "imputation_factor_Q607_constructional_fill",
-        }
-
-        self.assertTrue(
-            required_columns.issubset(set(payload_dataframe.columns)),
-            "Calculate Imputation Columns not in the DataFrame.",
+        method_input_file = (
+            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
         )
-        new_columns = payload_dataframe[required_columns]
 
-        self.assertFalse(new_columns.isnull().values.any())
+        with open(method_input_file, "r") as file:
+            json_content = file.read()
 
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+        ):
+            with mock.patch(
+                "calculate_imputation_factors_wrangler.boto3.client"
+            ) as mocked:
+                mocked_client = mock.Mock()
+                mocked.return_value = mocked_client
+                mocked_client.receive_message.return_value = {
+                    "Messages": [{"Body": json_content, "ReceiptHandle": "LORD MIKE"}]
+                }
+                with open(method_input_file, "rb") as file:
+                    invoke_return = file
+
+                    mocked_client.invoke.return_value = {
+                        "Payload": StreamingBody(invoke_return, 2760)
+                    }
+
+                    out = calculate_imputation_factors_wrangler.lambda_handler(
+                        None, {"aws_request_id": "666"}
+                    )
+                    assert "success" in out
+                    assert out["success"]
+
+    @mock_sqs
     @mock_sns
     def test_method(self):
         """
@@ -150,26 +156,30 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
 
         # final output match
-        expected_output_file = "tests/fixtures/calculate_imputation_factors_method_output.json"
+        expected_output_file = (
+            "tests/fixtures/calculate_imputation_factors_method_output.json"
+        )
         with open(expected_output_file, "r") as file:
             expected_dataframe = json.loads(file.read())
 
         actual_outcome_dataframe = pd.DataFrame(json.loads(output_file))
         expected_output_dataframe = pd.DataFrame(expected_dataframe)
-        print(actual_outcome_dataframe)
-        print(expected_output_dataframe)
         assert_frame_equal(
             actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str)
         )
 
-    def test_wrangler_exception_handling(self):
+    @mock_sqs
+    def test_wrangler_no_data_in_queue(self):
         """
         testing the exception handler works within the wrangler.
         :param self:
         :return: mock response
         """
-        response = calculate_imputation_factors_wrangler.lambda_handler(None, None)
+        response = calculate_imputation_factors_wrangler.lambda_handler(
+            None, {"aws_request_id": "666"}
+        )
         assert not response["success"]
+        assert response["error"].__contains__("no data in sqs queue")
 
     def test_method_exception_handling(self):
         """
@@ -184,15 +194,29 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
 
         response = calculate_imputation_factors_method.lambda_handler(
-            json_data_content, None
+            json_data_content, {"aws_request_id": "666"}
         )
         assert not response["success"]
 
-    def test_get_traceback(self):
-        traceback = calculate_imputation_factors_wrangler._get_traceback(
-            Exception("Mike")
-        )
-        assert traceback == "Exception: Mike\n"
+    def test_raise_general_exception_wrangles(self):
+        with mock.patch("calculate_imputation_factors_wrangler.boto3.client") as mocked:
+            mocked.side_effect = Exception("AARRRRGHH!!")
+            response = calculate_imputation_factors_wrangler.lambda_handler(
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """AARRRRGHH!!""" in response["error"]
+
+    def test_raise_general_exception_method(self):
+        with mock.patch("pandas.DataFrame") as mocked:
+            mocked.side_effect = Exception("AARRRRGHH!!")
+            response = calculate_imputation_factors_method.lambda_handler(
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """AARRRRGHH!!""" in response["error"]
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
@@ -205,13 +229,11 @@ class TestWranglerAndMethod(unittest.TestCase):
         ):
             calculate_imputation_factors_wrangler.os.environ.pop("method_name")
             out = calculate_imputation_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, None
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             self.assertRaises(ValueError)
             print(out)
-            assert out["error"].__contains__(
-                """ValueError: Error validating environment params:"""
-            )
+            assert """Parameter validation error""" in out["error"]
 
     @mock_sqs
     def test_marshmallow_raises_method_exception(self):
@@ -224,10 +246,130 @@ class TestWranglerAndMethod(unittest.TestCase):
         ):
             calculate_imputation_factors_method.os.environ.pop("questions")
             out = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, None
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
+            calculate_imputation_factors_method.os.environ[
+                "questions"
+            ] = "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand" \
+                " Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel " \
+                "Q607_constructional_fill"
             self.assertRaises(ValueError)
 
-            assert out["error"].__contains__(
-                """ValueError: Error validating environment params:"""
-            )
+            assert """Parameter validation error""" in out["error"]
+
+    def test_method_key_error_exception(self):
+        """
+        mocks functionality of the method
+        :return: None
+        """
+        # read in the json payload from wrangler
+        input_file = "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+
+        with open(input_file, "r") as file:
+            content = file.read()
+            content = content.replace("Q", "MIKE")
+            json_content = json.loads(content)
+
+        print(json_content)
+        output_file = calculate_imputation_factors_method.lambda_handler(
+            json_content, {"aws_request_id": "666"}
+        )
+
+        assert not output_file["success"]
+        assert "Key Error" in output_file["error"]
+
+    @mock_sns
+    @mock_sqs
+    def test_wrangler_incomplete_read_error(self):
+        """
+        mocks functionality of the wrangler:
+        - load json file. (uses the calc_imps_test_data.json file)
+        - invoke the method lambda.
+        - retrieve the payload from the method.
+        :return: None.
+
+        """
+        # load json file.
+
+        method_input_file = (
+            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        )
+
+        with open(method_input_file, "r") as file:
+            json_content = file.read()
+
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+        ):
+            with mock.patch(
+                "calculate_imputation_factors_wrangler.boto3.client"
+            ) as mocked:
+                mocked_client = mock.Mock()
+                mocked.return_value = mocked_client
+                print(json_content)
+                mocked_client.receive_message.return_value = {
+                    "Messages": [{"Body": json_content, "ReceiptHandle": "LORD MIKE"}]
+                }
+                with open(method_input_file, "rb") as file:
+                    invoke_return = file
+
+                    mocked_client.invoke.return_value = {
+                        "Payload": StreamingBody(invoke_return, 666)
+                    }
+
+                    out = calculate_imputation_factors_wrangler.lambda_handler(
+                        None, {"aws_request_id": "666"}
+                    )
+                    assert "success" in out
+                    assert not out["success"]
+                    assert "Incomplete Lambda response" in out["error"]
+
+    @mock_sns
+    @mock_sqs
+    def test_wrangler_key_error(self):
+        method_input_file = (
+            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        )
+        with open(method_input_file, "r") as file:
+            json_content = file.read()
+
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+        ):
+            with mock.patch(
+                "calculate_imputation_factors_wrangler.boto3.client"
+            ) as mocked:
+                mocked_client = mock.Mock()
+                mocked.return_value = mocked_client
+                mocked_client.receive_message.return_value = {
+                    "Messages": [{"LordMike": json_content, "ReceiptHandle": "LORD MIKE"}]
+                }
+                out = calculate_imputation_factors_wrangler.lambda_handler(
+                    None, {"aws_request_id": "666"}
+                )
+                assert "success" in out
+                assert not out["success"]
+                assert "Key Error" in out["error"]
+
+    def test_wrangler_client_error(self):
+        with mock.patch.dict(
+            calculate_imputation_factors_wrangler.os.environ, {"queue_url": "mike"}
+        ):
+            with mock.patch(
+                "calculate_imputation_factors_wrangler.boto3.client"
+            ) as mocked:
+                mocked.side_effect = ClientError(
+                    {"Error": {"Code": "Mike"}}, "create_stream"
+                )
+                out = calculate_imputation_factors_wrangler.lambda_handler(
+                    None, {"aws_request_id": "666"}
+                )
+                assert "success" in out
+                assert not out["success"]
+                assert "AWS Error" in out["error"]

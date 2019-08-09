@@ -1,23 +1,8 @@
-import traceback
 import os
 import pandas as pd
 import boto3  # noqa F401
-
+import logging
 from marshmallow import Schema, fields
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-
-    :param exception: Exception object
-    :return: string
-    """
-    return "".join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
 
 
 class EnvironSchema(Schema):
@@ -32,18 +17,26 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Calculates the imputation factors, called by the Calculate imputation factors wrangler.
+    Calculates the imputation factors,
+    called by the Calculate imputation factors wrangler.
 
     :param event: lambda event
     :param context: lambda context
     :return: json dataset
     """
-
+    current_module = "Calculate Factors - Method"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("CalculateFactors")
+    logger.setLevel(10)
     try:
+        logger.info("Calculate Factors Method Begun")
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
+
+        logger.info("Validated params")
 
         # set up variables
         questions = config["questions"]
@@ -58,7 +51,7 @@ def lambda_handler(event, context):
 
         def calculate_imputation_factors(row, question):
             """
-            Calculates the imputation factors for the DataFrame on row by row basis.
+            Calculates the imputation factors for the DataFrame on row by row basis. # noqa E501
             - Calculates imputation factor for each question, in each aggregated group, by:
                 Region
                 Land or Marine
@@ -93,14 +86,47 @@ def lambda_handler(event, context):
 
         for question in questions.split(" "):
             df = df.apply(lambda x: calculate_imputation_factors(x, question), axis=1)
+            logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
 
-    except Exception as exc:
+        logger.info("Succesfully calculated factors")
 
-        return {
-            "success": False,
-            "error": "Unexpected method exception {}".format(_get_traceback(exc)),
-        }
+    except ValueError as e:
+        error_message = (
+            "Parameter validation error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
 
     final_output = factors_dataframe.to_json(orient="records")
 
