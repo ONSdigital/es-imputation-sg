@@ -1,8 +1,8 @@
-import traceback
 import os
-import pandas as pd
-import boto3  # noqa F401
+import traceback
 
+import boto3  # noqa F401
+import pandas as pd
 from marshmallow import Schema, fields
 
 
@@ -32,7 +32,8 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Calculates the imputation factors, called by the Calculate imputation factors wrangler.
+    Calculates the imputation factors.
+    Called by the Calculate imputation factors wrangler.
 
     :param event: lambda event
     :param context: lambda context
@@ -58,8 +59,9 @@ def lambda_handler(event, context):
 
         def calculate_imputation_factors(row, question):
             """
-            Calculates the imputation factors for the DataFrame on row by row basis.
-            - Calculates imputation factor for each question, in each aggregated group, by:
+            Calculates the imputation factors for the DataFrame.
+            Does this on row by row basis.
+            - Calculates imputation factor per question in each aggregated group, by:
                 Region
                 Land or Marine
                 Count of refs within cell

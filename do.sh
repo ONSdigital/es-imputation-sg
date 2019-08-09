@@ -54,6 +54,10 @@ test() {
    run -e PYTHONPATH=/usr/src/app python py.test "$@" 
 }
 
+flake8() {
+   run -e PYTHONPATH=/usr/src/app python flake8 "$@" 
+}
+
 shell() {
     run $@ /bin/bash
 }

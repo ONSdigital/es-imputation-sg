@@ -1,9 +1,10 @@
 import json
-import traceback
-import random
 import os
-import pandas as pd
+import random
+import traceback
+
 import boto3
+import pandas as pd
 from marshmallow import Schema, fields
 
 

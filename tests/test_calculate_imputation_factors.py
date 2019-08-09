@@ -1,16 +1,18 @@
+import json
+import os
+import sys
 import unittest
 import unittest.mock as mock
-import json
-import pandas as pd
-from pandas.util.testing import assert_frame_equal
-import sys
-import os
-from moto import mock_sqs, mock_sns
+
 import boto3
+import pandas as pd
+from moto import mock_sns, mock_sqs
+from pandas.util.testing import assert_frame_equal
+
+import calculate_imputation_factors_method  # noqa E402
+import calculate_imputation_factors_wrangler  # noqa E402
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import calculate_imputation_factors_wrangler  # noqa E402
-import calculate_imputation_factors_method  # noqa E402
 
 
 class TestWranglerAndMethod(unittest.TestCase):
@@ -45,9 +47,13 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand "
-                + "Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel"
-                + " Q607_constructional_fill",
+                "questions": "Q601_asphalting_sand "
+                + "Q602_building_soft_sand "
+                + "Q603_concreting_sand "
+                + "Q604_bituminous_gravel "
+                + "Q605_concreting_gravel "
+                + "Q606_other_gravel "
+                + "Q607_constructional_fill",
                 "queue_url": "mock_queue",
                 "sqs_messageid_name": "mock_message",
             },
@@ -62,8 +68,12 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "first_imputation_factor": str(1),
                 "first_threshold": str(7),
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand "
-                + "Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel "
+                "questions": "Q601_asphalting_sand "
+                + "Q602_building_soft_sand "
+                + "Q603_concreting_sand "
+                + "Q604_bituminous_gravel "
+                + "Q605_concreting_gravel "
+                + "Q606_other_gravel "
                 + "Q607_constructional_fill",
                 "queue_url": "mock_queue",
                 "second_imputation_factor": str(2),
@@ -98,7 +108,8 @@ class TestWranglerAndMethod(unittest.TestCase):
         """
         # load json file.
 
-        method_input_file = "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        method_input_file = "tests/fixtures/"
+        method_input_file += "calculate_imputation_factors_method_input_data.json"
 
         with open(method_input_file, "r") as file:
             json_content = json.loads(file.read())
@@ -140,7 +151,8 @@ class TestWranglerAndMethod(unittest.TestCase):
         :return: None
         """
         # read in the json payload from wrangler
-        input_file = "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        input_file = "tests/fixtures/"
+        input_file += "calculate_imputation_factors_method_input_data.json"
 
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
@@ -150,7 +162,8 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
 
         # final output match
-        expected_output_file = "tests/fixtures/calculate_imputation_factors_method_output.json"
+        expected_output_file = "tests/fixtures/"
+        expected_output_file += "calculate_imputation_factors_method_output.json"
         with open(expected_output_file, "r") as file:
             expected_dataframe = json.loads(file.read())
 
