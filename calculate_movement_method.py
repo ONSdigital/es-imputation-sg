@@ -1,10 +1,23 @@
-import traceback
-import boto3
 import os
-import pandas as pd
+import traceback
 
-lambda_client = boto3.client('lambda')
+import boto3
+import pandas as pd
+from marshmallow import Schema, fields
+
+lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')
+
+
+class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :param Schema: Schema from marshmallow import
+    :return: None
+    """
+    current_period = fields.Str(required=True)
+    previous_period = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def _get_traceback(exception):
@@ -21,12 +34,26 @@ def _get_traceback(exception):
 
 
 def lambda_handler(event, context):
+    """
+    This method is responsible for creating the movements for each question and then
+    recording them in the respective columns.
+    :param event: The data in which you are calculating the movements on, this requires
+                  the current and previous period data - Type: JSON.
+    :param context: N/A
+    :return: final_output: The input data but now with the correct movements for
+                           the respective question columns - Type: JSON.
+    """
     try:
 
+        schema = EnvironSchema()
+        config, errors = schema.load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+
         # Declared inside of lambda_handler so that tests work correctly on local.
-        current_period = os.environ['current_period']
-        previous_period = os.environ['previous_period']
-        questions_list = os.environ['questions_list']
+        current_period = config['current_period']
+        previous_period = config['previous_period']
+        questions_list = config['questions_list']
 
         df = pd.DataFrame(event)
 
@@ -44,8 +71,8 @@ def lambda_handler(event, context):
             for i in range(0, len(sorted_current)):
 
                 # This check is too prevent the DivdebyZeroError.
-                if current_list[i] and previous_list[i] != 0:
-                    number = (current_list[i] - previous_list[i]) / current_list[i]
+                if previous_list[i] != 0:
+                    number = (current_list[i] - previous_list[i]) / previous_list[i]
                 else:
                     number = 0.0
 
