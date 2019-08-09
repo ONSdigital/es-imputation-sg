@@ -1,5 +1,4 @@
 import os
-import traceback
 import marshmallow
 import pandas as pd
 import logging
@@ -128,5 +127,6 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-
-    return df.to_json(orient="records")
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return df.to_json(orient="records")

@@ -1,85 +1,253 @@
-import json
 import unittest.mock as mock
-
+import boto3
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
-
 import atypicals_method
 import atypicals_wrangler
+from pandas.util.testing import assert_frame_equal
+from moto import mock_sqs, mock_lambda
+from botocore.response import StreamingBody
 
 
 class TestClass():
     @classmethod
     def setup_class(cls):
-        cls.mock_boto_wrangler_patcher = mock.patch('atypicals_wrangler.boto3')
-        cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
-
-        # cls.mock_boto_method_patcher = mock.patch('atypicals_method.boto3')
-        # cls.mock_boto_method = cls.mock_boto_method_patcher.start()
-
-        cls.mock_os_patcher = mock.patch.dict('os.environ', {
-            'queue_url': '213456',
-            'arn': 'mock_arn',
-            'checkpoint': '0',
-            'atypical_columns': 'atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607',
-            'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
-            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
-            'mean_columns': 'mean601,mean602,mean603,mean604,mean605,mean606,mean607',
-            'method_name': 'mock_method_name',
-            'sqs_messageid_name': 'mock_sqs_message_name',
-            'error_handler_arn': 'mock_error_handler_arn',
-            'bucket_name': 'mock_bucket',
-            'input_data': 'mock_data'
-        })
+        cls.mock_os_patcher = mock.patch.dict(
+            'os.environ',
+            {
+                'queue_url': '213456',
+                'arn': 'mock_arn',
+                'checkpoint': '0',
+                'atypical_columns': 'atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607',  # noqa E501
+                'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
+                'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
+                'mean_columns': 'mean601,mean602,mean603,mean604,mean605,mean606,mean607',
+                'method_name': 'mock_method_name',
+                'sqs_messageid_name': 'mock_sqs_message_name',
+                'error_handler_arn': 'mock_error_handler_arn',
+                'bucket_name': 'mock_bucket',
+                'input_data': 'mock_data'
+            }
+        )
         cls.mock_os = cls.mock_os_patcher.start()
 
     @classmethod
     def teardown_class(cls):
-        cls.mock_boto_wrangler_patcher.stop()
-        # cls.mock_boto_method_patcher.stop()
         cls.mock_os_patcher.stop()
 
-    def test_integration(self):
-        file_name_in = "atypical_input.json"
-        movement_col = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
-        sorting_cols = ['responder_id', 'region', 'strata']
-        selected_cols = movement_col.split(',')
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_happy_path(self):
+        with mock.patch("atypicals_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("atypical_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 416503)
+                    }
+                    with open("atypical_input.json", "rb") as queue_file:
+                        msgbody = queue_file.read()
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
+                        response = atypicals_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"},
+                        )
 
-        with open(file_name_in, "r") as file:
-            json_content = json.loads(file.read())
+                        assert "success" in response
+                        assert response["success"] is True
 
-        mocked_client = mock.Mock()
-        self.mock_boto_wrangler.client.return_value.invoke = mocked_client
+    def test_method_happy_path(self):
+        input_file = "atypical_input.json"
+        with open(input_file, "r") as file:
+            movement_col = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
+            sorting_cols = ['responder_id', 'region', 'strata']
+            selected_cols = movement_col.split(',')
 
-        with mock.patch('json.loads') as mock_json:
-            mock_json.return_value = json_content
+            json_content = file.read()
+            output = atypicals_method.lambda_handler(
+                json_content,
+                {"aws_request_id": "666"}
+            )
 
-            atypicals_wrangler.lambda_handler(None, None)
+            response_df = (
+                pd.DataFrame(output)
+                .sort_values(sorting_cols)
+                .reset_index()[selected_cols]
+            )
 
-        payload = mocked_client.call_args[1]['Payload']
-        response = atypicals_method.lambda_handler(json.loads(payload), None)
+            expected_df = (
+                pd.read_json('atypical_scala_output.json')
+                .sort_values(sorting_cols)
+                .reset_index()[selected_cols]
+            )
 
-        response_df = pd.DataFrame(response).sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+            response_df = response_df.round(5)
+            expected_df = expected_df.round(5)
 
-        expected_df = pd.read_json('atypical_scala_output.json').sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+            assert_frame_equal(response_df, expected_df)
 
-        response_df = response_df.round(5)
-        expected_df = expected_df.round(5)
+    @mock.patch("atypicals_wrangler.boto3")
+    def test_wrangler_general_exception(self, mock_boto):
+        with mock.patch("atypicals_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("atypical_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 416503)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    with mock.patch("atypicals_wrangler.pd.DataFrame") as mocked:
+                        mocked.side_effect = Exception("General exception")
+                        response = atypicals_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"}
+                        )
 
-        assert_frame_equal(response_df, expected_df)
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert """General exception""" in response["error"]
 
-    def test_wrangler_exception_handling(self):
-        response = atypicals_wrangler.lambda_handler(None, None)
-        assert not response['success']
+    def test_method_general_exception(self):
+        input_file = "atypical_input.json"
+        with open(input_file, "r") as file:
+            json_content = file.read()
+            with mock.patch("atypicals_method.pd.read_json") as mocked:
+                mocked.side_effect = Exception("General exception")
+                response = atypicals_method.lambda_handler(
+                    json_content,
+                    {"aws_request_id": "666"}
+                )
 
-    def test_method_exception_handling(self):
-        json_content = '[{"movement_Q601_asphalting_sand":0.0},{"movement_Q601_asphalting_sand":0.857614899}]'  # noqa: E501
+                assert "success" in response
+                assert response["success"] is False
+                assert """General exception""" in response["error"]
 
-        response = atypicals_method.lambda_handler(json_content, None)
-        assert not response['success']
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_key_error(self):
+        with mock.patch("atypicals_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("atypical_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 416503)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = atypicals_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
 
-    def test_wrangler_success_responses(self):
-        with mock.patch('atypicals_wrangler.json') as mock_json:
-            response = atypicals_wrangler.lambda_handler(None, None)
-            assert mock_json.dumps.call_args[0][0]['success']
-            assert response
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Key Error""" in response["error"]
+
+    def test_method_key_error(self):
+        with mock.patch.dict(
+            "os.environ",
+            {
+                "mean_columns": "bum"
+            }
+        ):
+            with open("atypical_input.json", "r") as file:
+                content = file.read()
+
+                response = atypicals_method.lambda_handler(
+                    content, {"aws_request_id": "666"}
+                )
+                assert """Key Error in""" in response["error"]
+
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+        Testing the marshmallow raises an exception in wrangler.
+        :return: None.
+        """
+        # Removing the strata_column to allow for test of missing parameter
+        atypicals_wrangler.os.environ.pop("method_name")
+        response = atypicals_wrangler.lambda_handler(None, {"aws_request_id": "666"})
+        atypicals_wrangler.os.environ["method_name"] = "mock_method"
+        assert """Error validating environment params:""" in response["error"]
+
+    def test_marshmallow_raises_method_exception(self):
+        """
+        Testing the marshmallow raises an exception in method.
+        :return: None.
+        """
+        input_file = "atypical_input.json"
+        with open(input_file, "r") as file:
+            json_content = file.read()
+            # Removing arn to allow for test of missing parameter
+            atypicals_method.os.environ.pop("mean_columns")
+            response = atypicals_method.lambda_handler(
+                json_content,
+                {"aws_request_id": "666"}
+            )
+            atypicals_method.os.environ["mean_columns"] = "mean601,mean602,mean603,mean604,mean605,mean606,mean607"  # noqa E501
+            assert """Error validating environment params:""" in response["error"]
+
+    @mock_sqs
+    def test_no_data_in_queue(self):
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
+        with mock.patch.dict(
+            atypicals_wrangler.os.environ,
+            {
+                "queue_url": queue_url
+            },
+        ):
+            response = atypicals_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """There was no data in sqs queue in""" in response["error"]
+
+    @mock_sqs
+    def test_wrangler_fail_to_get_from_sqs(self):
+        with mock.patch.dict(
+            atypicals_wrangler.os.environ,
+            {
+                "queue_url": "An Invalid Queue"
+            },
+        ):
+            response = atypicals_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """AWS Error""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangles_bad_data(self):
+        with mock.patch("atypicals_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value = {
+                    "Payload": StreamingBody("{'boo':'moo':}", 2)
+                }
+                with open("means_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = atypicals_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Bad data""" in response["error"]

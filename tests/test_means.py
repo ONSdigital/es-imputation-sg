@@ -1,6 +1,4 @@
 import json
-import sys
-import os
 import unittest
 import unittest.mock as mock
 import boto3
@@ -8,7 +6,7 @@ import pandas as pd
 import calculate_means_method
 import calculate_means_wrangler
 from pandas.util.testing import assert_frame_equal
-from moto import mock_sqs, mock_sns, mock_lambda
+from moto import mock_sqs, mock_lambda
 from botocore.response import StreamingBody
 
 
@@ -48,30 +46,33 @@ class TestMeans(unittest.TestCase):
                 mock_client.return_value = mock_client_object
                 with open("means_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 5894)
+                        "Payload": StreamingBody(file, 226388)
                     }
-                    msgbody = '{"period":"201809"}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
-                    response = calculate_means_wrangler.lambda_handler(
-                        None,
-                        {"aws_request_id": "666"},
-                    )
+                    with open("means_input.json", "rb") as queue_file:
+                        msgbody = queue_file.read()
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
+                        response = calculate_means_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"},
+                        )
 
-                    print(response)
-                    assert "success" in response
-                    assert response["success"] is True
-  
-    def test_method(self):
+                        assert "success" in response
+                        assert response["success"] is True
+
+    def test_method_happy_path(self):
         input_file = "mean_input_with_columns.json"
         with open(input_file, "r") as file:
             mean_col = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa: E501
             sorting_cols = ["responder_id", "region", "strata"]
             selected_cols = mean_col.split(",")
-            
+
             json_content = json.loads(file.read())
-            output = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
+            output = calculate_means_method.lambda_handler(
+                json_content,
+                {"aws_request_id": "666"}
+            )
 
             expected_df = (
                 pd.read_csv("means_output.csv")
@@ -80,7 +81,9 @@ class TestMeans(unittest.TestCase):
             )
 
             response_df = (
-                pd.read_json(output).sort_values(sorting_cols).reset_index()[selected_cols]
+                pd.read_json(output)
+                .sort_values(sorting_cols)
+                .reset_index()[selected_cols]
             )
 
             response_df = response_df.round(5)
@@ -96,7 +99,7 @@ class TestMeans(unittest.TestCase):
                 mock_client.return_value = mock_client_object
                 with open("means_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 5894)
+                        "Payload": StreamingBody(file, 226388)
                     }
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = {
@@ -105,13 +108,13 @@ class TestMeans(unittest.TestCase):
                     with mock.patch("calculate_means_wrangler.pd.DataFrame") as mocked:
                         mocked.side_effect = Exception("General exception")
                         response = calculate_means_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}}, 
+                            None,
                             {"aws_request_id": "666"}
                         )
 
                         assert "success" in response
                         assert response["success"] is False
-                        assert response["error"].__contains__("""General exception""")
+                        assert """General exception""" in response["error"]
 
     def test_method_general_exception(self):
         input_file = "mean_input_with_columns.json"
@@ -119,18 +122,43 @@ class TestMeans(unittest.TestCase):
             json_content = json.loads(file.read())
             with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")
-                response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
+                response = calculate_means_method.lambda_handler(
+                    json_content,
+                    {"aws_request_id": "666"}
+                )
 
                 assert "success" in response
                 assert response["success"] is False
-                assert response["error"].__contains__("""General exception""")
+                assert """General exception""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_key_error(self):
+        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("means_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 226388)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = calculate_means_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
         response = calculate_means_method.lambda_handler(None, {"aws_request_id": "666"})
-        assert response["error"].__contains__(
-                """Key Error in"""
-            )
+        assert """Key Error""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -138,12 +166,10 @@ class TestMeans(unittest.TestCase):
         :return: None.
         """
         # Removing the strata_column to allow for test of missing parameter
-        calculate_means_method.os.environ.pop("function_name")
-        response = calculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})
-        calculate_means_method.os.environ["function_name"] = "calculate_means_method"
-        assert response["error"].__contains__(
-            """Error validating environment params:"""
-        )
+        calculate_means_wrangler.os.environ.pop("function_name")
+        response = calculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})  # noqa E501
+        calculate_means_wrangler.os.environ["function_name"] = "mock_method"
+        assert """Error validating environment params:""" in response["error"]
 
     def test_marshmallow_raises_method_exception(self):
         """
@@ -153,13 +179,11 @@ class TestMeans(unittest.TestCase):
         input_file = "mean_input_with_columns.json"
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
-            # Removing the strata_column to allow for test of missing parameter
+            # Removing movement_columns to allow for test of missing parameter
             calculate_means_method.os.environ.pop("movement_columns")
-            response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})
-            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata"
-            assert response["error"].__contains__(
-                """Error validating environment params:"""
-            )
+            response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})  # noqa E501
+            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata"  # noqa E501
+            assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
     def test_no_data_in_queue(self):
@@ -177,5 +201,43 @@ class TestMeans(unittest.TestCase):
             )
             assert "success" in response
             assert response["success"] is False
-            print(response["error"])
-            assert response["error"].__contains__("""There was no data in sqs queue in""")
+            assert """There was no data in sqs queue in""" in response["error"]
+
+    @mock_sqs
+    def test_wrangler_fail_to_get_from_sqs(self):
+        with mock.patch.dict(
+            calculate_means_wrangler.os.environ,
+            {
+                "queue_url": "An Invalid Queue"
+            },
+        ):
+            response = calculate_means_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """AWS Error""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangles_bad_data(self):
+        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value = {
+                    "Payload": StreamingBody("{'boo':'moo':}", 2)
+                }
+                with open("means_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = calculate_means_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Bad data""" in response["error"]

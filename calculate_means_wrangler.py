@@ -1,7 +1,6 @@
 import json
 import os
 import random
-import traceback
 import logging
 import boto3
 import marshmallow
@@ -65,7 +64,6 @@ def lambda_handler(event, context):
 
         logger.info("Input data converted to dataframe")
 
-        # Add means columns
         for question in config['questions_list'].split(" "):
             data[question] = 0.0
 
@@ -122,18 +120,15 @@ def lambda_handler(event, context):
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
-        try:
-            error_message = (
-                "Parameter validation error"
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context["aws_request_id"])
-            )
-            log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-        except Exception as e:
-            print(e)
+        error_message = (
+            "Parameter validation error"
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
         error_message = (
             "AWS Error ("
@@ -205,6 +200,7 @@ def send_sns_message(imputation_run_type, checkpoint, sns, arn):
     }
 
     sns.publish(TargetArn=arn, Message=json.dumps(sns_message))
+
 
 def get_sqs_message(queue_url):
     """

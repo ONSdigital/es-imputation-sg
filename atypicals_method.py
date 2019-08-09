@@ -1,10 +1,9 @@
 import json
 import os
-import traceback
-
 import marshmallow
 import numpy as np
 import pandas as pd
+import logging
 
 
 class InputSchema(marshmallow.Schema):
@@ -14,28 +13,28 @@ class InputSchema(marshmallow.Schema):
     mean_columns = marshmallow.fields.Str(required=True)
 
 
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-    :param exception: Exception object
-    :return: string
-    """
-    return ''.join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
-
-
 def lambda_handler(event, context):
-
-    # env vars
-    config, errors = InputSchema().load(os.environ)
-    if errors:
-        raise ValueError(f"Error validating environment params: {errors}")
-
+    """
+    Add docs here.
+    """
+    current_module = "Atypicals - Method"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("Atypicals")
     try:
+
+        logger.info("Atypicals Method Begun")
+
+        # env vars
+        config, errors = InputSchema().load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+
+        logger.info("Validated params.")
+
         input_data = pd.read_json(event)
+
+        logger.info("Succesfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,
@@ -49,14 +48,47 @@ def lambda_handler(event, context):
 
         final_output = json.loads(json_out)
 
-    except Exception as exc:
+        logger.info("Succesfully calculated atypicals.")
 
-        return {
-            "success": False,
-            "error": "Unexpected exception {}".format(_get_traceback(exc))
-        }
-
-    return final_output
+    except ValueError as e:
+        error_message = (
+            "Input Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return final_output
 
 
 def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):

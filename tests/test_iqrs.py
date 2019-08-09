@@ -1,25 +1,17 @@
 import json
-import unittest
 import unittest.mock as mock
-
+import boto3
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
-
 import iqrs_method
 import iqrs_wrangler
+from pandas.util.testing import assert_frame_equal
+from moto import mock_sqs, mock_lambda
+from botocore.response import StreamingBody
 
 
-class TestWranglerAndMethod(unittest.TestCase):
-
+class TestWranglerAndMethod():
     @classmethod
     def setup_class(cls):
-        # Mock out all the things that need mocking out, here - and start them
-        cls.mock_boto_wrangler_patcher = mock.patch('iqrs_wrangler.boto3')
-        cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
-
-        cls.mock_boto_method_patcher = mock.patch('iqrs_method.boto3')
-        cls.mock_boto_method = cls.mock_boto_method_patcher.start()
-
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'queue_url': 'mock_queue',
             'sqs_messageid_name': 'mock_message',
@@ -36,115 +28,208 @@ class TestWranglerAndMethod(unittest.TestCase):
 
     @classmethod
     def teardown_class(cls):
-
-        # Stop the mocking of the boto stuff and the os
-        cls.mock_boto_wrangler_patcher.stop()
-        cls.mock_boto_method_patcher.stop()
         cls.mock_os_patcher.stop()
 
-    def test_wrangler(self):  # This function tests the wrangler
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_happy_path(self):
+        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("iqrs_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 228382)
+                    }
+                    with open("iqrs_input.json", "rb") as queue_file:
+                        msgbody = queue_file.read()
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
+                        response = iqrs_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"},
+                        )
 
-        # Load the input file - which includes means and movements
-        input_file = 'iqrs_input.json'
+                        assert "success" in response
+                        assert response["success"] is True
 
+    def test_method_happy_path(self):
+        input_file = "Iqrs_with_columns.json"
         with open(input_file, "r") as file:
+            iqrs_cols = 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607'
+            sorting_cols = ['region', 'strata']
+            selected_cols = iqrs_cols.split(',') + sorting_cols
+
             json_content = json.loads(file.read())
+            output = iqrs_method.lambda_handler(json_content, {"aws_request_id": "666"})
 
-        # Set the mock_json value to the json_content variable above (ie the input file)
-        # Also mock out the call to the iqrs_method within the wrangler
-        with mock.patch('json.loads') as mock_json:
-            mock_json.return_value = json_content
-            mocked_client = mock.Mock()
-            self.mock_boto_wrangler.client.return_value.invoke = mocked_client
+            response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
 
-        # Call the wrangler and pass the output into the payload variable
-            iqrs_wrangler.lambda_handler(None, None)
-            payload = mocked_client.call_args[1]['Payload']
+            expected_df = pd.read_csv("iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
 
-        # Output the payload to a file called "Iqrs_with_columns.json".
-        # This is not needed for testing the wrangler, but we need
-        # this data for testing the method, below, so we output
-        # it to a file here.
-        with open("Iqrs_with_columns.json", "w+") as file:
-            file.write(payload)
+            response_df = response_df.round(5)
+            expected_df = expected_df.round(5)
 
-        # Read the payload file into a dataframe.
-        payload_df = pd.read_json(json.loads(payload))
+            assert_frame_equal(response_df, expected_df)
 
-        # We want to check that the subset of "required_cols" - ie the iqrs
-        # cols are in the set of columns which are on the payload_df dataframe.
-        # The "assert" command below, performs this test.
-        required_cols = {
-            'iqrs601',
-            'iqrs602',
-            'iqrs603',
-            'iqrs604',
-            'iqrs605',
-            'iqrs606',
-            'iqrs607'
-        }
+    @mock.patch("iqrs_wrangler.boto3")
+    def test_wrangler_general_exception(self, mock_boto):
+        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("iqrs_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 416503)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    with mock.patch("iqrs_wrangler.pd.DataFrame") as mocked:
+                        mocked.side_effect = Exception("General exception")
+                        response = iqrs_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"}
+                        )
 
-        self.assertTrue(required_cols.issubset(set(payload_df.columns)), 'IQRS Columns are not in the DataFrame')  # noqa: E501
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert """General exception""" in response["error"]
 
-        # Set up a new dataframe, new_cols, which contains just the iqrs columns
-        # from payload_df. We then check whether any of the iqrs values are set
-        # to null - which they shouldn't be. The assert does this, any prints
-        # out any values which are set to null.
-
-        new_cols = payload_df[required_cols]
-        self.assertFalse(new_cols.isnull().values.any())
-
-    def test_method(self):  # This function tests the method
-
-        # Load the input data - which is the output data from the wrangler, created above
-        input_file = 'Iqrs_with_columns.json'
-
+    def test_method_general_exception(self):
+        input_file = "Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            json_content = json.loads(file.read())
+            json_content = file.read()
+            with mock.patch("iqrs_method.pd.read_json") as mocked:
+                mocked.side_effect = Exception("General exception")
+                response = iqrs_method.lambda_handler(
+                    json_content,
+                    {"aws_request_id": "666"}
+                )
 
-        # Call the method. We can pass the json_content file in as a parameter,
-        # as the method loads this data into a json file within the code.
-        # Output the result to a file called output
-        output = iqrs_method.lambda_handler(json_content, None)
+                assert "success" in response
+                assert response["success"] is False
+                assert """General exception""" in response["error"]
 
-        # Set up some variables to be used in the next step
-        iqrs_cols = 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607'
-        sorting_cols = ['region', 'strata']
-        selected_cols = iqrs_cols.split(',') + sorting_cols
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_key_error(self):
+        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("iqrs_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 416503)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = iqrs_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
 
-        # Load the output file into a dataframe. We want to sort it by the sorting cols,
-        # region and strata and we only want to keep the selected cols as defined above.
-        # We want to drop duplicates to ensure we only have one row per region/strata
-        # on the dataset, so it matches the scala output (as opposed to one row per
-        # responder_id)
-        output_df = pd.DataFrame(output).sort_values(sorting_cols)[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Key Error""" in response["error"]
 
-        # Load the data we have output from the Scala process.
-        # This data will have IQRS values on it, and should match the output_df.
-        # Again, we want to sort it by region and strata
-        # and only keep the selected columns
-        scala_df = pd.read_csv("iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+    def test_method_key_error(self):
+        with mock.patch.dict(
+            "os.environ",
+            {
+                "iqrs_columns": "bum"
+            }
+        ):
+            with open("Iqrs_with_columns.json", "r") as file:
+                content = json.loads(file.read())
 
-        # Round both dataframes to 5dp to ensure any differences
-        # between the dataframes are not caused by rounding
-        # Finally, assert that the two frames are equal.
-        response_df = output_df.round(5)
-        expected_df = scala_df.round(5)
-        assert_frame_equal(response_df, expected_df)
+                response = iqrs_method.lambda_handler(
+                    content, {"aws_request_id": "666"}
+                )
+                assert """Key Error in""" in response["error"]
 
-    # The tests below, all test the exception handling
-    def test_wrangler_exception_handling(self):
-        response = iqrs_wrangler.lambda_handler(None, None)
-        assert not response['success']
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+        Testing the marshmallow raises an exception in wrangler.
+        :return: None.
+        """
+        # Removing the strata_column to allow for test of missing parameter
+        iqrs_wrangler.os.environ.pop("method_name")
+        response = iqrs_wrangler.lambda_handler(None, {"aws_request_id": "666"})
+        iqrs_wrangler.os.environ["method_name"] = "mock_method"
+        assert """Error validating environment params:""" in response["error"]
 
-    def test_method_exception_handling(self):
-        json_content = '[{"movement_Q601_asphalting_sand":0.0},{"movement_Q601_asphalting_sand":0.857614899}]'  # noqa: E501
+    def test_marshmallow_raises_method_exception(self):
+        """
+        Testing the marshmallow raises an exception in method.
+        :return: None.
+        """
+        input_file = "Iqrs_with_columns.json"
+        with open(input_file, "r") as file:
+            json_content = file.read()
+            # Removing arn to allow for test of missing parameter
+            iqrs_method.os.environ.pop("iqrs_columns")
+            response = iqrs_method.lambda_handler(json_content, {"aws_request_id": "666"})
+            iqrs_method.os.environ["iqrs_columns"] = "iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607"  # noqa E501
+            assert """Error validating environment params:""" in response["error"]
 
-        response = iqrs_method.lambda_handler(json_content, None)
-        assert not response['success']
+    @mock_sqs
+    def test_no_data_in_queue(self):
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
+        with mock.patch.dict(
+            iqrs_wrangler.os.environ,
+            {
+                "queue_url": queue_url
+            },
+        ):
+            response = iqrs_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """There was no data in sqs queue in""" in response["error"]
 
-    def test_wrangler_success_responses(self):
-        with mock.patch('iqrs_wrangler.json') as mock_json:
-            response = iqrs_wrangler.lambda_handler(None, None)
-            assert mock_json.dumps.call_args[0][0]['success']
-            assert response
+    @mock_sqs
+    def test_wrangler_fail_to_get_from_sqs(self):
+        with mock.patch.dict(
+            iqrs_wrangler.os.environ,
+            {
+                "queue_url": "An Invalid Queue"
+            },
+        ):
+            response = iqrs_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            assert """AWS Error""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangles_bad_data(self):
+        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value = {
+                    "Payload": StreamingBody("{'boo':'moo':}", 2)
+                }
+                with open("iqrs_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = iqrs_wrangler.lambda_handler(
+                        None,
+                        {"aws_request_id": "666"},
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert """Bad data""" in response["error"]
