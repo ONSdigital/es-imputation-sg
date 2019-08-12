@@ -1,27 +1,12 @@
-"""
-Recalculate Means Wrangler.
-"""
-import traceback
 import json
 import random
 import os
 import boto3
 import pandas as pd
 import marshmallow
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-
-    :param exception: Exception object
-    :return: string
-    """
-    return ''.join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
+import logging
+from botocore.exceptions import ClientError
+from botocore.exceptions import IncompleteReadError
 
 
 class EnvironSchema(marshmallow.Schema):
@@ -36,6 +21,10 @@ class EnvironSchema(marshmallow.Schema):
     sqs_messageid_name = marshmallow.fields.Str(required=True)
 
 
+class NoDataInQueueError(Exception):
+    pass
+
+
 def lambda_handler(event, context):
     """
     prepares the data for the Means method.
@@ -47,8 +36,13 @@ def lambda_handler(event, context):
     :param context:
     :return: Outcome Message - Type: Json String.
     """
-
+    current_module = "Recalc - Wrangler"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("RecalcMeans")
+    logger.setLevel(10)
     try:
+        logger.info(current_module + " Begun")
         # Set up clients
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client('lambda', 'eu-west-2')
@@ -59,6 +53,7 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment parameters: {errors}")
 
+        logger.info("Validated params")
         # Set up environment variables
         arn = config["arn"]
         queue_url = config["queue_url"]
@@ -66,11 +61,16 @@ def lambda_handler(event, context):
         method_name = config["method_name"]
         questions_list = config["questions_list"]
         sqs_messageid_name = config["sqs_messageid_name"]
+
         response = get_sqs_message(queue_url)
+        if "Messages" not in response:
+            raise NoDataInQueueError("No Messages in queue")
+
         message = response['Messages'][0]
         message_json = json.loads(message['Body'])
-
         receipt_handle = message['ReceiptHandle']
+
+        logger.info("Successfully retrieved data from sqs")
 
         data = pd.DataFrame(message_json)
         # Add means columns
@@ -85,29 +85,105 @@ def lambda_handler(event, context):
         data_json = data.to_json(orient='records')
 
         returned_data = lambda_client.invoke(FunctionName=method_name, Payload=data_json)
+
         json_response = returned_data.get('Payload').read().decode("UTF-8")
 
+        logger.info("Successfully invoked lambda")
+
         send_sqs_message(queue_url, json_response, sqs_messageid_name)
-        imputation_run_type = "Data Imputated"
-        send_sns_message(arn, imputation_run_type, checkpoint)
+
+        logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-    except Exception as exc:
-        checkpoint = config["checkpoint"]
-        return {
-            "success": False,
-            "checkpoint": checkpoint,
-            "error": "Unexpected exception {}".format(_get_traceback(exc))
-        }
+        logger.info("Successfully deleted input data from sqs")
 
-    return {
-        "success": True,
-        "checkpoint": checkpoint
-    }
+        send_sns_message(arn, checkpoint)
+
+        logger.info("Successfully sent data to sns")
+
+    except NoDataInQueueError as e:
+        error_message = (
+            "There was no data in sqs queue in:  "
+            + current_module
+            + " |-  | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except AttributeError as e:
+        error_message = (
+            "Bad data encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ValueError as e:
+        error_message = (
+            "Parameter validation error"
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ClientError as e:
+        error_message = (
+            "AWS Error ("
+            + str(e.response["Error"]["Code"])
+            + ") "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except IncompleteReadError as e:
+        error_message = (
+            "Incomplete Lambda response encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return {"success": True, "checkpoint": checkpoint}
 
 
-def send_sns_message(arn, imputation_run_type, checkpoint):
+def send_sns_message(arn, checkpoint):
     """
     This function is responsible for sending notifications to the SNS Topic.
     Notifications will be used to relay information to the BPM.
@@ -123,8 +199,7 @@ def send_sns_message(arn, imputation_run_type, checkpoint):
     sns_message = {
         "success": True,
         "module": "Imputation ReCalculate Means",
-        "checkpoint": checkpoint,
-        "message": imputation_run_type
+        "checkpoint": checkpoint
     }
 
     sns.publish(
