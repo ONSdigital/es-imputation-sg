@@ -22,6 +22,15 @@ to be added to.
 
 Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
 
+### Calculate Imputation Factors Wangler
+
+This step is a combination of both calculate gb and non gb factors.
+
+Data is retrieved from the previous step from SQS, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
+
+Once this has been calculated then the data is sent back to the SQS queue to be used by the next method.
+
+
 ### Calculate IQRS Wrangler
 
 This is the third step of the imputation process. The wrangler returns means data from the sqs queue (the output from the calculate means step). It converts this data from JSON format into a dataframe and then adds 7 new IQRS columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
@@ -99,6 +108,17 @@ Following this, if the Atypical value is > 0, we recalculate the movement value 
 An atyp_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A Json string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
+
+
+### Calculate Imputation Factors Method
+
+**Name of Lambda:** imputation_calculate_imputation_factors_method.
+
+**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region,Land or Marine,Count of refs within cell. 
+
+**Inputs:** JSON string from wrangler with the needed columns.
+
+**Outputs:** JSON string containing imputation factors for each question in each aggregated group. 
 
 
 ### Apply Factors Method
