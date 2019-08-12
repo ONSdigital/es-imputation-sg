@@ -1,9 +1,10 @@
 import json
+import logging
 import os
+
 import marshmallow
 import numpy as np
 import pandas as pd
-import logging
 
 
 class InputSchema(marshmallow.Schema):
@@ -13,7 +14,11 @@ class InputSchema(marshmallow.Schema):
 
 def lambda_handler(event, context):
     """
-    Add docs here.
+    Returns JSON data with new IQR columns and respective values.
+    :param event: Event object
+    :param contet: Contet object
+
+    :return: JSON string
     """
     current_module = "IQRS - Method"
     error_message = ""
@@ -101,19 +106,14 @@ def calc_iqrs(input_table, move_cols, iqrs_cols):
 
 
 def iqr_sum(df, quest):
-    '''
-    Inputs:
-    df - Working dataset with the month on month question value movements
-    filtered by each individual combination of region and strata.
+    """
+    :param df: Working dataset with the month on month question value movements
+    filtered by each individual combination of region and strata - Type: DataFrame
+    :param quest: Individual question no - Type: String
 
-    quest - Individual question no
+    :return: String
+    """
 
-    Returns:
-    Returns the iqr for the question value based on the region, strata
-    and question number being passed through.
-    '''
-
-    # df=dfTest
     df = df[quest]
 
     df_size = df.size
@@ -125,7 +125,6 @@ def iqr_sum(df, quest):
         dfbottom = df[0:math.ceil(int(df_size / 2))].median()
         dftop = df[math.ceil(int(df_size / 2)):].median()
         iqr = dftop - dfbottom
-        # iqr = quantile75 - quantile25
     else:
         sorted_df = df.sort_values()
         df = sorted_df.reset_index(drop=True)

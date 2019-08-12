@@ -1,7 +1,8 @@
 import json
+import logging
 import os
 import random
-import logging
+
 import boto3
 import marshmallow
 import pandas as pd
@@ -9,9 +10,6 @@ from botocore.exceptions import ClientError, IncompleteReadError
 
 
 class InputSchema(marshmallow.Schema):
-    """
-    Add docs here.
-    """
     queue_url = marshmallow.fields.Str(required=True)
     checkpoint = marshmallow.fields.Str(required=True)
     function_name = marshmallow.fields.Str(required=True)
@@ -25,9 +23,6 @@ class NoDataInQueueError(Exception):
 
 
 def lambda_handler(event, context):
-    """
-    Add docs here.
-    """
     current_module = "Means - Wrangler"
     error_message = ""
     log_message = ""

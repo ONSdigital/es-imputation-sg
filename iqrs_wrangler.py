@@ -1,7 +1,8 @@
 import json
+import logging
 import os
 import random
-import logging
+
 import boto3
 import marshmallow
 import pandas as pd

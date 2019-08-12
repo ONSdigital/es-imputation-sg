@@ -1,9 +1,10 @@
 import json
+import logging
 import os
+
 import marshmallow
 import numpy as np
 import pandas as pd
-import logging
 
 
 class InputSchema(marshmallow.Schema):
@@ -15,7 +16,10 @@ class InputSchema(marshmallow.Schema):
 
 def lambda_handler(event, context):
     """
-    Add docs here.
+    Returns JSON daya with new atypicals columns and respective values.
+    :param event: Event object
+    :param context: Context object
+    :return: JSON string
     """
     current_module = "Atypicals - Method"
     error_message = ""
@@ -92,7 +96,16 @@ def lambda_handler(event, context):
 
 
 def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):
-
+    """
+    Calculates the atypical values for each column like so:
+        atypical_value = (movement_value - mean_value) - 2 * iqrs_value
+    This value is then rounded to 8 decimal places.
+    :param input_table: DataFrame containing means/movement data - Type: DataFrame
+    :param atyp_col: String containing atypical column names - Type: String
+    :param move_col: String containing movement column names - Type: String
+    :param irqs_col: String containing iqrs column names - Type: String
+    :param mean_col: String containing means column names - Type: String
+    """
     for i in range(0, len(iqrs_col)):
         input_table[atyp_col[i]] = abs(input_table[move_col[i]] - input_table[mean_col[i]]) - 2 * input_table[iqrs_col[i]]  # noqa: E501
         input_table[atyp_col[i]] = input_table[atyp_col[i]].round(8)

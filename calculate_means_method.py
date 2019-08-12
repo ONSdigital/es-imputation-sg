@@ -1,7 +1,8 @@
+import logging
 import os
+
 import marshmallow
 import pandas as pd
-import logging
 
 
 class InputSchema(marshmallow.Schema):
@@ -12,7 +13,7 @@ class InputSchema(marshmallow.Schema):
 def lambda_handler(event, context):
     """
     Generates an aggregated DataFrame containing the mean value for
-    each of the period on period percentage movements, gropued by
+    each of the period on period percentage movements, grouped by
     region and strata.
     :param event: Event object
     :param context: Context object

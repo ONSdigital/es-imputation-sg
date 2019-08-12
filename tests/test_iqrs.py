@@ -1,12 +1,14 @@
 import json
 import unittest.mock as mock
+
 import boto3
 import pandas as pd
+from botocore.response import StreamingBody
+from moto import mock_lambda, mock_sqs
+from pandas.util.testing import assert_frame_equal
+
 import iqrs_method
 import iqrs_wrangler
-from pandas.util.testing import assert_frame_equal
-from moto import mock_sqs, mock_lambda
-from botocore.response import StreamingBody
 
 
 class TestWranglerAndMethod():
@@ -233,3 +235,28 @@ class TestWranglerAndMethod():
                     assert "success" in response
                     assert response["success"] is False
                     assert """Bad data""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    def test_incomplete_read(self):
+        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                with open("iqrs_input.json", "rb") as file:
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody(file, 123456)
+                    }
+                    with open("iqrs_input.json", "rb") as queue_file:
+                        msgbody = queue_file.read()
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
+                        response = iqrs_wrangler.lambda_handler(
+                            None,
+                            {"aws_request_id": "666"},
+                        )
+
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert """Incomplete Lambda response""" in response["error"]
