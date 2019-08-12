@@ -31,8 +31,8 @@ class TestImputation:
   
   # Testing output against expected output - Method
   def test_data_output(self):
-    with open('tests/movements_output.json') as file: input_data = json.load(file)
-    with open('tests/means_output.json') as file: means_data = file.read()
+    with open('tests/fixtures/movements_output.json') as file: input_data = json.load(file)
+    with open('tests/fixtures/means_output.json') as file: means_data = file.read()
 
     with mock.patch.dict(calculate_means_method.os.environ, {
            'queue_url': 'queue_url',
