@@ -91,12 +91,10 @@ def lambda_handler(event, context):
         imputation_run_type = "Data Imputated"
         send_sns_message(arn, imputation_run_type, checkpoint)
 
-        ### COMMENTED OUT FOR TESTING ###
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
     except Exception as exc:
         checkpoint = config["checkpoint"]
-        print("Unexpected exception {}".format(_get_traceback(exc)))
         return {
             "success": False,
             "checkpoint": checkpoint,
@@ -144,7 +142,7 @@ def send_sqs_message(queue_url, message, output_message_id):
     :param output_message_id: The label of the record in the SQS queue - Type: String
     :return: None
     """
-    # sqs = boto3.client('sqs')
+
     sqs = boto3.client('sqs', region_name='eu-west-2')
 
     # MessageDeduplicationId is set to a random hash to overcome de-duplication,

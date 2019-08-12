@@ -10,7 +10,7 @@ import pandas as pd
 import boto3
 from moto import mock_sns, mock_sqs
 sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
-import recalculate_means_wrangler
+import recalculate_means_wrangler  # noqa: E402
 
 
 class TestRecalculateMeans(unittest.TestCase):
@@ -68,8 +68,6 @@ class TestRecalculateMeans(unittest.TestCase):
 
             recalculate_means_wrangler.lambda_handler(None, None)
 
-        payload = mock_lambda.return_value.invoke.call_args[1]['Payload']
-
         # check the output file contains the expected columns and non null values
         payload_dataframe = pd.DataFrame(method_output)
         required_columns = {
@@ -118,7 +116,7 @@ class TestRecalculateMeans(unittest.TestCase):
             recalculate_means_wrangler.os.environ.pop("questions_list")
             response = recalculate_means_wrangler.lambda_handler(
                 {"RuntimeVariables":
-                     {"checkpoint": 123}}, None)
+                 {"checkpoint": 123}}, None)
             # self.assertRaises(ValueError)
             assert(response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
