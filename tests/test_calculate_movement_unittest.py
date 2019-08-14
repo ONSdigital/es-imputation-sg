@@ -146,14 +146,11 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.get_data_from_sqs')
     @mock.patch('calculate_movement_wrangler.read_data_from_s3')
     def test_wrangler_incomplete_json(self, mock_s3_return, mock_sqs_return, mock_s3_save,
-                                     mock_strata, mock_lambda, mock_send_sqs,
-                                     mock_sns_message):
+                                      mock_strata, mock_lambda, mock_send_sqs,
+                                      mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data.json') as file:
             input_data = json.load(file)
-
-        with open('tests/fixtures/method_output_compare_result.json') as file:
-            method_output = json.load(file)
 
         with open('tests/fixtures/s3_previous_period_data.json') as file:
             previous_data = json.load(file)
@@ -167,8 +164,6 @@ class TestClass(unittest.TestCase):
                                                      "ReceiptHandle": "String"}]}
 
         mock_strata.return_value = pd.DataFrame(merged_data), pd.DataFrame()
-
-        myvar = mock_send_sqs.call_args_list
 
         with open('tests/fixtures/method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {"Payload":
@@ -189,15 +184,12 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.save_to_s3')
     @mock.patch('calculate_movement_wrangler.get_data_from_sqs')
     @mock.patch('calculate_movement_wrangler.read_data_from_s3')
-    def testing__wrangler_bad_data(self, mock_s3_return, mock_sqs_return,
-                                   mock_s3_save, mock_strata, mock_lambda,
-                                   mock_send_sqs, mock_sns_message):
+    def testing_wrangler_bad_data(self, mock_s3_return, mock_sqs_return,
+                                  mock_s3_save, mock_strata, mock_lambda,
+                                  mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data.json') as file:
             input_data = json.load(file)
-
-        with open('tests/fixtures/method_output_compare_result.json') as file:
-            method_output = json.load(file)
 
         with open('tests/fixtures/s3_previous_period_data.json') as file:
             previous_data = json.load(file)
@@ -212,8 +204,6 @@ class TestClass(unittest.TestCase):
 
         mock_strata.return_value = pd.DataFrame(merged_data), pd.DataFrame()
 
-        myvar = mock_send_sqs.call_args_list
-
         with open('tests/fixtures/method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {
                 "Payload": StreamingBody("{'boo':'moo':}", 2)
@@ -226,3 +216,33 @@ class TestClass(unittest.TestCase):
         assert "success" in response
         assert response["success"] is False
         assert response["error"].__contains__("""Bad data encountered""")
+
+    @mock.patch('calculate_movement_wrangler.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.send_sqs_message')
+    @mock.patch('calculate_movement_wrangler.boto3.client')
+    @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
+    @mock.patch('calculate_movement_wrangler.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.get_data_from_sqs')
+    @mock.patch('calculate_movement_wrangler.read_data_from_s3')
+    def test_wrangler_key_error_exception(self, mock_s3_return, mock_sqs_return,
+                                          mock_s3_save, mock_strata, mock_lambda,
+                                          mock_send_sqs, mock_sns_message):
+
+        with open('tests/fixtures/wrangler_input_test_data.json') as file:
+            input_data = json.load(file)
+
+        with open('tests/fixtures/s3_previous_period_data.json') as file:
+            previous_data = json.load(file)
+
+        mock_s3_return.return_value = previous_data
+
+        mock_sqs_return.return_value = {"Messages": [{"Incorrect": json.dumps(input_data),
+                                                      "ReceiptHandle": "String"}]}
+
+        response = calculate_movement_wrangler.lambda_handler(
+            {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+        )
+
+        assert "success" in response
+        assert not response["success"]
+        assert "Key Error" in response["error"]

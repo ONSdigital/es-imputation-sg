@@ -4,7 +4,6 @@ import boto3
 import pandas as pd
 import logging
 from marshmallow import Schema, fields
-from botocore.exceptions import IncompleteReadError
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')
@@ -79,14 +78,6 @@ def lambda_handler(event, context):
 
         final_output = filled_dataframe.to_json(orient='records')
 
-    except AttributeError as e:
-        error_message = "Bad data encountered in " \
-                        + current_module + " |- " \
-                        + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
-
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-
     except ValueError as e:
         error_message = "Parameter validation error" \
                         + current_module + " |- " \
@@ -97,14 +88,6 @@ def lambda_handler(event, context):
 
     except KeyError as e:
         error_message = "Key Error in " \
-                        + current_module + " |- " \
-                        + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
-
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-
-    except IncompleteReadError as e:
-        error_message = "Incomplete Lambda response encountered in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
                         + str(context['aws_request_id'])
