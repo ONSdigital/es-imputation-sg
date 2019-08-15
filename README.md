@@ -52,6 +52,12 @@ The factors data is merged on to the non responder data next, adding imputation_
 
 The result of the method is imputed values for each non responder, this is joined back onto the responder data(used to calculate factors) and sent to the SQS queue.
 
+## Recalculate Means Wrangler
+
+This wrangler recalculates the means of movement after the atypical values have been removed.
+
+This uses the same method as calculate means.
+
 ## Methods
 
 ### Calculate Movements Method
