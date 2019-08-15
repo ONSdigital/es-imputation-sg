@@ -1,16 +1,19 @@
 """
 Tests for Recalculate Means Wrangler.
 """
-import unittest
-from unittest import mock
 import json
 import os
 import sys
-import pandas as pd
+import unittest
+from unittest import mock
+
 import boto3
+import pandas as pd
 from moto import mock_sns, mock_sqs
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
+
 import recalculate_means_wrangler  # noqa: E402
+
+sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 
 
 class TestRecalculateMeans(unittest.TestCase):
@@ -117,7 +120,6 @@ class TestRecalculateMeans(unittest.TestCase):
             response = recalculate_means_wrangler.lambda_handler(
                 {"RuntimeVariables":
                  {"checkpoint": 123}}, None)
-            # self.assertRaises(ValueError)
             assert(response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
 
