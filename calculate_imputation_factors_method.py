@@ -51,8 +51,9 @@ def lambda_handler(event, context):
 
         def calculate_imputation_factors(row, question):
             """
-            Calculates the imputation factors for the DataFrame on row by row basis. # noqa E501
-            - Calculates imputation factor for each question, in each aggregated group, by:
+            Calculates the imputation factors for the DataFrame on row by row basis.
+            - Calculates imputation factor for each question, in each aggregated group,
+              by:
                 Region
                 Land or Marine
                 Count of refs within cell
