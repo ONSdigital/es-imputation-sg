@@ -1,7 +1,7 @@
-import os
-import pandas as pd
-import boto3  # noqa F401
 import logging
+import os
+
+import pandas as pd
 from marshmallow import Schema, fields
 
 

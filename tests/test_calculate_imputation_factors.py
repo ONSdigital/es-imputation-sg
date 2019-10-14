@@ -1,18 +1,20 @@
+import json
+import os
+import sys
 import unittest
 import unittest.mock as mock
-import json
-import pandas as pd
-from pandas.util.testing import assert_frame_equal
-import sys
-import os
-from moto import mock_sqs, mock_sns
+
 import boto3
-from botocore.response import StreamingBody
+import pandas as pd
 from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
+from moto import mock_sns, mock_sqs
+from pandas.util.testing import assert_frame_equal
+
+import calculate_imputation_factors_method  # noqa E402
+import calculate_imputation_factors_wrangler  # noqa E402
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import calculate_imputation_factors_wrangler  # noqa E402
-import calculate_imputation_factors_method  # noqa E402
 
 
 class TestWranglerAndMethod(unittest.TestCase):
