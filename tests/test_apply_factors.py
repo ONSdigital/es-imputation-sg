@@ -1,15 +1,17 @@
-import os  # noqa F401
-from moto import mock_sqs, mock_sns, mock_s3, mock_lambda
-import boto3
 import json
-import unittest.mock as mock
-import unittest
-import pandas as pd
+import os  # noqa F401
 import sys
+import unittest
+import unittest.mock as mock
+
+import boto3
+import pandas as pd
+from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
+
+import apply_factors_method as lambda_method_function  # noqa E402
+import apply_factors_wrangler as lambda_wrangler_function  # noqa E402
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import apply_factors_wrangler as lambda_wrangler_function  # noqa E402
-import apply_factors_method as lambda_method_function  # noqa E402
 
 
 class TestApplyFactors(unittest.TestCase):

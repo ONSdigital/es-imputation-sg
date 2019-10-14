@@ -1,8 +1,15 @@
-import pandas as pd
 import logging
+
+import pandas as pd
 
 
 def lambda_handler(event, context):
+    """
+    Calculate and applies imputation factors on a question-by-question basis.
+    :param event: N/A
+    :param context: N/A
+    :return: JSON - String
+    """
     current_module = "Apply Factors - Method"
     error_message = ""
     log_message = ""

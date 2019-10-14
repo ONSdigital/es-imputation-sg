@@ -1,12 +1,12 @@
 import json
-import boto3
-import pandas as pd
+import logging
 import os
 import random
-import logging
+
+import boto3
+import pandas as pd
+from botocore.exceptions import ClientError, IncompleteReadError
 from marshmallow import Schema, fields
-from botocore.exceptions import ClientError
-from botocore.exceptions import IncompleteReadError
 
 
 def get_from_sqs(queue_url):
@@ -104,6 +104,13 @@ class NoDataInQueueError(Exception):
 
 
 def lambda_handler(event, context):
+    """
+    This wrangler is used to prepare data for the apply factors statistical method.
+    The method requires a column per question to store the factors.
+    :param event: N/A
+    :param context: N/A
+    :return: Success - True/False & Checkpoint
+    """
     current_module = "Apply Factors - Wrangler"
     error_message = ""
     log_message = ""
