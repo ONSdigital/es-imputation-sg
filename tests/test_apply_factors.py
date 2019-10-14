@@ -1,5 +1,5 @@
 import json
-import os  # noqa F401
+import os
 import sys
 import unittest
 import unittest.mock as mock
@@ -8,8 +8,8 @@ import boto3
 import pandas as pd
 from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 
-import apply_factors_method as lambda_method_function  # noqa E402
-import apply_factors_wrangler as lambda_wrangler_function  # noqa E402
+import apply_factors_method as lambda_method_function
+import apply_factors_wrangler as lambda_wrangler_function
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 
@@ -131,7 +131,8 @@ class TestApplyFactors(unittest.TestCase):
         )
         client.create_bucket(Bucket="MIKE")
         client.upload_file(
-            Filename="tests/fixtures/factorsdata.json", Bucket="MIKE", Key="123"
+            Filename="tests/fixtures/factorsdata.json",
+            Bucket="MIKE", Key="123"
         )
 
         s3object = s3.Object("MIKE", "123")

@@ -18,9 +18,15 @@ boto3 = "*"
 awscli = "*"
 moto = "*"
 marshmallow = "*"
+isort = "*"
+flake8-builtins-unleashed = "*"
+flake8-eradicate = "*"
+flake8-breakpoint = "*"
+flake8-isort = "*"
 
 [packages]
 pandas = "*"
 
 [requires]
 python_version = "3.7"
+c
