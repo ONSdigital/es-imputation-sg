@@ -35,12 +35,6 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
         cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
 
-        # setting up the method mock boto patcher and starting the patch
-        cls.mock_boto_method_patcher = mock.patch(
-            "calculate_imputation_factors_method.boto3"
-        )
-        cls.mock_boto_method = cls.mock_boto_method_patcher.start()
-
         # setting up the mock environment variables for the wrangler
         cls.mock_os_wrangler_patcher = mock.patch.dict(
             "os.environ",
@@ -95,7 +89,6 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         """
         cls.mock_boto_wrangler_patcher.stop()
-        cls.mock_boto_method_patcher.stop()
         cls.mock_os_wrangler_patcher.stop()
         cls.mock_os_method_patcher.stop()
 
