@@ -1,26 +1,13 @@
 import json
+import logging
 import os
 import random
-import traceback
 
 import boto3
 import pandas as pd
+from botocore.exceptions import ClientError, IncompleteReadError
+
 from marshmallow import Schema, fields
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-
-    :param exception: Exception object
-    :return: string
-    """
-
-    return "".join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
 
 
 class EnvironSchema(Schema):
@@ -32,6 +19,10 @@ class EnvironSchema(Schema):
     questions = fields.Str(required=True)
 
 
+class NoDataInQueueError(Exception):
+    pass
+
+
 def lambda_handler(event, context):
     """
     Prepares data for and calls the Calculate imputation factors method.
@@ -41,11 +32,19 @@ def lambda_handler(event, context):
     :param context: lambda context
     :return: string
     """
+    current_module = "Calculate Factors - Wrangler"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("CalculateFactors")
+    logger.setLevel(10)
     try:
+        logger.info("Calculate Factors Wrangler Begun")
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
+
+        logger.info("Validated params")
 
         # environment variables
         sqs = boto3.client("sqs")
@@ -58,13 +57,19 @@ def lambda_handler(event, context):
         questions = config["questions"]
         checkpoint = config["checkpoint"]
         arn = config["arn"]
+
         # read in data from the sqs queue
         response = sqs.receive_message(QueueUrl=queue_url)
+        if "Messages" not in response:
+            raise NoDataInQueueError("No Messages in queue")
+
         message = response["Messages"][0]
         message_json = json.loads(message["Body"])
 
         # reciept handler used to clear sqs queue
         receipt_handle = message["ReceiptHandle"]
+
+        logger.info("Successfully retrieved data from sqs")
 
         data = pd.DataFrame(message_json)
 
@@ -74,27 +79,93 @@ def lambda_handler(event, context):
 
         data_json = data.to_json(orient="records")
 
+        logger.info("Successfully wrangled data from sqs")
         # invoke the method to calculate the factors
         calculate_factors = lambda_client.invoke(
             FunctionName=method_name, Payload=data_json
         )
         json_response = calculate_factors.get("Payload").read().decode("UTF-8")
 
+        logger.info("Successfully invoked lambda")
+
         # send data to sqs queue
         send_sqs_message(queue_url, json.loads(json_response), sqs_messageid_name)
+        logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-        send_sns_message(arn, "Imputation Factors Calculated", checkpoint)
-    except Exception as exc:
-        print(_get_traceback(exc))
-        checkpoint = config["checkpoint"]
-        return {
-            "success": False,
-            "checkpoint": checkpoint,
-            "error": "Unexpected exception {}".format(_get_traceback(exc)),
-        }
+        logger.info("Successfully deleted input data from sqs")
 
-    return {"success": True, "checkpoint": checkpoint}
+        send_sns_message(arn, "Imputation Factors Calculated", checkpoint)
+        logger.info("Successfully sent data to sns")
+    except NoDataInQueueError as e:
+        error_message = (
+            "There was no data in sqs queue in:  "
+            + current_module
+            + " |-  | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ValueError as e:
+        error_message = (
+            "Parameter validation error"
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except ClientError as e:
+        error_message = (
+            "AWS Error ("
+            + str(e.response["Error"]["Code"])
+            + ") "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except IncompleteReadError as e:
+        error_message = (
+            "Incomplete Lambda response encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return {"success": True, "checkpoint": checkpoint}
 
 
 def send_sns_message(arn, imputation_run_type, checkpoint):
@@ -130,7 +201,7 @@ def send_sqs_message(queue_url, message, output_message_id):
     """
     sqs = boto3.client("sqs")
 
-    sqs.send_message(
+    return sqs.send_message(
         QueueUrl=queue_url,
         MessageBody=message,
         MessageGroupId=output_message_id,
