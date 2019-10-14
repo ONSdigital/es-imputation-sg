@@ -1,14 +1,12 @@
 import json
+import logging
 import os
 import random
 
 import boto3
 import pandas as pd
-import logging
+from botocore.exceptions import ClientError, IncompleteReadError
 from marshmallow import Schema, fields
-from botocore.exceptions import IncompleteReadError
-from botocore.exceptions import ClientError
-
 
 # Set up clients
 s3 = boto3.resource('s3')

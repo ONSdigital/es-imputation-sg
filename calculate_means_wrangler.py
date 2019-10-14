@@ -1,9 +1,10 @@
-import traceback
 import json
-import boto3
-import pandas as pd
 import os
 import random
+import traceback
+
+import boto3
+import pandas as pd
 
 # Set up clients
 sqs = boto3.client('sqs', region_name='eu-west-2')

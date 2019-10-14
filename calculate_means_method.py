@@ -1,9 +1,10 @@
-import traceback
 import json
-import boto3
-import pandas as pd
 import os
 import random
+import traceback
+
+import boto3
+import pandas as pd
 
 
 def _get_traceback(exception):

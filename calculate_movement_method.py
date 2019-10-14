@@ -1,8 +1,8 @@
+import logging
 import os
 
 import boto3
 import pandas as pd
-import logging
 from marshmallow import Schema, fields
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
