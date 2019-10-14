@@ -1,68 +1,133 @@
-import json
+import logging
 import os
-import random
-import traceback
 
-import boto3
+import marshmallow
 import pandas as pd
 
 
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-    :param exception: Exception object
-    :return: string
-    """
-    return ''.join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
-    
+class InputSchema(marshmallow.Schema):
+    movement_columns = marshmallow.fields.Str(required=True)
+    questions_list = marshmallow.fields.Str(required=True)
+
 
 def lambda_handler(event, context):
     """
-    Generates an aggregated DataFrame containing the mean value for 
-    each of the period on period percentage movements, gropued by 
+    Generates an aggregated DataFrame containing the mean value for
+    each of the period on period percentage movements, grouped by
     region and strata.
     :param event: Event object
     :param context: Context object
     :return: JSON string
     """
+    current_module = "Means - Method"
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("Means")
     try:
 
-        # Clients
-        sqs = boto3.client('sqs', region_name='eu-west-2')
+        logger.info("Means Method Begun")
 
-        # ENV vars
-        queue_url = os.environ['queue_url']
-        current_period = os.environ['current_period']
-        previous_period = os.environ['previous_period']
-        questions_list = os.environ['questions_list']
+        # env vars
+        config, errors = InputSchema().load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+
+        logger.info("Validated params.")
 
         df = pd.DataFrame(event)
-        
-        df.groupby(['region', 'strata'])
-        
-        q_list = questions_list.split()
-        
-        # Filter new dataframe on questions
-        movement_current = df.filter(['movement_Q601_asphalting_sand','movement_Q602_building_soft_sand','movement_Q603_concreting_sand','movement_Q604_bituminous_gravel','movement_Q605_concreting_gravel','movement_Q606_other_gravel','movement_Q607_constructional_fill'], axis=1)
-        
-        # Calculate question mean-movement values
-        df['mean_'] = movement_current.mean(axis=1)
-        # print(df['mean_'])
-        
-        final_output = df.to_json(orient='records')
-        
-    except Exception as exc:
-        # purge = sqs.purge_queue(
-        #   QueueUrl=queue_url
-        # )
 
-        return {
-            "success": False,
-            "error": "Unexpected exception {}".format(_get_traceback(exc))
-        }
+        logger.info("Succesfully retrieved data from event.")
 
-    return final_output
+        workingdf = df[config['movement_columns'].split(" ")]
+
+        counts = workingdf.groupby(["region", "strata"]).count()
+        # Rename columns to fit naming standards
+        counts.rename(
+            columns={
+                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_count",
+                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_count",  # noqa: E501
+                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_count",
+                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_count",  # noqa: E501
+                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_count",  # noqa: E501
+                "movement_Q606_other_gravel": "movement_Q606_other_gravel_count",
+                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_count",  # noqa: E501
+            },
+            inplace=True,
+        )
+
+        # Create dataframe which sums the movements grouped by region and strata
+        sums = workingdf.groupby(["region", "strata"]).sum()
+        # Rename columns to fit naming standards
+        sums.rename(
+            columns={
+                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_sum",
+                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_sum",  # noqa: E501
+                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_sum",
+                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_sum",  # noqa: E501
+                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_sum",  # noqa: E501
+                "movement_Q606_other_gravel": "movement_Q606_other_gravel_sum",
+                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_sum",  # noqa: E501
+            },
+            inplace=True,
+        )
+
+        counts = counts.reset_index(level=["region", "strata"])
+        sums = sums.reset_index(level=["region", "strata"])
+        moves = sums.merge(
+            counts,
+            left_on=["region", "strata"],
+            right_on=["region", "strata"],
+            how="left",
+        )
+
+        # join on movements and counts on region& strata to df
+        df = pd.merge(df, moves, on=["region", "strata"], how="left")
+
+        for question in config['questions_list'].split():
+            df["mean_" + question] = df.apply(
+                lambda x: x["movement_" + question + "_sum"]
+                / x["movement_" + question + "_count"],
+                axis=1,
+            )
+
+        logger.info("Succesfully calculated means.")
+
+    except ValueError as e:
+        error_message = (
+            "Input Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except KeyError as e:
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except Exception as e:
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+        if (len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+        else:
+            logger.info("Successfully completed module: " + current_module)
+            return df.to_json(orient="records")
