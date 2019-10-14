@@ -1,5 +1,5 @@
+import logging
 import os
-import traceback
 
 import boto3
 import pandas as pd
@@ -12,25 +12,11 @@ s3 = boto3.resource('s3')
 class EnvironSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
-    :param Schema: Schema from marshmallow import
     :return: None
     """
     current_period = fields.Str(required=True)
     previous_period = fields.Str(required=True)
     questions_list = fields.Str(required=True)
-
-
-def _get_traceback(exception):
-    """
-    Given an exception, returns the traceback as a string.
-    :param exception: Exception object
-    :return: string
-    """
-    return ''.join(
-        traceback.format_exception(
-            etype=type(exception), value=exception, tb=exception.__traceback__
-        )
-    )
 
 
 def lambda_handler(event, context):
@@ -43,6 +29,12 @@ def lambda_handler(event, context):
     :return: final_output: The input data but now with the correct movements for
                            the respective question columns - Type: JSON.
     """
+    current_module = "Imputation Movement - Method"
+    logger = logging.getLogger("Starting " + current_module)
+    error_message = ''
+    log_message = ''
+    final_output = {}
+
     try:
 
         schema = EnvironSchema()
@@ -86,11 +78,36 @@ def lambda_handler(event, context):
 
         final_output = filled_dataframe.to_json(orient='records')
 
-    except Exception as exc:
+    except ValueError as e:
+        error_message = "Parameter validation error" \
+                        + current_module + " |- " \
+                        + str(e.args) + " | Request ID: " \
+                        + str(context['aws_request_id'])
 
-        return {
-            "success": False,
-            "error": "Unexpected method exception {}".format(_get_traceback(exc))
-        }
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+
+    except KeyError as e:
+        error_message = "Key Error in " \
+                        + current_module + " |- " \
+                        + str(e.args) + " | Request ID: " \
+                        + str(context['aws_request_id'])
+
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+
+    except Exception as e:
+        error_message = "General Error in " \
+                        + current_module + " (" \
+                        + str(type(e)) + ") |- " \
+                        + str(e.args) + " | Request ID: " \
+                        + str(context['aws_request_id'])
+
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    finally:
+
+        if(len(error_message)) > 0:
+            logger.error(log_message)
+            return {"success": False, "error": error_message}
+
+    logger.info("Successfully completed module: " + current_module)
 
     return final_output
