@@ -6,13 +6,10 @@ import unittest
 from unittest import mock
 
 import boto3
-from botocore.response import StreamingBody
-from moto import mock_sns, mock_sqs, mock_lambda
-
+import pandas as pd
+from moto import mock_lambda, mock_sns, mock_sqs
 
 import recalculate_means_wrangler  # noqa: E402
-
-
 
 
 class TestRecalculateMeans(unittest.TestCase):
@@ -129,9 +126,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 {"RuntimeVariables":
 
                  {"checkpoint": 123}}, {"aws_request_id": "666"})
-            # self.assertRaises(ValueError)
             assert """Error validating environment parameters:""" in response['error']
-
 
     @mock_sns
     def test_sns_messages(self):
