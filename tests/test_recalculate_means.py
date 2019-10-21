@@ -1,17 +1,18 @@
 """
 Tests for Recalculate Means Wrangler.
 """
+import json
 import unittest
 from unittest import mock
-import json
-import os
-import sys
-import pandas as pd
+
 import boto3
 from botocore.response import StreamingBody
 from moto import mock_sns, mock_sqs, mock_lambda
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
+
+
 import recalculate_means_wrangler  # noqa: E402
+
+
 
 
 class TestRecalculateMeans(unittest.TestCase):
@@ -126,9 +127,11 @@ class TestRecalculateMeans(unittest.TestCase):
             recalculate_means_wrangler.os.environ.pop("questions_list")
             response = recalculate_means_wrangler.lambda_handler(
                 {"RuntimeVariables":
+
                  {"checkpoint": 123}}, {"aws_request_id": "666"})
             # self.assertRaises(ValueError)
             assert """Error validating environment parameters:""" in response['error']
+
 
     @mock_sns
     def test_sns_messages(self):

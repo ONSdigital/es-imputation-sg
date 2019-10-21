@@ -1,9 +1,15 @@
+"""
+Recalculate Means Wrangler.
+"""
+
 import json
-import random
 import os
+import random
+import traceback
+
 import boto3
-import pandas as pd
 import marshmallow
+
 import logging
 from botocore.exceptions import ClientError
 from botocore.exceptions import IncompleteReadError
