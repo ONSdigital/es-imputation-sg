@@ -139,7 +139,7 @@ functions:
       third_imputation_factor: 1
 
   deploy-calculate-means-wrangler:
-    name: es-calculate-factors-wrangler
+    name: es-calculate-means-wrangler
     handler: calculate_means_wrangler.lambda_handler
     package:
       include:
