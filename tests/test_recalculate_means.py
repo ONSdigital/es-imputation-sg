@@ -2,18 +2,14 @@
 Tests for Recalculate Means Wrangler.
 """
 import json
-import os
-import sys
 import unittest
 from unittest import mock
 
 import boto3
 import pandas as pd
-from moto import mock_sns, mock_sqs
+from moto import mock_lambda, mock_sns, mock_sqs
 
 import recalculate_means_wrangler  # noqa: E402
-
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 
 
 class TestRecalculateMeans(unittest.TestCase):
@@ -52,8 +48,10 @@ class TestRecalculateMeans(unittest.TestCase):
         """
         cls.mock_os_wrangler_patcher.stop()
 
-    @mock.patch('recalculate_means_wrangler.boto3.client')
-    def test_wrangler(self, mock_lambda):
+    @mock_sqs
+    @mock_lambda
+    @mock_sns
+    def test_wrangler(self):
         """
         mocks functionality of the wrangler:
         - load json file
@@ -62,14 +60,21 @@ class TestRecalculateMeans(unittest.TestCase):
         :return: None.
         """
         with open('tests/fixtures/recalculate_means_input.json') as file:
-            input_data = json.load(file)
+            input_data = file.read()
         with open('tests/fixtures/recalculate_means_method_output.json', "rb") as file:
-            method_output = json.load(file)
+            method_output = json.loads(file.read())
+        with mock.patch('recalculate_means_wrangler.boto3.client') as mock_boto:
+            mocked_client = mock.Mock()
+            mock_boto.return_value = mocked_client
+            mocked_client.receive_message.return_value = {
+                                "Messages": [{"Body": input_data, "ReceiptHandle": 666}]
+                            }
+            # for some reason cannot mock the lambda invoke,
+            # instead mocking the decoding of response
+            with mock.patch('codecs.decode') as mock_lamb:
+                mock_lamb.return_value = input_data
 
-        with mock.patch('json.loads')as json_loads:
-            json_loads.return_value = input_data
-
-            recalculate_means_wrangler.lambda_handler(None, None)
+            recalculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})
 
         # check the output file contains the expected columns and non null values
         payload_dataframe = pd.DataFrame(method_output)
@@ -86,7 +91,6 @@ class TestRecalculateMeans(unittest.TestCase):
         self.assertTrue(required_columns.issubset(set(payload_dataframe.columns)),
                         'Recalculate Means Columns not in the DataFrame.')
         new_columns = payload_dataframe[required_columns]
-
         self.assertFalse(new_columns.isnull().values.any())
 
     def test_wrangler_exception_handling(self):
@@ -96,7 +100,8 @@ class TestRecalculateMeans(unittest.TestCase):
         :param self:
         :return: mock response
         """
-        response = recalculate_means_wrangler.lambda_handler(None, None)
+        response = recalculate_means_wrangler.lambda_handler(None,
+                                                             {"aws_request_id": "666"})
         assert not response['success']
 
     @mock_sqs
@@ -119,9 +124,9 @@ class TestRecalculateMeans(unittest.TestCase):
             recalculate_means_wrangler.os.environ.pop("questions_list")
             response = recalculate_means_wrangler.lambda_handler(
                 {"RuntimeVariables":
-                 {"checkpoint": 123}}, None)
-            assert(response['error'].__contains__(
-                """ValueError: Error validating environment parameters:"""))
+
+                 {"checkpoint": 123}}, {"aws_request_id": "666"})
+            assert """Error validating environment parameters:""" in response['error']
 
     @mock_sns
     def test_sns_messages(self):
@@ -135,7 +140,6 @@ class TestRecalculateMeans(unittest.TestCase):
             topic = sns.create_topic(Name="test_topic")
             topic_arn = topic["TopicArn"]
             recalculate_means_wrangler.send_sns_message(topic_arn,
-                                                        "test_runtype",
                                                         "test_checkpoint")
 
     @mock_sqs
@@ -155,3 +159,84 @@ class TestRecalculateMeans(unittest.TestCase):
                                                     "test_group_id")
         messages = recalculate_means_wrangler.get_sqs_message(queue_url)
         assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
+
+    @mock_sqs
+    def test_no_data_in_queue_error(self):
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+                recalculate_means_wrangler.os.environ,
+                {
+                    "checkpoint": "",
+                    "queue_url": queue_url
+                }
+        ):
+            response = recalculate_means_wrangler.lambda_handler(
+                {"RuntimeVariables":
+                    {"checkpoint": 123}}, {"aws_request_id": "666"})
+            assert 'success' in response
+            assert not response['success']
+            assert "no data in sqs queue" in response['error']
+
+    @mock_sqs
+    def test_client_error(self):
+        response = recalculate_means_wrangler.lambda_handler(
+            {"RuntimeVariables":
+                {"checkpoint": 123}}, {"aws_request_id": "666"})
+        assert 'success' in response
+        assert not response['success']
+        assert "AWS Error" in response['error']
+
+    @mock_sqs
+    def test_attribute_error(self):
+        with open('tests/fixtures/recalculate_means_input.json') as file:
+            input_data = file.read()
+        with mock.patch('recalculate_means_wrangler.boto3.client') as mock_boto:
+            mocked_client = mock.Mock()
+            mock_boto.return_value = mocked_client
+            mocked_client.receive_message.return_value = {
+                                "Messages": [{"Body": input_data, "ReceiptHandle": 666}]
+                            }
+            mocked_client.invoke.return_value = {"Payload": "mike"}
+
+            response = recalculate_means_wrangler.lambda_handler(None,
+                                                                 {"aws_request_id":
+                                                                  "666"})
+        assert 'success' in response
+        assert not response['success']
+        assert "Bad data" in response['error']
+
+    @mock_sqs
+    def test_key_error(self):
+        with open('tests/fixtures/recalculate_means_input.json') as file:
+            input_data = file.read()
+        with mock.patch('recalculate_means_wrangler.boto3.client') as mock_boto:
+            mocked_client = mock.Mock()
+            mock_boto.return_value = mocked_client
+            mocked_client.receive_message.return_value = {
+                                "Messages": [{"F#": input_data, "ReceiptHandle": 666}]
+                            }
+            response = recalculate_means_wrangler.lambda_handler(None,
+                                                                 {"aws_request_id":
+                                                                  "666"})
+        assert 'success' in response
+        assert not response['success']
+        assert "Key Error" in response['error']
+
+    @mock_sqs
+    def test_general_exception(self):
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+                recalculate_means_wrangler.os.environ, {"queue_url": queue_url}
+        ):
+            with mock.patch("recalculate_means_wrangler.boto3.client") as mocked:
+                mocked.side_effect = Exception("SQS Failure")
+                response = recalculate_means_wrangler.lambda_handler(
+                    "", {"aws_request_id": "666"}
+                )
+                assert "success" in response
+                assert response["success"] is False
+                assert "General Error" in response['error']
