@@ -1,25 +1,23 @@
 import json
 import logging
 import os
-import random
 
 import boto3
-import marshmallow
-import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
+from esawsfunctions import funk
+from marshmallow import Schema, fields
 
 
-class InputSchema(marshmallow.Schema):
-    queue_url = marshmallow.fields.Str(required=True)
-    sqs_messageid_name = marshmallow.fields.Str(required=True)
-    arn = marshmallow.fields.Str(required=True)
-    checkpoint = marshmallow.fields.Str(required=True)
-    iqrs_columns = marshmallow.fields.Str(required=True)
-    method_name = marshmallow.fields.Str(required=True)
-
-
-class NoDataInQueueError(Exception):
-    pass
+class InputSchema(Schema):
+    bucket_name = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
+    sqs_messageid_name = fields.Str(required=True)
+    arn = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
+    iqrs_columns = fields.Str(required=True)
+    method_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
+    file_name = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -45,23 +43,24 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
+        bucket_name = config["bucket_name"]
+        queue_url = config["queue_url"]
+        sqs_messageid_name = config["sqs_messageid_name"]
+        method_name = config["method_name"]
+        iqrs_columns = config["iqrs_columns"]
+        checkpoint = config["checkpoint"]
+        arn = config["arn"]
+        incoming_message_group = config["incoming_message_group"]
+        file_name = config["file_name"]
+
         logger.info("Vaildated params")
 
-        #  Reads in Data from SQS Queue
-        response = get_sqs_message(config['queue_url'])
-        if "Messages" not in response:
-            raise NoDataInQueueError("No Messages in queue")
-        message = response['Messages'][0]
-        message_json = json.loads(message['Body'])
-        receipt_handle = message['ReceiptHandle']
+        data, receipt_handler = funk.get_dataframe(queue_url, bucket_name,
+                                                   "means_out.json",
+                                                   incoming_message_group)
+        logger.info("Succesfully retrieved data.")
 
-        logger.info("Succesfully retrieved data from sqs")
-
-        data = pd.DataFrame(message_json)
-
-        logger.info("Input data converted to dataframe")
-
-        for col in config['iqrs_columns'].split(','):
+        for col in iqrs_columns.split(','):
             data[col] = 0
 
         logger.info("IQRS columns succesfully added")
@@ -71,7 +70,7 @@ def lambda_handler(event, context):
         logger.info("Dataframe converted to JSON")
 
         wrangled_data = lambda_client.invoke(
-            FunctionName=config['method_name'],
+            FunctionName=method_name,
             Payload=json.dumps(data_json)
         )
 
@@ -79,31 +78,19 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully invoked method lambda")
 
-        sqs.send_message(
-            QueueUrl=config['queue_url'],
-            MessageBody=json_response,
-            MessageGroupId=config['sqs_messageid_name'],
-            MessageDeduplicationId=str(random.getrandbits(128))
-        )
+        funk.save_data(bucket_name, file_name,
+                       json_response, queue_url, sqs_messageid_name)
 
         logger.info("Successfully sent data to sqs")
 
-        sqs.delete_message(QueueUrl=config['queue_url'], ReceiptHandle=receipt_handle)
-
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handler)
+        funk.delete_data(bucket_name, file_name)
         logger.info("Successfully deleted input data from sqs")
 
-        send_sns_message(config['checkpoint'], sns, config['arn'])
+        funk.send_sns_message(checkpoint, sns, arn)
 
         logger.info("Succesfully sent data to sns")
 
-    except NoDataInQueueError as e:
-        error_message = (
-            "There was no data in sqs queue in:  "
-            + current_module
-            + " |-  | Request ID: "
-            + str(context["aws_request_id"])
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except AttributeError as e:
         error_message = (
             "Bad data encountered in "
@@ -174,34 +161,4 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
         else:
             logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": config['checkpoint']}
-
-
-def send_sns_message(checkpoint, sns, arn):
-    """
-    This function is responsible for sending notifications to the SNS Topic.
-    Notifications will be used to relay information to the BPM.
-    :param checkpoint: Location of process - Type: String.
-    :param sns: boto3 SNS client - Type: boto3.client
-    :param arn: The Address of the SNS topic - Type: String.
-    :return: None.
-    """
-    sns_message = {
-        "success": True,
-        "module": "outlier_aggregation",
-        "checkpoint": checkpoint
-    }
-    sns.publish(
-        TargetArn=arn,
-        Message=json.dumps(sns_message)
-    )
-
-
-def get_sqs_message(queue_url):
-    """
-    Retrieves message from the SQS queue.
-    :param queue_url: The url of the SQS queue. - Type: String.
-    :return: Message from queue - Type: String.
-    """
-    sqs = boto3.client("sqs", region_name="eu-west-2")
-    return sqs.receive_message(QueueUrl=queue_url)
+            return {"success": True, "checkpoint": checkpoint}

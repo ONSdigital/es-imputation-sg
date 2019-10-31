@@ -1,7 +1,6 @@
 import json
 import unittest.mock as mock
 
-import boto3
 import pandas as pd
 from botocore.response import StreamingBody
 from moto import mock_lambda, mock_sqs
@@ -16,6 +15,9 @@ class TestWranglerAndMethod():
     def setup_class(cls):
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'queue_url': 'mock_queue',
+            'bucket_name': 'mock_bucket',
+            'incoming_message_group': 'mock_group',
+            'file_name': 'mock_file',
             'sqs_messageid_name': 'mock_message',
             'arn': 'mock_arn',
             'checkpoint': 'mock_checkpoint',
@@ -34,8 +36,10 @@ class TestWranglerAndMethod():
 
     @mock_sqs
     @mock_lambda
-    def test_wrangler_happy_path(self):
-        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+    @mock.patch("iqrs_wrangler.funk.send_sns_message")
+    @mock.patch("iqrs_wrangler.funk.save_data")
+    def test_wrangler_happy_path(self, mock_me, mock_you):
+        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -45,14 +49,11 @@ class TestWranglerAndMethod():
                     }
                     with open("iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
                             None,
                             {"aws_request_id": "666"},
                         )
-
                         assert "success" in response
                         assert response["success"] is True
 
@@ -76,29 +77,20 @@ class TestWranglerAndMethod():
             assert_frame_equal(response_df, expected_df)
 
     @mock.patch("iqrs_wrangler.boto3")
-    def test_wrangler_general_exception(self, mock_boto):
-        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
-            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                with open("iqrs_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 416503)
-                    }
-                    msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
-                    with mock.patch("iqrs_wrangler.pd.DataFrame") as mocked:
-                        mocked.side_effect = Exception("General exception")
-                        response = iqrs_wrangler.lambda_handler(
-                            None,
-                            {"aws_request_id": "666"}
-                        )
+    @mock.patch("iqrs_wrangler.funk.get_dataframe")
+    def test_wrangler_general_exception(self, mock_boto, mock_squeues):
+        with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+            mock_client.side_effect = Exception()
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+            response = iqrs_wrangler.lambda_handler(
+                None,
+                {"aws_request_id": "666"}
+            )
 
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert """General exception""" in response["error"]
+            assert "success" in response
+            assert response["success"] is False
+            assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
         input_file = "Iqrs_with_columns.json"
@@ -117,27 +109,20 @@ class TestWranglerAndMethod():
 
     @mock_sqs
     @mock_lambda
-    def test_wrangler_key_error(self):
-        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
-            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                with open("iqrs_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 416503)
-                    }
-                    msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
-                    }
-                    response = iqrs_wrangler.lambda_handler(
-                        None,
-                        {"aws_request_id": "666"},
-                    )
+    @mock.patch("iqrs_wrangler.funk.get_dataframe")
+    def test_wrangler_key_error(self, mock_squeues):
+        with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+            mock_client.side_effect = KeyError()
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+            response = iqrs_wrangler.lambda_handler(
+                    None,
+                    {"aws_request_id": "666"},
+                )
 
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert """Key Error""" in response["error"]
+            assert "success" in response
+            assert response["success"] is False
+            assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
         with mock.patch.dict(
@@ -180,24 +165,6 @@ class TestWranglerAndMethod():
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
-    def test_no_data_in_queue(self):
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
-        with mock.patch.dict(
-            iqrs_wrangler.os.environ,
-            {
-                "queue_url": queue_url
-            },
-        ):
-            response = iqrs_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """There was no data in sqs queue in""" in response["error"]
-
-    @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
         with mock.patch.dict(
             iqrs_wrangler.os.environ,
@@ -215,7 +182,7 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_lambda
     def test_wrangles_bad_data(self):
-        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -224,9 +191,7 @@ class TestWranglerAndMethod():
                 }
                 with open("iqrs_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = iqrs_wrangler.lambda_handler(
                         None,
                         {"aws_request_id": "666"},
@@ -239,7 +204,7 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_lambda
     def test_incomplete_read(self):
-        with mock.patch("iqrs_wrangler.get_sqs_message") as mock_squeues:
+        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -249,9 +214,7 @@ class TestWranglerAndMethod():
                     }
                     with open("iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
                             None,
                             {"aws_request_id": "666"},

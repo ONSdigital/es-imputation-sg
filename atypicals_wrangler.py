@@ -20,10 +20,6 @@ class InputSchema(Schema):
     file_name = fields.Str(required=True)
 
 
-class NoDataInQueueError(Exception):
-    pass
-
-
 def lambda_handler(event, context):
     current_module = "Atypicals - Wrangler"
     error_message = ""
@@ -57,7 +53,7 @@ def lambda_handler(event, context):
                                                    "iqrs_out.json",
                                                    incoming_message_group)
 
-        logger.info("Input data converted to dataframe")
+        logger.info("Succesfully retrieved data.")
 
         for col in atypical_columns.split(','):
             data[col] = 0
@@ -82,10 +78,10 @@ def lambda_handler(event, context):
         logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handler)
+        funk.delete_data(bucket_name, file_name)
+        logger.info("Successfully deleted input data.")
 
-        logger.info("Successfully deleted input data from sqs")
-
-        funk.send_sns_message(arn, sns, checkpoint)
+        funk.send_sns_message(checkpoint, sns, arn)
 
         logger.info("Succesfully sent data to sns")
 
@@ -160,34 +156,3 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint}
-
-
-def send_sns_message(arn, sns, checkpoint):
-    """
-    This function is responsible for sending notifications to the SNS Topic.
-    Notifications will be used to relay information to the BPM.
-    :param checkpoint: Location of process - Type: String.
-    :param sns: boto3 SNS client - Type: boto3.client
-    :param arn: The Address of the SNS topic - Type: String.
-    :return: None.
-    """
-    sns_message = {
-        "success": True,
-        "module": "outlier_aggregation",
-        "checkpoint": checkpoint
-    }
-
-    sns.publish(
-        TargetArn=arn,
-        Message=json.dumps(sns_message)
-    )
-
-
-def get_sqs_message(queue_url):
-    """
-    Retrieves message from the SQS queue.
-    :param queue_url: The url of the SQS queue. - Type: String.
-    :return: Message from queue - Type: String.
-    """
-    sqs = boto3.client("sqs", region_name="eu-west-2")
-    return sqs.receive_message(QueueUrl=queue_url)
