@@ -38,14 +38,15 @@ class TestApplyFactors(unittest.TestCase):
             sqs.create_queue(QueueName="test-queue")
             queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
-            messages = lambda_wrangler_function.receive_message(queue_url)
+            messages = lambda_wrangler_function.funk.get_sqs_message(queue_url)
 
             assert len(messages) == 1
 
     @mock_sqs
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
-    def test_sqs_messages_send(self, mock_me, mock_you):
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_sqs_messages_send(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         queue = sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
@@ -60,7 +61,7 @@ class TestApplyFactors(unittest.TestCase):
             sns = boto3.client("sns", region_name="eu-west-2")
             topic = sns.create_topic(Name="bloo")
             topic_arn = topic["TopicArn"]
-            lambda_wrangler_function.funk.send_sns_message(topic_arn, "Gyargh", 3)
+            lambda_wrangler_function.funk.send_sns_message("", topic_arn, "Gyargh")
 
     @mock_sqs
     def test_catch_wrangler_exception(self):
@@ -84,7 +85,7 @@ class TestApplyFactors(unittest.TestCase):
                 "file_name": "Test",
             },
         ):
-            with mock.patch("apply_factors_wrangler.get_from_sqs") as mocked:
+            with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
@@ -151,7 +152,8 @@ class TestApplyFactors(unittest.TestCase):
     @mock_lambda
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
-    def test_wrangles(self, mock_me, mock_you):
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -201,7 +203,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = message, 666
+                mock_client_object.receive_message.return_value = pd.DataFrame(json.loads(message)), 666
 
                 myvar = mock_client_object.send_message.call_args_list
                 with open("tests/fixtures/non_responders_return.json", "rb") as file:
@@ -318,7 +320,8 @@ class TestApplyFactors(unittest.TestCase):
     @mock_lambda
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
-    def test_wrangles_incomplete_data(self, mock_me, mock_you):
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles_incomplete_data(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -368,7 +371,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = message, 666
+                mock_client_object.receive_message.return_value = pd.DataFrame(json.loads(message)), 666
 
                 with open("tests/fixtures/non_responders_return.json", "rb") as file:
 
@@ -390,7 +393,8 @@ class TestApplyFactors(unittest.TestCase):
     @mock_lambda
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
-    def test_wrangles_key_error(self, mock_me, mock_you):
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles_key_error(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -418,7 +422,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = message, 666
+                mock_client_object.receive_message.return_value = pd.DataFrame(json.loads(message)), 666
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
@@ -432,7 +436,8 @@ class TestApplyFactors(unittest.TestCase):
     @mock_lambda
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
-    def test_wrangles_type_error(self, mock_me, mock_you):
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles_type_error(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
