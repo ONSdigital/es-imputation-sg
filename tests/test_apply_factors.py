@@ -257,7 +257,6 @@ class TestApplyFactors(unittest.TestCase):
             response = lambda_method_function.lambda_handler(
                 methodinput, {"aws_request_id": "666"}
             )
-            print(response)
             assert response["error"].__contains__("""Key Error""")
 
     @mock_sqs
@@ -426,7 +425,7 @@ class TestApplyFactors(unittest.TestCase):
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
-                print(response)
+
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Key Error""")
@@ -434,9 +433,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
     @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     def test_wrangles_type_error(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
@@ -460,6 +459,7 @@ class TestApplyFactors(unittest.TestCase):
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
+                mock_everyone.return_value = 66, 666
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 mock_client_object.receive_message.return_value = 66, 666
@@ -467,7 +467,7 @@ class TestApplyFactors(unittest.TestCase):
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
-
+                print(response)
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Bad data type""")

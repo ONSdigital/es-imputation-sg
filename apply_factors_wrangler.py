@@ -68,16 +68,16 @@ def lambda_handler(event, context):
         arn = config["arn"]
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        factors_dataframe, receipt_handle = funk.get_sqs_message(queue_url)
+        factors_dataframe, receipt_handler = funk.get_dataframe(queue_url, bucket_name, "calc_out.json", incoming_message_group)
         logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
-        non_responder_dataframe = funk.get_dataframe(queue_url, bucket_name, "non_responders_output.json", incoming_message_group)
+        non_responder_dataframe = funk.read_dataframe_from_s3(bucket_name, "non_responders_output.json")
 
         logger.info("Successfully retrieved non-responder data from s3")
 
         # Read in previous period data for current period non-responders
-        prev_period_data = funk.get_dataframe(queue_url, bucket_name, s3_file, incoming_message_group)
+        prev_period_data = funk.read_dataframe_from_s3(bucket_name, s3_file)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
