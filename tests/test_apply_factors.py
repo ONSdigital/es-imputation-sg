@@ -9,7 +9,7 @@ import pandas as pd
 from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 
 import apply_factors_method as lambda_method_function
-import apply_factors_wrangler as lambda_wrangler_function
+import apply_factors_wrangler
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 
@@ -18,7 +18,7 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     def test_get_sqs(self):
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "mike",
@@ -38,7 +38,7 @@ class TestApplyFactors(unittest.TestCase):
             sqs.create_queue(QueueName="test-queue")
             queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
-            messages = lambda_wrangler_function.funk.get_sqs_message(queue_url)
+            messages = apply_factors_wrangler.funk.get_sqs_message(queue_url)
 
             assert len(messages) == 1
 
@@ -50,18 +50,18 @@ class TestApplyFactors(unittest.TestCase):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         queue = sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        lambda_wrangler_function.funk.save_data("bucket_name", "file_name", "message", queue_url, "")
+        apply_factors_wrangler.funk.save_data("bucket_name", "file_name", "message", queue_url, "")
 
         messages = queue.receive_messages()
         assert len(messages) == 1
 
     @mock_sns
     def test_sns_send(self):
-        with mock.patch.dict(lambda_wrangler_function.os.environ, {"arn": "mike"}):
+        with mock.patch.dict(apply_factors_wrangler.os.environ, {"arn": "mike"}):
             sns = boto3.client("sns", region_name="eu-west-2")
             topic = sns.create_topic(Name="bloo")
             topic_arn = topic["TopicArn"]
-            lambda_wrangler_function.funk.send_sns_message("", topic_arn, "Gyargh")
+            apply_factors_wrangler.funk.send_sns_message("", topic_arn, "Gyargh")
 
     @mock_sqs
     def test_catch_wrangler_exception(self):
@@ -70,7 +70,7 @@ class TestApplyFactors(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "mike",
@@ -87,7 +87,7 @@ class TestApplyFactors(unittest.TestCase):
         ):
             with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
-                response = lambda_wrangler_function.lambda_handler(
+                response = apply_factors_wrangler.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
                 assert "success" in response
@@ -99,7 +99,7 @@ class TestApplyFactors(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ, {"queue_url": queue_url}
+            apply_factors_wrangler.os.environ, {"queue_url": queue_url}
         ):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
@@ -161,7 +161,7 @@ class TestApplyFactors(unittest.TestCase):
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
-            lambda_wrangler_function.funk.save_data("bucket_name", "file_name", message, queue_url, "")
+            apply_factors_wrangler.funk.save_data("bucket_name", "file_name", message, queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
@@ -183,7 +183,7 @@ class TestApplyFactors(unittest.TestCase):
         )
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -211,7 +211,7 @@ class TestApplyFactors(unittest.TestCase):
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 1317)
                     }
-                    response = lambda_wrangler_function.lambda_handler("", None)
+                    response = apply_factors_wrangler.lambda_handler("", None)
                     output = myvar[0][1]["MessageBody"]
                     outputdf = pd.DataFrame(json.loads(output))
                     outputdf = outputdf[outputdf["response_type"] == 1]
@@ -224,7 +224,7 @@ class TestApplyFactors(unittest.TestCase):
     def test_method(self):
         methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -238,7 +238,7 @@ class TestApplyFactors(unittest.TestCase):
     def test_attribute_error_method(self):
         methodinput = "Potatoes"
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -251,7 +251,7 @@ class TestApplyFactors(unittest.TestCase):
         methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
         methodinput.rename(columns={"prev_Q601_asphalting_sand": "Mike"}, inplace=True)
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -265,7 +265,7 @@ class TestApplyFactors(unittest.TestCase):
         methodinput["prev_Q601_asphalting_sand"] = "MIKE"
         methodinput["imputation_factor_Q601_asphalting_sand"] = "MIIIKE!"
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -280,10 +280,10 @@ class TestApplyFactors(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"checkpoint": "1", "queue_url": queue_url},
         ):
-            out = lambda_wrangler_function.lambda_handler(
+            out = apply_factors_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             self.assertRaises(ValueError)
@@ -292,7 +292,7 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     def test_wrangles_fail_to_get_from_sqs(self):
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -307,7 +307,7 @@ class TestApplyFactors(unittest.TestCase):
                 "file_name": "Test",
             },
         ):
-            response = lambda_wrangler_function.lambda_handler(
+            response = apply_factors_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             assert "success" in response
@@ -328,7 +328,7 @@ class TestApplyFactors(unittest.TestCase):
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
-            lambda_wrangler_function.funk.save_data("s3", "file_name", message, queue_url, "")
+            apply_factors_wrangler.funk.save_data("s3", "file_name", message, queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
@@ -350,7 +350,7 @@ class TestApplyFactors(unittest.TestCase):
         )
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -377,7 +377,7 @@ class TestApplyFactors(unittest.TestCase):
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 1)
                     }
-                    response = lambda_wrangler_function.lambda_handler(
+                    response = apply_factors_wrangler.lambda_handler(
                         "", {"aws_request_id": "666"}
                     )
 
@@ -402,7 +402,7 @@ class TestApplyFactors(unittest.TestCase):
             message = file.read()
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -422,7 +422,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 mock_client_object.receive_message.return_value = pd.DataFrame(json.loads(message)), 666
-                response = lambda_wrangler_function.lambda_handler(
+                response = apply_factors_wrangler.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
 
@@ -436,13 +436,13 @@ class TestApplyFactors(unittest.TestCase):
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
     @mock.patch("apply_factors_wrangler.funk.save_to_s3")
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
-    def test_wrangles_type_error(self, mock_me, mock_you, mock_everyone):
+    def test_wrangles_type_error(self, mock_me, mock_you, mock_all):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -459,15 +459,16 @@ class TestApplyFactors(unittest.TestCase):
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                mock_everyone.return_value = 66, 666
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = 66, 666
+                with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mock_everyone:
+                    mock_everyone.return_value = 66, 666
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+                    mock_client_object.receive_message.return_value = 66, 666
 
-                response = lambda_wrangler_function.lambda_handler(
-                    "", {"aws_request_id": "666"}
-                )
-                print(response)
-                assert "success" in response
-                assert response["success"] is False
-                assert response["error"].__contains__("""Bad data type""")
+                    response = apply_factors_wrangler.lambda_handler(
+                        "", {"aws_request_id": "666"}
+                    )
+                    print(response)
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert response["error"].__contains__("""Bad data type""")
