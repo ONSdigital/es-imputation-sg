@@ -1,11 +1,9 @@
-import json
 import logging
 import os
-import random
 
 import boto3
-import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
+from esawsfunctions import funk
 from marshmallow import Schema, fields
 
 
@@ -16,10 +14,9 @@ class EnvironSchema(Schema):
     sqs_messageid_name = fields.Str(required=True)
     method_name = fields.Str(required=True)
     questions = fields.Str(required=True)
-
-
-class NoDataInQueueError(Exception):
-    pass
+    incoming_message_group = fields.Str(required=True)
+    file_name = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -35,7 +32,7 @@ def lambda_handler(event, context):
     error_message = ""
     log_message = ""
     logger = logging.getLogger("CalculateFactors")
-    logger.setLevel(10)
+    logger.setLevel(logging.INFO)
     try:
         logger.info("Calculate Factors Wrangler Begun")
         schema = EnvironSchema()
@@ -45,10 +42,9 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
-        # environment variables
         sqs = boto3.client("sqs")
         lambda_client = boto3.client("lambda")
-
+        # environment variables
         queue_url = config["queue_url"]
         sqs_messageid_name = config["sqs_messageid_name"]
 
@@ -56,21 +52,15 @@ def lambda_handler(event, context):
         questions = config["questions"]
         checkpoint = config["checkpoint"]
         arn = config["arn"]
+        incoming_message_group = config['incoming_message_group']
+        file_name = config['file_name']
+        bucket_name = config['bucket_name']
 
-        # read in data from the sqs queue
-        response = sqs.receive_message(QueueUrl=queue_url)
-        if "Messages" not in response:
-            raise NoDataInQueueError("No Messages in queue")
+        data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
+                                                  "recalc_out.json",
+                                                  incoming_message_group)
 
-        message = response["Messages"][0]
-        message_json = json.loads(message["Body"])
-
-        # reciept handler used to clear sqs queue
-        receipt_handle = message["ReceiptHandle"]
-
-        logger.info("Successfully retrieved data from sqs")
-
-        data = pd.DataFrame(message_json)
+        logger.info("Successfully retrieved data")
 
         # create df columns needed for method
         for question in questions.split(" "):
@@ -87,23 +77,21 @@ def lambda_handler(event, context):
 
         logger.info("Successfully invoked lambda")
 
-        # send data to sqs queue
-        send_sqs_message(queue_url, json.loads(json_response), sqs_messageid_name)
+        funk.save_data(bucket_name, file_name,
+                       json_response, queue_url, sqs_messageid_name)
+
         logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
         logger.info("Successfully deleted input data from sqs")
 
-        send_sns_message(arn, "Imputation Factors Calculated", checkpoint)
+        logger.info(funk.delete_data(bucket_name, "recalc_out.json"))
+
+        imputation_run_type = "Imputation Factors Calculated successfully."
+
+        funk.send_sns_message(checkpoint, arn, imputation_run_type)
         logger.info("Successfully sent data to sns")
-    except NoDataInQueueError as e:
-        error_message = (
-            "There was no data in sqs queue in:  "
-            + current_module
-            + " |-  | Request ID: "
-            + str(context["aws_request_id"])
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+
     except ValueError as e:
         error_message = (
             "Parameter validation error"
@@ -165,44 +153,3 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint}
-
-
-def send_sns_message(arn, imputation_run_type, checkpoint):
-    """
-    This function is responsible for sending notifications to the SNS Topic.
-    :param arn: The address of the sns topic - String
-    :param imputation_run_type: A message indicating
-            where in the process we are. - String
-    :param checkpoint: Current location in imputation process.
-    :return:
-    """
-
-    sns = boto3.client("sns")
-
-    sns_message = {
-        "success": True,
-        "module": "Imputation Calculate Imputation Factors",
-        "checkpoint": checkpoint,
-        "message": imputation_run_type,
-    }
-
-    sns.publish(TargetArn=arn, Message=json.dumps(sns_message))
-
-
-def send_sqs_message(queue_url, message, output_message_id):
-    """
-    This method is responsible for sending data to the SQS queue.
-
-    :param queue_url: The url of the SQS queue. - Type: String.
-    :param message: The message/data you wish to send to the SQS queue - Type: String.
-    :param output_message_id: The label of the record in the SQS queue - Type: String
-    :return: None
-    """
-    sqs = boto3.client("sqs")
-
-    return sqs.send_message(
-        QueueUrl=queue_url,
-        MessageBody=message,
-        MessageGroupId=output_message_id,
-        MessageDeduplicationId=str(random.getrandbits(128)),
-    )

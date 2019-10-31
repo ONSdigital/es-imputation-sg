@@ -75,6 +75,8 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted input data from sqs")
 
+        logger.info(funk.delete_data(bucket_name, "movement_out.json"))
+
         imputation_run_type = "Calculate Means was run successfully."
 
         funk.send_sns_message(checkpoint, arn, imputation_run_type)
