@@ -85,6 +85,8 @@ def lambda_handler(event, context):
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
         logger.info("Successfully deleted input data from sqs")
 
+        logger.info(funk.delete_data(bucket_name, "recalc_out.json"))
+
         imputation_run_type = "Imputation Factors Calculated successfully."
 
         funk.send_sns_message(checkpoint, arn, imputation_run_type)
