@@ -81,7 +81,7 @@ def lambda_handler(event, context):
         funk.delete_data(bucket_name, file_name)
         logger.info("Successfully deleted input data.")
 
-        funk.send_sns_message(checkpoint, sns, arn)
+        logger.info(funk.send_sns_message(checkpoint, sns, arn))
 
         logger.info("Succesfully sent data to sns")
 

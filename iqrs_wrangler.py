@@ -84,7 +84,7 @@ def lambda_handler(event, context):
         logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handler)
-        funk.delete_data(bucket_name, file_name)
+        logger.info(funk.delete_data(bucket_name, "means.json"))
         logger.info("Successfully deleted input data from sqs")
 
         funk.send_sns_message(checkpoint, sns, arn)

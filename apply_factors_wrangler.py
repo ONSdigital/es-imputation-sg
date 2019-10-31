@@ -1,90 +1,12 @@
 import json
 import logging
 import os
-import random
 
 import boto3
 import pandas as pd
+from esawsfunctions import funk
 from botocore.exceptions import ClientError, IncompleteReadError
 from marshmallow import Schema, fields
-
-
-def get_from_sqs(queue_url):
-    """
-    Gets and formats data from sqs queue
-    :param queue_url: Name of sqs queue  - String
-    :return: factors_dataframe: Data from previous step - Dataframe
-             receipt_handle : The id of the sqs message, used to
-                    delete from queue at the end of the process - String
-    """
-
-    response = receive_message(queue_url)
-    if "Messages" not in response:
-        raise NoDataInQueueError("No Messages in queue")
-    message = response["Messages"][0]
-    message_json = json.loads(message["Body"])
-    factors_dataframe = pd.DataFrame(message_json)
-    # Used for clearing the Queue
-    receipt_handle = message["ReceiptHandle"]
-
-    return factors_dataframe, receipt_handle
-
-
-def receive_message(queue_url):
-    """
-    Gets the raw sqs response.
-    :param queue_url: Name of sqs queue - String
-    :return: response: unprocessed(raw) sqs message - Dict
-    """
-
-    sqs = boto3.client("sqs", region_name="eu-west-2")
-    return sqs.receive_message(QueueUrl=queue_url)
-
-
-def delete_sqs_message(sqs, queue_url, receipt_handle):
-    """
-    Deletes a specified sqs message from the queue
-    :param sqs: SQS client for use in interacting with sqs - Boto3 client(SQS)
-    :param queue_url: Name of sqs queue - String
-    :param receipt_handle: The id of the sqs message,
-                                used to delete from queue  - String
-    :return: None
-    """
-    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-
-
-def send_output_to_sqs(queue_url, message, output_message_id, receipt_handle):
-    """
-        Handles sending output data at end of module, and deleting input data from queue
-        :param queue_url: Name of sqs queue - String
-        :param message: Message to send to sqs, string(json) representation of
-                                output dataframe  - String
-        :param output_message_id: ID of the message to be sent  - String
-        :param receipt_handle: The id of the sqs message, used to
-                                    delete from queue  - String
-        :return: None
-    """
-    sqs = boto3.client("sqs", region_name="eu-west-2")
-    send_sqs_message(sqs, queue_url, message, output_message_id)
-    delete_sqs_message(sqs, queue_url, receipt_handle)
-
-
-def send_sqs_message(sqs, queue_url, message, output_message_id):
-    """
-    This method is responsible for sending data to the SQS queue.
-    :param sqs: SQS client for use in interacting with sqs  - Boto3 client(SQS)
-    :param queue_url: The url of the SQS queue. - String.
-    :param message: The message/data you wish to send to the SQS queue - String.
-    :param output_message_id: The label of the record in the SQS queue - String.
-    :return: None
-    """
-
-    sqs.send_message(
-        QueueUrl=queue_url,
-        MessageBody=message,
-        MessageGroupId=output_message_id,
-        MessageDeduplicationId=str(random.getrandbits(128)),
-    )
 
 
 class EnvironSchema(Schema):
@@ -97,7 +19,8 @@ class EnvironSchema(Schema):
     queue_url = fields.Str(required=True)
     s3_file = fields.Str(required=True)
     sqs_messageid_name = fields.Str(required=True)
-
+    incoming_message_group = fields.Str(required=True)
+    file_name = fields.Str(required=True)
 
 class NoDataInQueueError(Exception):
     pass
@@ -134,6 +57,8 @@ def lambda_handler(event, context):
         sqs_messageid_name = config["sqs_messageid_name"]
 
         #
+        incoming_message_group = config["incoming_message_group"]
+        file_name = config["file_name"]
         checkpoint = config["checkpoint"]
         current_period = config["period"]
         method_name = config["method_name"]
@@ -143,17 +68,16 @@ def lambda_handler(event, context):
         arn = config["arn"]
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        factors_dataframe, receipt_handle = get_from_sqs(queue_url)
+        factors_dataframe, receipt_handle = funk.get_sqs_message(queue_url)
         logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
-        non_responder_dataframe = pd.DataFrame(
-            read_data_from_s3(bucket_name, non_responder_data_file)
-        )
+        non_responder_dataframe = funk.get_dataframe(queue_url, bucket_name, "non_responders_output.json", incoming_message_group)
+
         logger.info("Successfully retrieved non-responder data from s3")
 
         # Read in previous period data for current period non-responders
-        prev_period_data = pd.DataFrame(read_data_from_s3(bucket_name, s3_file))
+        prev_period_data = funk.get_dataframe(queue_url, bucket_name, s3_file, incoming_message_group)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
@@ -231,18 +155,12 @@ def lambda_handler(event, context):
         imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient="records")
 
-        send_output_to_sqs(queue_url, message, sqs_messageid_name, receipt_handle)
+        funk.save_data(bucket_name, file_name, message, queue_url, sqs_messageid_name)
         logger.info("Successfully sent to sqs")
-        send_sns_message(arn, imputation_run_type, checkpoint)
+        funk.send_sns_message(checkpoint, imputation_run_type, arn)
         logger.info("Successfully sent to sns")
-    except NoDataInQueueError as e:
-        error_message = (
-            "There was no data in sqs queue in:  "
-            + current_module
-            + " |-  | Request ID: "
-            + str(context["aws_request_id"])
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        logger.info(funk.delete_data(bucket_name, file_name))
+
     except TypeError as e:
         error_message = (
             "Bad data type encountered in "
@@ -314,39 +232,3 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint}
-
-
-def send_sns_message(arn, imputation_run_type, checkpoint):
-    """
-    This method is responsible for sending a notification to the specified arn,
-     so that it can be used to relay information for the BPM to use and handle.
-    :param arn: Address of the sns topic. - String
-    :param imputation_run_type: A flag to see if imputation ran or not - String.
-    :param checkpoint: Current location of process. - Int
-    :return: None
-    """
-    sns = boto3.client("sns", region_name="eu-west-2")
-
-    sns_message = {
-        "success": True,
-        "module": "Imputation",
-        "checkpoint": checkpoint,
-        "message": imputation_run_type,
-    }
-
-    sns.publish(TargetArn=arn, Message=json.dumps(sns_message))
-
-
-def read_data_from_s3(bucket_name, s3_file):
-    """
-    This method is used to retrieve data from an s3 bucket.
-    :param bucket_name: The name of the bucket you are accessing.
-    :param s3_file: The file you wish to import.
-    :return: json_file: - JSON.
-    """
-    s3 = boto3.resource("s3", region_name="eu-west-2")
-    object = s3.Object(bucket_name, s3_file)
-    content = object.get()["Body"].read()
-    json_file = json.loads(content)
-
-    return json_file

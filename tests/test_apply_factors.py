@@ -29,6 +29,8 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": "test-queue",
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
 
@@ -41,11 +43,13 @@ class TestApplyFactors(unittest.TestCase):
             assert len(messages) == 1
 
     @mock_sqs
-    def test_sqs_messages_send(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    def test_sqs_messages_send(self, mock_me, mock_you):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         queue = sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        lambda_wrangler_function.send_output_to_sqs(queue_url, "", "", "")
+        lambda_wrangler_function.funk.save_data("bucket_name", "file_name", "message", queue_url, "")
 
         messages = queue.receive_messages()
         assert len(messages) == 1
@@ -56,7 +60,7 @@ class TestApplyFactors(unittest.TestCase):
             sns = boto3.client("sns", region_name="eu-west-2")
             topic = sns.create_topic(Name="bloo")
             topic_arn = topic["TopicArn"]
-            lambda_wrangler_function.send_sns_message(topic_arn, "Gyargh", 3)
+            lambda_wrangler_function.funk.send_sns_message(topic_arn, "Gyargh", 3)
 
     @mock_sqs
     def test_catch_wrangler_exception(self):
@@ -76,6 +80,8 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": queue_url,
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
             with mock.patch("apply_factors_wrangler.get_from_sqs") as mocked:
@@ -143,7 +149,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    def test_wrangles(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    def test_wrangles(self, mock_me, mock_you):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -151,7 +159,7 @@ class TestApplyFactors(unittest.TestCase):
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
-            lambda_wrangler_function.send_output_to_sqs(queue_url, message, "testy", "")
+            lambda_wrangler_function.funk.save_data("bucket_name", "file_name", message, queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
@@ -184,6 +192,8 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": queue_url,
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
             from botocore.response import StreamingBody
@@ -191,9 +201,8 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": message, "ReceiptHandle": "666"}]
-                }
+                mock_client_object.receive_message.return_value = message, 666
+
                 myvar = mock_client_object.send_message.call_args_list
                 with open("tests/fixtures/non_responders_return.json", "rb") as file:
 
@@ -234,33 +243,6 @@ class TestApplyFactors(unittest.TestCase):
                 methodinput, {"aws_request_id": "666"}
             )
             assert response["error"].__contains__("""Input Error""")
-
-    @mock_sqs
-    def test_no_data_in_queue(self):
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
-        with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
-            {
-                "arn": "mike",
-                "bucket_name": "MIKE",
-                "checkpoint": "3",
-                "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
-                "period": "201809",
-                "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
-                "sqs_messageid_name": "apply_factors_out",
-            },
-        ):
-            response = lambda_wrangler_function.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
-            )
-            assert "success" in response
-            assert response["success"] is False
-            print(response["error"])
-            assert response["error"].__contains__("""no data in sqs queue""")
 
     @mock_sqs
     def test_key_error_method(self):
@@ -320,6 +302,8 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": "Sausages",
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
             response = lambda_wrangler_function.lambda_handler(
@@ -332,7 +316,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    def test_wrangles_incomplete_data(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    def test_wrangles_incomplete_data(self, mock_me, mock_you):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -340,7 +326,7 @@ class TestApplyFactors(unittest.TestCase):
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
-            lambda_wrangler_function.send_output_to_sqs(queue_url, message, "testy", "")
+            lambda_wrangler_function.funk.save_data("s3", "file_name", message, queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
@@ -373,6 +359,8 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": queue_url,
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
             from botocore.response import StreamingBody
@@ -380,9 +368,8 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": message, "ReceiptHandle": "666"}]
-                }
+                mock_client_object.receive_message.return_value = message, 666
+
                 with open("tests/fixtures/non_responders_return.json", "rb") as file:
 
                     mock_client_object.invoke.return_value = {
@@ -401,7 +388,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    def test_wrangles_key_error(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    def test_wrangles_key_error(self, mock_me, mock_you):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -421,15 +410,15 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": queue_url,
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Mike": message, "ReceiptHandle": "666"}]
-                }
+                mock_client_object.receive_message.return_value = message, 666
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
@@ -441,7 +430,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    def test_wrangles_type_error(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    def test_wrangles_type_error(self, mock_me, mock_you):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -458,15 +449,16 @@ class TestApplyFactors(unittest.TestCase):
                 "queue_url": queue_url,
                 "s3_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "file_name": "Test",
             },
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": 66, "ReceiptHandle": "666"}]
-                }
+                mock_client_object.receive_message.return_value = 66, 666
+
                 response = lambda_wrangler_function.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
