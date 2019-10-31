@@ -58,7 +58,6 @@ class TestClass():
                             None,
                             {"aws_request_id": "666"},
                         )
-                        print(response)
                         assert "success" in response
                         assert response["success"] is True
 
