@@ -139,6 +139,7 @@ def lambda_handler(event, context):
         output_file = config['output_file']
         file_name = config['file_name']
         incoming_message_group = config['incoming_message_group']
+        s3_file = config['s3_file']
 
         # Import for strata miss-match
         reference = config['reference']  # Set as "responder_id"
@@ -151,7 +152,7 @@ def lambda_handler(event, context):
         # Set as "previous_strata"
         previous_segmentation = config['previous_segmentation']
 
-        previous_period_data = funk.read_dataframe_from_s3(bucket_name, file_name)
+        previous_period_data = funk.read_dataframe_from_s3(bucket_name, s3_file)
         logger.info("Completed reading data from s3")
 
         data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
