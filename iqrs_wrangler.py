@@ -17,7 +17,8 @@ class InputSchema(Schema):
     iqrs_columns = fields.Str(required=True)
     method_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    file_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -51,12 +52,13 @@ def lambda_handler(event, context):
         checkpoint = config["checkpoint"]
         arn = config["arn"]
         incoming_message_group = config["incoming_message_group"]
-        file_name = config["file_name"]
+        in_file_name = config["in_file_name"]
+        out_file_name = config["out_file_name"]
 
         logger.info("Vaildated params")
 
         data, receipt_handler = funk.get_dataframe(queue_url, bucket_name,
-                                                   "means_out.json",
+                                                   in_file_name,
                                                    incoming_message_group)
         logger.info("Succesfully retrieved data.")
 
@@ -78,15 +80,14 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully invoked method lambda")
 
-        funk.save_data(bucket_name, file_name,
+        funk.save_data(bucket_name, out_file_name,
                        json_response, queue_url, sqs_messageid_name)
 
         logger.info("Successfully sent data to sqs")
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handler)
-        logger.info(funk.delete_data(bucket_name, "means.json"))
+        logger.info(funk.delete_data(bucket_name, in_file_name))
         logger.info("Successfully deleted input data from sqs")
-
         funk.send_sns_message(checkpoint, sns, arn)
 
         logger.info("Succesfully sent data to sns")

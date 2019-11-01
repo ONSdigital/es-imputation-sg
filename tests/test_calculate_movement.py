@@ -66,7 +66,8 @@ class TestStringMethods(unittest.TestCase):
             'current_segmentation': 'current_strata',
             'previous_segmentation': 'previous_strata',
             'incoming_message_group': 'bananas',
-            'file_name': 'le file'
+            'in_file_name': 'Test',
+            'out_file_name': 'Test',
         }):
 
             # using get_from_s3 to force exception early on.
@@ -168,7 +169,8 @@ class TestStringMethods(unittest.TestCase):
             'current_segmentation': 'current_strata',
             'previous_segmentation': 'previous_strata',
             'incoming_message_group': 'bananas',
-            'file_name': 'le file'
+            'in_file_name': 'Test',
+            'out_file_name': 'Test',
             }
         ):
             # Removing the previous_period to allow for test of missing parameter
@@ -209,7 +211,8 @@ class TestStringMethods(unittest.TestCase):
                 'current_segmentation': 'current_strata',
                 'previous_segmentation': 'previous_strata',
                 'incoming_message_group': 'bananas',
-                'file_name': 'le file'
+                'in_file_name': 'Test',
+                'out_file_name': 'Test',
             },
         ):
             response = calculate_movement_wrangler.lambda_handler(

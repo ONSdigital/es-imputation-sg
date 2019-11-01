@@ -4,8 +4,8 @@ import os
 
 import boto3
 import pandas as pd
-from esawsfunctions import funk
 from botocore.exceptions import ClientError, IncompleteReadError
+from esawsfunctions import funk
 from marshmallow import Schema, fields
 
 
@@ -17,13 +17,11 @@ class EnvironSchema(Schema):
     non_responder_file = fields.Str(required=True)
     period = fields.Str(required=True)
     queue_url = fields.Str(required=True)
-    s3_file = fields.Str(required=True)
+    previous_data_file = fields.Str(required=True)
     sqs_messageid_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    file_name = fields.Str(required=True)
-
-class NoDataInQueueError(Exception):
-    pass
+    in_file_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -58,26 +56,29 @@ def lambda_handler(event, context):
 
         #
         incoming_message_group = config["incoming_message_group"]
-        file_name = config["file_name"]
+        in_file_name = config["in_file_name"]
+        out_file_name = config["out_file_name"]
         checkpoint = config["checkpoint"]
         current_period = config["period"]
         method_name = config["method_name"]
         #
 
-        s3_file = config["s3_file"]
+        previous_data_file = config["previous_data_file"]
         arn = config["arn"]
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        factors_dataframe, receipt_handler = funk.get_dataframe(queue_url, bucket_name, "calc_out.json", incoming_message_group)
+        factors_dataframe, receipt_handler = funk.get_dataframe(
+            queue_url, bucket_name, in_file_name, incoming_message_group)
         logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
-        non_responder_dataframe = funk.read_dataframe_from_s3(bucket_name, "non_responders_output.json")
+        non_responder_dataframe = funk.read_dataframe_from_s3(
+            bucket_name, non_responder_data_file)
 
         logger.info("Successfully retrieved non-responder data from s3")
 
         # Read in previous period data for current period non-responders
-        prev_period_data = funk.read_dataframe_from_s3(bucket_name, s3_file)
+        prev_period_data = funk.read_dataframe_from_s3(bucket_name, previous_data_file)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
@@ -155,11 +156,12 @@ def lambda_handler(event, context):
         imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient="records")
 
-        funk.save_data(bucket_name, file_name, message, queue_url, sqs_messageid_name)
+        funk.save_data(bucket_name, out_file_name, message,
+                       queue_url, sqs_messageid_name)
         logger.info("Successfully sent to sqs")
         funk.send_sns_message(checkpoint, imputation_run_type, arn)
         logger.info("Successfully sent to sns")
-        logger.info(funk.delete_data(bucket_name, file_name))
+        logger.info(funk.delete_data(bucket_name, in_file_name))
 
     except TypeError as e:
         error_message = (

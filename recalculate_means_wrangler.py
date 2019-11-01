@@ -18,7 +18,8 @@ class EnvironSchema(Schema):
     questions_list = fields.Str(required=True)
     sqs_messageid_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    file_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
 
 
@@ -58,12 +59,13 @@ def lambda_handler(event, context):
         method_name = config["method_name"]
         questions_list = config["questions_list"]
         sqs_messageid_name = config["sqs_messageid_name"]
-        file_name = config['file_name']
+        in_file_name = config["in_file_name"]
+        out_file_name = config["out_file_name"]
         incoming_message_group = config['incoming_message_group']
         bucket_name = config['bucket_name']
 
         data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
-                                                  "atypicals_out.json",
+                                                  in_file_name,
                                                   incoming_message_group)
 
         logger.info("Successfully retrieved data")
@@ -85,7 +87,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully invoked lambda")
 
-        funk.save_data(bucket_name, file_name,
+        funk.save_data(bucket_name, out_file_name,
                        json_response, queue_url, sqs_messageid_name)
 
         logger.info("Successfully sent data to sqs")
@@ -94,7 +96,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted input data from sqs")
 
-        logger.info(funk.delete_data(bucket_name, "atypicals_out.json"))
+        logger.info(funk.delete_data(bucket_name, in_file_name))
 
         imputation_run_type = "Recalculate Means was run successfully."
 

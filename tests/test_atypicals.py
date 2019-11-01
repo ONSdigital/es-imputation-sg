@@ -29,7 +29,8 @@ class TestClass():
                 'bucket_name': 'mock_bucket',
                 'input_data': 'mock_data',
                 'incoming_message_group': 'mock_group',
-                'file_name': 'mock_file'
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             }
         )
         cls.mock_os = cls.mock_os_patcher.start()

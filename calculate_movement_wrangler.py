@@ -33,7 +33,8 @@ class EnvironSchema(Schema):
     current_segmentation = fields.Str(required=True)
     previous_segmentation = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    file_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
 
 
 def strata_mismatch_detector(data, current_period, time, reference, segmentation,
@@ -137,7 +138,8 @@ def lambda_handler(event, context):
         response_type = config['response_type']  # Set as "response_type"
         questions_list = config['questions_list']
         output_file = config['output_file']
-        file_name = config['file_name']
+        in_file_name = config["in_file_name"]
+        out_file_name = config["out_file_name"]
         incoming_message_group = config['incoming_message_group']
         s3_file = config['s3_file']
 
@@ -156,7 +158,7 @@ def lambda_handler(event, context):
         logger.info("Completed reading data from s3")
 
         data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
-                                                  "strata_out.json",
+                                                  in_file_name,
                                                   incoming_message_group)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
@@ -215,7 +217,7 @@ def lambda_handler(event, context):
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
 
             imputation_run_type = "Calculate movement was ran successfully"
-            funk.save_data(bucket_name, file_name,
+            funk.save_data(bucket_name, out_file_name,
                            json_response, queue_url, sqs_messageid_name)
 
             logger.info("Successfully sent the data to SQS")
@@ -225,7 +227,7 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Imputation was not ran"
             anomalies = pd.DataFrame
-            funk.save_data(bucket_name, file_name, data, queue_url, sqs_messageid_name)
+            funk.save_data(bucket_name, in_file_name, data, queue_url, sqs_messageid_name)
 
             logger.info("Successfully sent the unchanged data to SQS")
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)

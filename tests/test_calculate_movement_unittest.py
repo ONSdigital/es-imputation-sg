@@ -42,7 +42,8 @@ class TestClass(unittest.TestCase):
             'current_segmentation': 'current_strata',
             'previous_segmentation': 'previous_strata',
             'incoming_message_group': 'bananas',
-            'file_name': 'le file'
+            'in_file_name': 'Test',
+            'out_file_name': 'Test',
         })
         cls.mock_os = cls.mock_os_patcher.start()
 

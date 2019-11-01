@@ -53,7 +53,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "queue_url": "mock_queue",
                 "sqs_messageid_name": "mock_message",
                 "incoming_message_group": "I am GROOP",
-                "file_name": "filestine",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
                 "bucket_name": "Mike"
             },
         )
