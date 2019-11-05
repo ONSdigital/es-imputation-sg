@@ -33,7 +33,6 @@ def lambda_handler(event, context):
     error_message = ""
     log_message = ""
     logger = logging.getLogger("CalculateFactors")
-    logger.setLevel(logging.INFO)
     try:
         logger.info("Calculate Factors Wrangler Begun")
         schema = EnvironSchema()
