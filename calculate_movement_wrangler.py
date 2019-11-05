@@ -108,7 +108,6 @@ def lambda_handler(event, context):
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler"
     logger = logging.getLogger("Starting " + current_module)
-    logger.setLevel(logging.INFO)
     error_message = ''
     log_message = ''
     checkpoint = 0
