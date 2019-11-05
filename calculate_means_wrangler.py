@@ -46,9 +46,9 @@ def lambda_handler(event, context):
         sqs_messageid_name = config['sqs_messageid_name']
         checkpoint = config['checkpoint']
         arn = config['arn']
-        
+
         logger.info("Validated params")
-        
+
         data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
                                                   in_file_name,
                                                   incoming_message_group)
