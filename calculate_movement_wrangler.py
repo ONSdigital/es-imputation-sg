@@ -1,17 +1,12 @@
 import json
 import logging
 import os
-import random
 
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
+from esawsfunctions import funk
 from marshmallow import Schema, fields
-
-# Set up clients
-s3 = boto3.resource('s3')
-sqs = boto3.client('sqs', region_name='eu-west-2')
-sns = boto3.client('sns', region_name='eu-west-2')
 
 
 class EnvironSchema(Schema):
@@ -37,10 +32,9 @@ class EnvironSchema(Schema):
     previous_time = fields.Str(required=True)
     current_segmentation = fields.Str(required=True)
     previous_segmentation = fields.Str(required=True)
-
-
-class NoDataInQueueError(Exception):
-    pass
+    incoming_message_group = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
 
 
 def strata_mismatch_detector(data, current_period, time, reference, segmentation,
@@ -127,12 +121,11 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
-        # Needs to be declared inside of the lambda handler
+        # Set up clients
+        sqs = boto3.client('sqs', region_name='eu-west-2')
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
-
         logger.info("Setting-up environment configs")
 
-        s3_file = config['s3_file']
         bucket_name = config['bucket_name']
         queue_url = config['queue_url']
         sqs_messageid_name = config['sqs_messageid_name']
@@ -144,6 +137,10 @@ def lambda_handler(event, context):
         response_type = config['response_type']  # Set as "response_type"
         questions_list = config['questions_list']
         output_file = config['output_file']
+        in_file_name = config["in_file_name"]
+        out_file_name = config["out_file_name"]
+        incoming_message_group = config['incoming_message_group']
+        s3_file = config['s3_file']
 
         # Import for strata miss-match
         reference = config['reference']  # Set as "responder_id"
@@ -156,23 +153,13 @@ def lambda_handler(event, context):
         # Set as "previous_strata"
         previous_segmentation = config['previous_segmentation']
 
-        previous_period_json = read_data_from_s3(bucket_name, s3_file)
-
+        previous_period_data = funk.read_dataframe_from_s3(bucket_name, s3_file)
         logger.info("Completed reading data from s3")
 
-        response = get_data_from_sqs(queue_url)
-
-        if 'Messages' not in response:
-            raise NoDataInQueueError("No messages in queue")
-
-        message = response['Messages'][0]
-        message_json = json.loads(message['Body'])
-        receipt_handle = message['ReceiptHandle']
-
-        logger.info("Successfully retrieved data from SQS")
-
-        data = pd.DataFrame(message_json)
-
+        data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
+                                                  in_file_name,
+                                                  incoming_message_group)
+        logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
         filtered_non_responders = data.loc[(data[response_type] == 1) &
@@ -190,7 +177,7 @@ def lambda_handler(event, context):
 
             logger.info("Successfully created non-responders json")
 
-            save_to_s3(bucket_name, output_file, non_responders_json)
+            funk.save_to_s3(bucket_name, output_file, non_responders_json)
 
             logger.info("Successfully saved to s3 bucket")
 
@@ -199,7 +186,6 @@ def lambda_handler(event, context):
             data = data[data[response_type] == 2]
 
             # Merged together so it can be sent via the payload to the method
-            previous_period_data = pd.DataFrame(previous_period_json)
             merged_data = pd.concat([data, previous_period_data])
 
             logger.info("Successfully filtered and merged the previous period data")
@@ -230,8 +216,8 @@ def lambda_handler(event, context):
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
 
             imputation_run_type = "Calculate movement was ran successfully"
-
-            send_sqs_message(queue_url, json_response, sqs_messageid_name, receipt_handle)
+            funk.save_data(bucket_name, out_file_name,
+                           json_response, queue_url, sqs_messageid_name)
 
             logger.info("Successfully sent the data to SQS")
 
@@ -240,20 +226,14 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Imputation was not ran"
             anomalies = pd.DataFrame
+            funk.save_data(bucket_name, in_file_name, data, queue_url, sqs_messageid_name)
 
-            send_sqs_message(queue_url, message, sqs_messageid_name, receipt_handle)
             logger.info("Successfully sent the unchanged data to SQS")
-
-        send_sns_message(imputation_run_type, anomalies, arn, checkpoint)
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+        funk.send_sns_message_with_anomalies(checkpoint,
+                                             str(anomalies), arn, imputation_run_type)
 
         logger.info("Successfully sent the SNS message")
-
-    except NoDataInQueueError as e:
-        error_message = "There was no data in sqs queue in:  " \
-                        + current_module + " |-  | Request ID: " \
-                        + str(context['aws_request_id'])
-
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
     except AttributeError as e:
         error_message = "Bad data encountered in " \
@@ -312,82 +292,3 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint, "impute": to_be_imputed}
-
-
-def read_data_from_s3(bucket_name, s3_file):
-    """
-    This method is used to retrieve data from an s3 bucket.
-    :param bucket_name: The name of the bucket you are accessing.
-    :param s3_file: The file you wish to import.
-    :return: previous_period_json - Type: JSON.
-    """
-    previous_period_object = s3.Object(bucket_name, s3_file)
-    previous_period_content = previous_period_object.get()['Body'].read()
-    previous_period_json = json.loads(previous_period_content)
-
-    return previous_period_json
-
-
-def save_to_s3(bucket_name, output_file_name, output_data):
-    """
-    This function uploads a specified set of data to the s3 bucket under the given name.
-    :param bucket_name: Name of the bucket you wish to upload too - Type: String.
-    :param output_file_name: Name you want the file to be called on s3 - Type: String.
-    :param output_data: The data that you wish to upload to s3 - Type: JSON.
-    :return: None
-    """
-    s3.Object(bucket_name, output_file_name).put(Body=output_data)
-
-
-def get_data_from_sqs(queue_url):
-    """
-    This method retrieves the data from the specified SQS queue.
-    :param queue_url: The url of the SQS queue.
-    :return: Type: Array of Message objects
-    """
-    return sqs.receive_message(QueueUrl=queue_url)
-
-
-def send_sqs_message(queue_url, message, output_message_id, receipt_handle):
-    """
-    This method is responsible for sending data to the SQS queue and deleting the
-    left-over data.
-    :param queue_url: The url of the SQS queue. - Type: String.
-    :param message: The message/data you wish to send to the SQS queue - Type: String.
-    :param output_message_id: The label of the record in the SQS queue - Type: String
-    :param receipt_handle: Received from the sqs payload, used to
-                           specify content to be deleted.
-    :return: None
-    """
-    # MessageDeduplicationId is set to a random hash to overcome de-duplication,
-    # otherwise modules could not be re-run in the space of 5 Minutes.
-    sqs.send_message(QueueUrl=queue_url,
-                     MessageBody=message,
-                     MessageGroupId=output_message_id,
-                     MessageDeduplicationId=str(random.getrandbits(128))
-                     )
-
-    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-
-
-def send_sns_message(imputation_run_type, anomalies, arn, checkpoint):
-    """
-    This method is responsible for sending a notification to the specified arn,
-    so that it can be used to relay information for the BPM to use and handle.
-    :param imputation_run_type: A flag to see if imputation ran or not - Type: String.
-    :param anomalies: Any discrepancies that have been detected during processing -
-                      Type: DataFrame.
-    :param arn: The arn of the sns topic you are directing the message at - Type: String.
-    :param checkpoint: The current checkpoint location - Type: String.
-    :return: None
-    """
-
-    sns_message = {
-        "success": True,
-        "module": "Imputation",
-        "checkpoint": checkpoint,
-        "anomalies": anomalies.to_json(orient='records'),
-        "message": imputation_run_type
-    }
-
-    return sns.publish(TargetArn=arn, Message=json.dumps(sns_message))

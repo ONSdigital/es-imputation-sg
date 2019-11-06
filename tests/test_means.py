@@ -5,7 +5,7 @@ import unittest.mock as mock
 import boto3
 import pandas as pd
 from botocore.response import StreamingBody
-from moto import mock_lambda, mock_sqs
+from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import calculate_means_method
@@ -28,6 +28,11 @@ class TestMeans(unittest.TestCase):
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
                 "arn": "mock_arn",
+                "incoming_message_group": "I am GROOP",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
+                "bucket_name": "Mike"
+
             },
         )
 
@@ -40,8 +45,17 @@ class TestMeans(unittest.TestCase):
 
     @mock_sqs
     @mock_lambda
+    @mock_s3
     def test_wrangler_happy_path(self):
-        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="Mike")
+        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -50,10 +64,9 @@ class TestMeans(unittest.TestCase):
                         "Payload": StreamingBody(file, 226388)
                     }
                     with open("means_input.json", "rb") as queue_file:
-                        msgbody = queue_file.read()
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        msgbody = queue_file.read().decode("UTF-8")
+                        mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+
                         response = calculate_means_wrangler.lambda_handler(
                             None,
                             {"aws_request_id": "666"},
@@ -92,30 +105,19 @@ class TestMeans(unittest.TestCase):
 
             assert_frame_equal(response_df, expected_df)
 
-    @mock.patch("calculate_means_wrangler.boto3")
-    def test_wrangler_general_exception(self, mock_boto):
-        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
-            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                with open("means_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 226388)
-                    }
-                    msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
-                    with mock.patch("calculate_means_wrangler.pd.DataFrame") as mocked:
-                        mocked.side_effect = Exception("General exception")
-                        response = calculate_means_wrangler.lambda_handler(
-                            None,
-                            {"aws_request_id": "666"}
-                        )
+    def test_wrangler_general_exception(self):
+        with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+            mock_client.side_effect = Exception()
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+            response = calculate_means_wrangler.lambda_handler(
+                None,
+                {"aws_request_id": "666"}
+            )
 
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert """General exception""" in response["error"]
+            assert "success" in response
+            assert response["success"] is False
+            assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
         input_file = "mean_input_with_columns.json"
@@ -135,26 +137,18 @@ class TestMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_wrangler_key_error(self):
-        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
-            with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                with open("means_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 226388)
-                    }
-                    msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
-                    }
-                    response = calculate_means_wrangler.lambda_handler(
-                        None,
-                        {"aws_request_id": "666"},
-                    )
+        with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
+            mock_client.side_effect = KeyError()
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+            response = calculate_means_wrangler.lambda_handler(
+                 None,
+                 {"aws_request_id": "666"},
+            )
 
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert """Key Error""" in response["error"]
+            assert "success" in response
+            assert response["success"] is False
+            assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
@@ -187,24 +181,6 @@ class TestMeans(unittest.TestCase):
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
-    def test_no_data_in_queue(self):
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
-        with mock.patch.dict(
-            calculate_means_wrangler.os.environ,
-            {
-                "queue_url": queue_url
-            },
-        ):
-            response = calculate_means_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """There was no data in sqs queue in""" in response["error"]
-
-    @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
         with mock.patch.dict(
             calculate_means_wrangler.os.environ,
@@ -222,7 +198,7 @@ class TestMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_wrangles_bad_data(self):
-        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -230,10 +206,9 @@ class TestMeans(unittest.TestCase):
                     "Payload": StreamingBody("{'boo':'moo':}", 2)
                 }
                 with open("means_input.json", "rb") as queue_file:
-                    msgbody = queue_file.read()
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
+                    msgbody = queue_file.read().decode('UTF-8')
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+
                     response = calculate_means_wrangler.lambda_handler(
                         None,
                         {"aws_request_id": "666"},
@@ -246,7 +221,7 @@ class TestMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_incomplete_read(self):
-        with mock.patch("calculate_means_wrangler.get_sqs_message") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -256,9 +231,8 @@ class TestMeans(unittest.TestCase):
                     }
                     with open("means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+
                         response = calculate_means_wrangler.lambda_handler(
                             None,
                             {"aws_request_id": "666"},

@@ -52,6 +52,10 @@ class TestWranglerAndMethod(unittest.TestCase):
                 + "Q607_constructional_fill",
                 "queue_url": "mock_queue",
                 "sqs_messageid_name": "mock_message",
+                "incoming_message_group": "I am GROOP",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
+                "bucket_name": "Mike"
             },
         )
 
@@ -121,23 +125,26 @@ class TestWranglerAndMethod(unittest.TestCase):
             with mock.patch(
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
-                mocked_client = mock.Mock()
-                mocked.return_value = mocked_client
-                mocked_client.receive_message.return_value = {
-                    "Messages": [{"Body": json_content, "ReceiptHandle": "LORD MIKE"}]
-                }
-                with open(method_input_file, "rb") as file:
-                    invoke_return = file
+                with mock.patch(
+                        "calculate_imputation_factors_wrangler.funk"
+                ) as funk:
+                    mocked_client = mock.Mock()
+                    mocked.return_value = mocked_client
+                    funk.get_dataframe.return_value = \
+                        pd.DataFrame(json.loads(json_content)), 777
 
-                    mocked_client.invoke.return_value = {
-                        "Payload": StreamingBody(invoke_return, 2760)
-                    }
+                    with open(method_input_file, "rb") as file:
+                        invoke_return = file
 
-                    out = calculate_imputation_factors_wrangler.lambda_handler(
-                        None, {"aws_request_id": "666"}
-                    )
-                    assert "success" in out
-                    assert out["success"]
+                        mocked_client.invoke.return_value = {
+                            "Payload": StreamingBody(invoke_return, 2760)
+                        }
+
+                        out = calculate_imputation_factors_wrangler.lambda_handler(
+                            None, {"aws_request_id": "666"}
+                        )
+                        assert "success" in out
+                        assert out["success"]
 
     @mock_sqs
     @mock_sns
@@ -170,19 +177,6 @@ class TestWranglerAndMethod(unittest.TestCase):
         assert_frame_equal(
             actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str)
         )
-
-    @mock_sqs
-    def test_wrangler_no_data_in_queue(self):
-        """
-        testing the exception handler works within the wrangler.
-        :param self:
-        :return: mock response
-        """
-        response = calculate_imputation_factors_wrangler.lambda_handler(
-            None, {"aws_request_id": "666"}
-        )
-        assert not response["success"]
-        assert response["error"].__contains__("no data in sqs queue")
 
     def test_method_exception_handling(self):
         """
@@ -310,55 +304,40 @@ class TestWranglerAndMethod(unittest.TestCase):
             with mock.patch(
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
-                mocked_client = mock.Mock()
-                mocked.return_value = mocked_client
-                print(json_content)
-                mocked_client.receive_message.return_value = {
-                    "Messages": [{"Body": json_content, "ReceiptHandle": "LORD MIKE"}]
-                }
-                with open(method_input_file, "rb") as file:
-                    invoke_return = file
+                with mock.patch(
+                        "calculate_imputation_factors_wrangler.funk.get_dataframe"
+                ) as get_data:
+                    mocked_client = mock.Mock()
+                    mocked.return_value = mocked_client
+                    get_data.return_value = pd.DataFrame(json.loads(json_content)), 567
 
-                    mocked_client.invoke.return_value = {
-                        "Payload": StreamingBody(invoke_return, 666)
-                    }
+                    with open(method_input_file, "rb") as file:
+                        invoke_return = file
 
-                    out = calculate_imputation_factors_wrangler.lambda_handler(
-                        None, {"aws_request_id": "666"}
-                    )
-                    assert "success" in out
-                    assert not out["success"]
-                    assert "Incomplete Lambda response" in out["error"]
+                        mocked_client.invoke.return_value = {
+                            "Payload": StreamingBody(invoke_return, 666)
+                        }
+
+                        out = calculate_imputation_factors_wrangler.lambda_handler(
+                            None, {"aws_request_id": "666"}
+                        )
+                        assert "success" in out
+                        assert not out["success"]
+                        assert "Incomplete Lambda response" in out["error"]
 
     @mock_sns
     @mock_sqs
     def test_wrangler_key_error(self):
-        method_input_file = (
-            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
-        )
-        with open(method_input_file, "r") as file:
-            json_content = file.read()
-
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        with mock.patch.dict(
-            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
-        ):
-            with mock.patch(
-                "calculate_imputation_factors_wrangler.boto3.client"
-            ) as mocked:
-                mocked_client = mock.Mock()
-                mocked.return_value = mocked_client
-                mocked_client.receive_message.return_value = {
-                    "Messages": [{"LordMike": json_content, "ReceiptHandle": "LORD MIKE"}]
-                }
-                out = calculate_imputation_factors_wrangler.lambda_handler(
-                    None, {"aws_request_id": "666"}
-                )
-                assert "success" in out
-                assert not out["success"]
-                assert "Key Error" in out["error"]
+        with mock.patch(
+            "calculate_imputation_factors_wrangler.funk.get_dataframe"
+        ) as mocked:
+            mocked.side_effect = KeyError()
+            out = calculate_imputation_factors_wrangler.lambda_handler(
+                None, {"aws_request_id": "666"}
+            )
+            assert "success" in out
+            assert not out["success"]
+            assert "Key Error" in out["error"]
 
     def test_wrangler_client_error(self):
         with mock.patch.dict(

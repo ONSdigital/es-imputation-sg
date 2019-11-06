@@ -6,10 +6,11 @@ import unittest.mock as mock
 
 import boto3
 import pandas as pd
+from botocore.response import StreamingBody
 from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 
 import apply_factors_method as lambda_method_function
-import apply_factors_wrangler as lambda_wrangler_function
+import apply_factors_wrangler
 
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 
@@ -18,7 +19,7 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     def test_get_sqs(self):
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "mike",
@@ -27,8 +28,11 @@ class TestApplyFactors(unittest.TestCase):
                 "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "queue_url": "test-queue",
-                "s3_file": "previous_period_enriched_stratared.json",
+                "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             },
         ):
 
@@ -36,27 +40,31 @@ class TestApplyFactors(unittest.TestCase):
             sqs.create_queue(QueueName="test-queue")
             queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
-            messages = lambda_wrangler_function.receive_message(queue_url)
+            messages = apply_factors_wrangler.funk.get_sqs_message(queue_url)
 
             assert len(messages) == 1
 
     @mock_sqs
-    def test_sqs_messages_send(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_sqs_messages_send(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         queue = sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        lambda_wrangler_function.send_output_to_sqs(queue_url, "", "", "")
+        apply_factors_wrangler.funk.save_data("bucket_name", "Test",
+                                              "message", queue_url, "")
 
         messages = queue.receive_messages()
         assert len(messages) == 1
 
     @mock_sns
     def test_sns_send(self):
-        with mock.patch.dict(lambda_wrangler_function.os.environ, {"arn": "mike"}):
+        with mock.patch.dict(apply_factors_wrangler.os.environ, {"arn": "mike"}):
             sns = boto3.client("sns", region_name="eu-west-2")
             topic = sns.create_topic(Name="bloo")
             topic_arn = topic["TopicArn"]
-            lambda_wrangler_function.send_sns_message(topic_arn, "Gyargh", 3)
+            apply_factors_wrangler.funk.send_sns_message("", topic_arn, "Gyargh")
 
     @mock_sqs
     def test_catch_wrangler_exception(self):
@@ -65,7 +73,7 @@ class TestApplyFactors(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "mike",
@@ -74,13 +82,16 @@ class TestApplyFactors(unittest.TestCase):
                 "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
+                "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             },
         ):
-            with mock.patch("apply_factors_wrangler.get_from_sqs") as mocked:
+            with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
-                response = lambda_wrangler_function.lambda_handler(
+                response = apply_factors_wrangler.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
                 assert "success" in response
@@ -92,7 +103,7 @@ class TestApplyFactors(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ, {"queue_url": queue_url}
+            apply_factors_wrangler.os.environ, {"queue_url": queue_url}
         ):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
@@ -143,7 +154,10 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     @mock_s3
     @mock_lambda
-    def test_wrangles(self):
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles(self, mock_me, mock_you, mock_everyone):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -151,7 +165,8 @@ class TestApplyFactors(unittest.TestCase):
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
-            lambda_wrangler_function.send_output_to_sqs(queue_url, message, "testy", "")
+            apply_factors_wrangler.funk.save_data("bucket_name", "Test",
+                                                  message, queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
@@ -173,7 +188,7 @@ class TestApplyFactors(unittest.TestCase):
         )
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -182,30 +197,26 @@ class TestApplyFactors(unittest.TestCase):
                 "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
+                "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             },
         ):
-            from botocore.response import StreamingBody
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": message, "ReceiptHandle": "666"}]
-                }
-                myvar = mock_client_object.send_message.call_args_list
+                mock_client_object.receive_message.return_value = pd.DataFrame(
+                    json.loads(message)), 666
+
                 with open("tests/fixtures/non_responders_return.json", "rb") as file:
 
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 1317)
                     }
-                    response = lambda_wrangler_function.lambda_handler("", None)
-                    output = myvar[0][1]["MessageBody"]
-                    outputdf = pd.DataFrame(json.loads(output))
-                    outputdf = outputdf[outputdf["response_type"] == 1]
-                    a_value_to_test = outputdf["Q603_concreting_sand"].to_list()[0]
-                    assert a_value_to_test == 91
+                    response = apply_factors_wrangler.lambda_handler("", None)
                     assert "success" in response
                     assert response["success"] is True
 
@@ -213,7 +224,7 @@ class TestApplyFactors(unittest.TestCase):
     def test_method(self):
         methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -227,7 +238,7 @@ class TestApplyFactors(unittest.TestCase):
     def test_attribute_error_method(self):
         methodinput = "Potatoes"
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -236,44 +247,16 @@ class TestApplyFactors(unittest.TestCase):
             assert response["error"].__contains__("""Input Error""")
 
     @mock_sqs
-    def test_no_data_in_queue(self):
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
-        with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
-            {
-                "arn": "mike",
-                "bucket_name": "MIKE",
-                "checkpoint": "3",
-                "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
-                "period": "201809",
-                "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
-                "sqs_messageid_name": "apply_factors_out",
-            },
-        ):
-            response = lambda_wrangler_function.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
-            )
-            assert "success" in response
-            assert response["success"] is False
-            print(response["error"])
-            assert response["error"].__contains__("""no data in sqs queue""")
-
-    @mock_sqs
     def test_key_error_method(self):
         methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
         methodinput.rename(columns={"prev_Q601_asphalting_sand": "Mike"}, inplace=True)
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
                 methodinput, {"aws_request_id": "666"}
             )
-            print(response)
             assert response["error"].__contains__("""Key Error""")
 
     @mock_sqs
@@ -282,7 +265,7 @@ class TestApplyFactors(unittest.TestCase):
         methodinput["prev_Q601_asphalting_sand"] = "MIKE"
         methodinput["imputation_factor_Q601_asphalting_sand"] = "MIIIKE!"
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
@@ -297,10 +280,10 @@ class TestApplyFactors(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {"checkpoint": "1", "queue_url": queue_url},
         ):
-            out = lambda_wrangler_function.lambda_handler(
+            out = apply_factors_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             self.assertRaises(ValueError)
@@ -309,7 +292,7 @@ class TestApplyFactors(unittest.TestCase):
     @mock_sqs
     def test_wrangles_fail_to_get_from_sqs(self):
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -318,11 +301,14 @@ class TestApplyFactors(unittest.TestCase):
                 "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "queue_url": "Sausages",
-                "s3_file": "previous_period_enriched_stratared.json",
+                "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             },
         ):
-            response = lambda_wrangler_function.lambda_handler(
+            response = apply_factors_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             assert "success" in response
@@ -339,64 +325,51 @@ class TestApplyFactors(unittest.TestCase):
 
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
-
-            lambda_wrangler_function.send_output_to_sqs(queue_url, message, "testy", "")
-            # s3 bit
-        client = boto3.client(
-            "s3",
-            region_name="eu-west-1",
-            aws_access_key_id="fake_access_key",
-            aws_secret_access_key="fake_secret_key",
-        )
-
-        client.create_bucket(Bucket="MIKE")
-        client.upload_file(
-            Filename="tests/fixtures/test_data.json",
-            Bucket="MIKE",
-            Key="previous_period_enriched_stratared.json",
-        )
-        client.upload_file(
-            Filename="tests/fixtures/non_responders_output.json",
-            Bucket="MIKE",
-            Key="non_responders_output.json",
-        )
+        with open("tests/fixtures/test_data.json", "r") as file:
+            prevfile = pd.DataFrame(json.loads(file.read()))
+        with open("tests/fixtures/non_responders_output.json", "r") as file:
+            nonresponderfile = pd.DataFrame(json.loads(file.read()))
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
-            {
-                "arn": "mike",
-                "bucket_name": "MIKE",
-                "checkpoint": "3",
-                "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
-                "period": "201809",
-                "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
-                "sqs_messageid_name": "apply_factors_out",
-            },
+                apply_factors_wrangler.os.environ,
+                {
+                    "arn": "mike",
+                    "bucket_name": "MIKE",
+                    "checkpoint": "3",
+                    "method_name": "apply_factors_method",
+                    "non_responder_file": "non_responders_output.json",
+                    "period": "201809",
+                    "queue_url": queue_url,
+                    "previous_data_file": "previous_period_enriched_stratared.json",
+                    "sqs_messageid_name": "apply_factors_out",
+                    "incoming_message_group": "Sheep",
+                    "in_file_name": "Test",
+                    "out_file_name": "Test",
+                },
         ):
-            from botocore.response import StreamingBody
-
-            with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
+            with mock.patch(
+                    "apply_factors_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": message, "ReceiptHandle": "666"}]
-                }
-                with open("tests/fixtures/non_responders_return.json", "rb") as file:
+                with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                    mock_funk.get_dataframe.return_value = pd.DataFrame(
+                        json.loads(message)), 666
+                    mock_funk.read_dataframe_from_s3.side_effect = [
+                        nonresponderfile, prevfile]
+                    with open("tests/fixtures/non_responders_return.json",
+                              "rb") as file:
+                        mock_client_object.invoke.return_value = {
+                            "Payload": StreamingBody(file, 1)
+                        }
+                        response = apply_factors_wrangler.lambda_handler(
+                            "", {"aws_request_id": "666"}
+                        )
 
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 1)
-                    }
-                    response = lambda_wrangler_function.lambda_handler(
-                        "", {"aws_request_id": "666"}
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert response["error"].__contains__(
-                        """Incomplete Lambda response"""
-                    )
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert response["error"].__contains__(
+                            """Incomplete Lambda response"""
+                        )
 
     @mock_sqs
     @mock_s3
@@ -410,30 +383,30 @@ class TestApplyFactors(unittest.TestCase):
             message = file.read()
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
-            {
-                "arn": "mike",
-                "bucket_name": "MIKE",
-                "checkpoint": "3",
-                "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
-                "period": "201809",
-                "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
-                "sqs_messageid_name": "apply_factors_out",
-            },
+                apply_factors_wrangler.os.environ,
+                {
+                    "arn": "mike",
+                    "bucket_name": "MIKE",
+                    "checkpoint": "3",
+                    "method_name": "apply_factors_method",
+                    "non_responder_file": "non_responders_output.json",
+                    "period": "201809",
+                    "queue_url": queue_url,
+                    "previous_data_file": "previous_period_enriched_stratared.json",
+                    "sqs_messageid_name": "apply_factors_out",
+                    "incoming_message_group": "Sheep",
+                    "in_file_name": "Test",
+                    "out_file_name": "Test",
+                },
         ):
-
-            with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Mike": message, "ReceiptHandle": "666"}]
-                }
-                response = lambda_wrangler_function.lambda_handler(
+            with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                mock_funk.get_dataframe.return_value = pd.DataFrame(
+                    json.loads(message)), 666
+                mock_funk.get_dataframe.side_effect = KeyError()
+                response = apply_factors_wrangler.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
-                print(response)
+
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Key Error""")
@@ -447,7 +420,7 @@ class TestApplyFactors(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
         with mock.patch.dict(
-            lambda_wrangler_function.os.environ,
+            apply_factors_wrangler.os.environ,
             {
                 "arn": "mike",
                 "bucket_name": "MIKE",
@@ -456,21 +429,21 @@ class TestApplyFactors(unittest.TestCase):
                 "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "queue_url": queue_url,
-                "s3_file": "previous_period_enriched_stratared.json",
+                "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_messageid_name": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
             },
         ):
 
-            with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = {
-                    "Messages": [{"Body": 66, "ReceiptHandle": "666"}]
-                }
-                response = lambda_wrangler_function.lambda_handler(
+            with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                mock_funk.get_dataframe.return_value = 66, 666
+
+                response = apply_factors_wrangler.lambda_handler(
                     "", {"aws_request_id": "666"}
                 )
-
+                print(response)
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Bad data type""")
