@@ -34,12 +34,13 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-tf-vpc-s3
-      s3_file: previous_period_enriched_stratared.json
+      bucket_name: results-s3-bucket
+      in_file_name: calculate_factors_out.json
+      out_file_name: apply_factors_out.json
       non_responder_file: non_responders_output.json
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: apply_factors_out
       method_name: es-apply-factors-method
       period: 201809
@@ -75,12 +76,15 @@ functions:
     tags:
       app: results
     environment:
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: atypicals_out
       method_name: es-atypicals-method
       atypical_columns: atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607
+      in_file_name: iqrs_out.json
+      out_file_name: atypicals_out.json
 
   deploy-atypicals-method:
     name: es-atypicals-method
@@ -116,12 +120,15 @@ functions:
     tags:
       app: results
     environment:
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: calculate_factors_out
       method_name: es-calculate-factors-method
       questions: Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel Q607_constructional_fill
+      in_file_name: recalculate_means_out.json
+      out_file_name: calculate_factors_out.json
 
   deploy-calculate-factors-method:
     name: es-calculate-factors-method
@@ -160,12 +167,15 @@ functions:
     tags:
       app: results
     environment:
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: calculate_means_out
       method_name: es-calculate-means-method
       questions_list: Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel Q607_constructional_fill
+      in_file_name: calculate_movement_out.json
+      out_file_name: calculate_means_output.json
 
   deploy-calculate-means-method:
     name: es-calculate-means-method
@@ -199,11 +209,12 @@ functions:
     tags:
       app: results
     environment:
-      s3_file: previous_period_enriched_stratared.json
-      bucket_name: results-tf-vpc-s3
+      in_file_name: previous_period_enriched_stratared.json
+      out_file_name: calculate_movement_out.json
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: calculate_movement_out
       method_name: es-calculate-movement-method
       time: period
@@ -251,12 +262,15 @@ functions:
     tags:
       app: results
     environment:
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: iqrs_out
       method_name: es-iqrs-method
       iqrs_columns: iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607
+      in_file_name: calculate_means_out.json
+      out_file_name: iqrs_out.json
 
   deploy-iqrs-method:
     name: es-iqrs-method
@@ -273,7 +287,7 @@ functions:
       app: results
     environment:
       iqrs_columns: iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607
-      movement_columns: movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata
+      movement_columns: movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata
 
   deploy-recalculate-means-wrangler:
     name: es-recalculate-means-wrangler
@@ -290,9 +304,12 @@ functions:
     tags:
       app: results
     environment:
+      bucket_name: results-s3-bucket
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       checkpoint: 3
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_messageid_name: recalc_means_out
       method_name: es-calculate-means-method
       questions_list: Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel Q607_constructional_fill
+      in_file_name: atypicals_out.json
+      out_file_name: recalculate_means_out.json
