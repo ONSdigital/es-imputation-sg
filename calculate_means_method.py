@@ -1,13 +1,13 @@
 import logging
 import os
 
-import marshmallow
 import pandas as pd
+from marshmallow import Schema, fields
 
 
-class InputSchema(marshmallow.Schema):
-    movement_columns = marshmallow.fields.Str(required=True)
-    questions_list = marshmallow.fields.Str(required=True)
+class InputSchema(Schema):
+    movement_columns = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):

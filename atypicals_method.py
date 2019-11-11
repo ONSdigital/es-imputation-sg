@@ -2,16 +2,16 @@ import json
 import logging
 import os
 
-import marshmallow
 import numpy as np
 import pandas as pd
+from marshmallow import Schema, fields
 
 
-class InputSchema(marshmallow.Schema):
-    atypical_columns = marshmallow.fields.Str(required=True)
-    iqrs_columns = marshmallow.fields.Str(required=True)
-    mean_columns = marshmallow.fields.Str(required=True)
-    movement_columns = marshmallow.fields.Str(required=True)
+class InputSchema(Schema):
+    atypical_columns = fields.Str(required=True)
+    iqrs_columns = fields.Str(required=True)
+    mean_columns = fields.Str(required=True)
+    movement_columns = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
