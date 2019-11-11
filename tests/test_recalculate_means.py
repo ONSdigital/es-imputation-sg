@@ -26,13 +26,13 @@ class TestRecalculateMeans(unittest.TestCase):
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
-                'queue_url': 'mock_queue',
-                'questions_list': 'Q601_asphalting_sand Q602_building_soft_sand '
-                                  + 'Q603_concreting_sand Q604_bituminous_gravel '
-                                  + 'Q605_concreting_gravel Q606_other_gravel '
+                'sqs_queue_url': 'mock_queue',
+                'questions_list': 'Q601_asphalting_sand,Q602_building_soft_sand,'
+                                  + 'Q603_concreting_sand,Q604_bituminous_gravel,'
+                                  + 'Q605_concreting_gravel,Q606_other_gravel,'
                                   + 'Q607_constructional_fill',
-                'sqs_messageid_name': 'mock_message',
-                'arn': 'mock_arn',
+                'sqs_message_group_id': 'mock_message',
+                'sns_topic_arn': 'mock_arn',
                 "incoming_message_group": "I am GROOP",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
@@ -103,12 +103,12 @@ class TestRecalculateMeans(unittest.TestCase):
         """
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
                 recalculate_means_wrangler.os.environ,
                 {
                     "checkpoint": "",
-                    "queue_url": queue_url
+                    "sqs_queue_url": sqs_queue_url
                 }
         ):
             # Removing the checkpoint to allow for test of missing parameter
@@ -168,9 +168,9 @@ class TestRecalculateMeans(unittest.TestCase):
     def test_general_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-                recalculate_means_wrangler.os.environ, {"queue_url": queue_url}
+                recalculate_means_wrangler.os.environ, {"sqs_queue_url": sqs_queue_url}
         ):
             with mock.patch("recalculate_means_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("SQS Failure")

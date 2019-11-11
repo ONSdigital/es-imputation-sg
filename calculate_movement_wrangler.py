@@ -14,27 +14,27 @@ class EnvironSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    s3_file = fields.Str(required=True)
-    bucket_name = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
-    sqs_messageid_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
-    arn = fields.Str(required=True)
-    method_name = fields.Str(required=True)
-    time = fields.Str(required=True)
-    response_type = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
-    output_file = fields.Str(required=True)
-    reference = fields.Str(required=True)
-    segmentation = fields.Str(required=True)
-    stored_segmentation = fields.Str(required=True)
-    current_time = fields.Str(required=True)
-    previous_time = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
     current_segmentation = fields.Str(required=True)
-    previous_segmentation = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
+    current_time = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
+    method_name = fields.Str(required=True)
+    non_response_file = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
+    previous_period_file = fields.Str(required=True)
+    previous_segmentation = fields.Str(required=True)
+    previous_time = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
+    reference = fields.Str(required=True)
+    response_type = fields.Str(required=True)
+    segmentation = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
+    sqs_queue_url = fields.Str(required=True)
+    stored_segmentation = fields.Str(required=True)
+    time = fields.Str(required=True)
 
 
 def strata_mismatch_detector(data, current_period, time, reference, segmentation,
@@ -106,7 +106,7 @@ def lambda_handler(event, context):
     :return: Success - True/False & Checkpoint
     """
     to_be_imputed = True
-    current_module = "Imputation Movement - Wrangler"
+    current_module = "Imputation Movement - Wrangler."
     logger = logging.getLogger("Starting " + current_module)
     error_message = ''
     log_message = ''
@@ -114,7 +114,7 @@ def lambda_handler(event, context):
 
     try:
 
-        logger.info("Starting movements wrangler")
+        logger.info("Starting " + current_module)
 
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
@@ -126,39 +126,38 @@ def lambda_handler(event, context):
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
         logger.info("Setting-up environment configs")
 
-        bucket_name = config['bucket_name']
-        queue_url = config['queue_url']
-        sqs_messageid_name = config['sqs_messageid_name']
         checkpoint = config['checkpoint']
-        arn = config['arn']
-        period = event['RuntimeVariables']['period']
-        method_name = config['method_name']
-        time = config['time']  # Set as "period"
-        response_type = config['response_type']  # Set as "response_type"
-        questions_list = config['questions_list']
-        output_file = config['output_file']
+        bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
-        out_file_name = config["out_file_name"]
         incoming_message_group = config['incoming_message_group']
-        s3_file = config['s3_file']
+        method_name = config['method_name']
+        non_response_file = config['non_response_file']
+        out_file_name = config["out_file_name"]
+        period = event['RuntimeVariables']['period']
+        questions_list = config['questions_list']
+        previous_period_file = config['previous_period_file']
+        response_type = config['response_type']  # Set as "response_type"
+        sns_topic_arn = config['sns_topic_arn']
+        sqs_message_group_id = config['sqs_message_group_id']
+        sqs_queue_url = config['sqs_queue_url']
+        time = config['time']  # Set as "period"
 
         # Import for strata miss-match
+        current_segmentation = config['current_segmentation']  # Set as "current_strata"
+        current_time = config['current_time']  # Set as "current_period"
+        previous_segmentation = config['previous_segmentation']  # Set "previous_strata"
+        previous_time = config['previous_time']  # Set as "previous_period"
         reference = config['reference']  # Set as "responder_id"
         segmentation = config['segmentation']  # Set as "strata"
         stored_segmentation = config['stored_segmentation']  # Set as "goodstrata"
-        current_time = config['current_time']  # Set as "current_period"
-        previous_time = config['previous_time']  # Set as "previous_period"
-        # Set as "current_strata"
-        current_segmentation = config['current_segmentation']
-        # Set as "previous_strata"
-        previous_segmentation = config['previous_segmentation']
 
-        previous_period_data = funk.read_dataframe_from_s3(bucket_name, s3_file)
+        previous_period_data = funk.read_dataframe_from_s3(bucket_name,
+                                                           previous_period_file)
         logger.info("Completed reading data from s3")
 
-        data, receipt_handle = funk.get_dataframe(queue_url, bucket_name,
-                                                  in_file_name,
-                                                  incoming_message_group)
+        data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
+                                                   in_file_name,
+                                                   incoming_message_group)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
@@ -177,7 +176,7 @@ def lambda_handler(event, context):
 
             logger.info("Successfully created non-responders json")
 
-            funk.save_to_s3(bucket_name, output_file, non_responders_json)
+            funk.save_to_s3(bucket_name, non_response_file, non_responders_json)
 
             logger.info("Successfully saved to s3 bucket")
 
@@ -201,7 +200,7 @@ def lambda_handler(event, context):
 
             logger.info("Successfully completed strata mismatch detection")
 
-            for question in questions_list.split():
+            for question in questions_list.split(','):
                 merged_data['movement_' + question] = 0.0
 
             json_ordered_data = merged_data.to_json(orient='records')
@@ -215,26 +214,28 @@ def lambda_handler(event, context):
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
 
-            imputation_run_type = "Calculate movement was ran successfully"
+            imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,
-                           json_response, queue_url, sqs_messageid_name)
+                           json_response, sqs_queue_url, sqs_message_group_id)
 
-            logger.info("Successfully sent the data to SQS")
+            logger.info("Successfully sent the data to s3")
 
         else:
 
             to_be_imputed = False
-            imputation_run_type = "Imputation was not ran"
+            imputation_run_type = "Has Not Run."
             anomalies = pd.DataFrame
-            funk.save_data(bucket_name, in_file_name, data, queue_url, sqs_messageid_name)
+            funk.save_data(bucket_name, in_file_name, data, sqs_queue_url,
+                           sqs_message_group_id)
 
-            logger.info("Successfully sent the unchanged data to SQS")
+            logger.info("Successfully sent the unchanged data to s3")
 
-        if receipt_handle:
-            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+        if receipt_handler:
+            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
         funk.send_sns_message_with_anomalies(checkpoint,
-                                             str(anomalies), arn, imputation_run_type)
+                                             str(anomalies), sns_topic_arn,
+                                             'Imputation - ' + imputation_run_type)
 
         logger.info("Successfully sent the SNS message")
 
@@ -247,7 +248,7 @@ def lambda_handler(event, context):
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
     except ValueError as e:
-        error_message = "Parameter validation error" \
+        error_message = "Parameter validation error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
                         + str(context['aws_request_id'])

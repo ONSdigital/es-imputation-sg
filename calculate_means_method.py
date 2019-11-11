@@ -38,7 +38,7 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully retrieved data from event.")
 
-        workingdf = df[config['movement_columns'].split(" ")]
+        workingdf = df[config['movement_columns'].split(",")]
 
         counts = workingdf.groupby(["region", "strata"]).count()
         # Rename columns to fit naming standards
@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         # join on movements and counts on region& strata to df
         df = pd.merge(df, moves, on=["region", "strata"], how="left")
 
-        for question in config['questions_list'].split():
+        for question in config['questions_list'].split(','):
             df["mean_" + question] = df.apply(
                 lambda x: x["movement_" + question + "_sum"]
                 / x["movement_" + question + "_count"],

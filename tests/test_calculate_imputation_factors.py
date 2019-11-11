@@ -39,19 +39,19 @@ class TestWranglerAndMethod(unittest.TestCase):
         cls.mock_os_wrangler_patcher = mock.patch.dict(
             "os.environ",
             {
-                "arn": "mock_arn",
+                "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand "
-                + "Q602_building_soft_sand "
-                + "Q603_concreting_sand "
-                + "Q604_bituminous_gravel "
-                + "Q605_concreting_gravel "
-                + "Q606_other_gravel "
+                "questions_list": "Q601_asphalting_sand,"
+                + "Q602_building_soft_sand,"
+                + "Q603_concreting_sand,"
+                + "Q604_bituminous_gravel,"
+                + "Q605_concreting_gravel,"
+                + "Q606_other_gravel,"
                 + "Q607_constructional_fill",
-                "queue_url": "mock_queue",
-                "sqs_messageid_name": "mock_message",
+                "sqs_queue_url": "mock_queue",
+                "sqs_message_group_id": "mock_message",
                 "incoming_message_group": "I am GROOP",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
@@ -63,19 +63,19 @@ class TestWranglerAndMethod(unittest.TestCase):
         cls.mock_os_method_patcher = mock.patch.dict(
             "os.environ",
             {
-                "arn": "mock_arn",
+                "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
                 "first_imputation_factor": str(1),
                 "first_threshold": str(7),
                 "period": "mock_period",
-                "questions": "Q601_asphalting_sand "
-                + "Q602_building_soft_sand "
-                + "Q603_concreting_sand "
-                + "Q604_bituminous_gravel "
-                + "Q605_concreting_gravel "
-                + "Q606_other_gravel "
+                "questions_list": "Q601_asphalting_sand,"
+                + "Q602_building_soft_sand,"
+                + "Q603_concreting_sand,"
+                + "Q604_bituminous_gravel,"
+                + "Q605_concreting_gravel,"
+                + "Q606_other_gravel,"
                 + "Q607_constructional_fill",
-                "queue_url": "mock_queue",
+                "sqs_queue_url": "mock_queue",
                 "second_imputation_factor": str(2),
                 "second_threshold": str(7),
                 "third_imputation_factor": str(1),
@@ -118,9 +118,10 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+            calculate_imputation_factors_wrangler.os.environ,
+                {"sqs_queue_url": sqs_queue_url}
         ):
             with mock.patch(
                 "calculate_imputation_factors_wrangler.boto3.client"
@@ -219,10 +220,11 @@ class TestWranglerAndMethod(unittest.TestCase):
     def test_marshmallow_raises_wrangler_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+            calculate_imputation_factors_wrangler.os.environ,
+                {"sqs_queue_url": sqs_queue_url}
         ):
             calculate_imputation_factors_wrangler.os.environ.pop("method_name")
             out = calculate_imputation_factors_wrangler.lambda_handler(
@@ -236,19 +238,20 @@ class TestWranglerAndMethod(unittest.TestCase):
     def test_marshmallow_raises_method_exception(self):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
-            calculate_imputation_factors_method.os.environ, {"queue_url": queue_url}
+            calculate_imputation_factors_method.os.environ,
+                {"sqs_queue_url": sqs_queue_url}
         ):
-            calculate_imputation_factors_method.os.environ.pop("questions")
+            calculate_imputation_factors_method.os.environ.pop("questions_list")
             out = calculate_imputation_factors_method.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             calculate_imputation_factors_method.os.environ[
-                "questions"
-            ] = "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand" \
-                " Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel " \
+                "questions_list"
+            ] = "Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand" \
+                ",Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel," \
                 "Q607_constructional_fill"
             self.assertRaises(ValueError)
 
@@ -297,9 +300,10 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-            calculate_imputation_factors_wrangler.os.environ, {"queue_url": queue_url}
+            calculate_imputation_factors_wrangler.os.environ,
+                {"sqs_queue_url": sqs_queue_url}
         ):
             with mock.patch(
                 "calculate_imputation_factors_wrangler.boto3.client"
@@ -341,7 +345,7 @@ class TestWranglerAndMethod(unittest.TestCase):
 
     def test_wrangler_client_error(self):
         with mock.patch.dict(
-            calculate_imputation_factors_wrangler.os.environ, {"queue_url": "mike"}
+            calculate_imputation_factors_wrangler.os.environ, {"sqs_queue_url": "mike"}
         ):
             with mock.patch(
                 "calculate_imputation_factors_wrangler.boto3.client"

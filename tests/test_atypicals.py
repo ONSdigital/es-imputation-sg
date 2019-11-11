@@ -16,15 +16,15 @@ class TestClass():
         cls.mock_os_patcher = mock.patch.dict(
             'os.environ',
             {
-                'queue_url': '213456',
-                'arn': 'mock_arn',
+                'sqs_queue_url': '213456',
+                'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
                 'atypical_columns': 'atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607',  # noqa E501
                 'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
                 'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
                 'mean_columns': 'mean601,mean602,mean603,mean604,mean605,mean606,mean607',
                 'method_name': 'mock_method_name',
-                'sqs_messageid_name': 'mock_sqs_message_name',
+                'sqs_message_group_id': 'mock_sqs_message_name',
                 'error_handler_arn': 'mock_error_handler_arn',
                 'bucket_name': 'mock_bucket',
                 'input_data': 'mock_data',
@@ -174,7 +174,7 @@ class TestClass():
         input_file = "atypical_input.json"
         with open(input_file, "r") as file:
             json_content = file.read()
-            # Removing arn to allow for test of missing parameter
+            # Removing sns_topic_arn to allow for test of missing parameter
             atypicals_method.os.environ.pop("mean_columns")
             response = atypicals_method.lambda_handler(
                 json_content,
@@ -188,7 +188,7 @@ class TestClass():
         with mock.patch.dict(
             atypicals_wrangler.os.environ,
             {
-                "queue_url": "An Invalid Queue"
+                "sqs_queue_url": "An Invalid Queue"
             },
         ):
             response = atypicals_wrangler.lambda_handler(

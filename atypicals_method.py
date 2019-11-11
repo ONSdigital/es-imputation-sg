@@ -10,8 +10,8 @@ import pandas as pd
 class InputSchema(marshmallow.Schema):
     atypical_columns = marshmallow.fields.Str(required=True)
     iqrs_columns = marshmallow.fields.Str(required=True)
-    movement_columns = marshmallow.fields.Str(required=True)
     mean_columns = marshmallow.fields.Str(required=True)
+    movement_columns = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -21,13 +21,13 @@ def lambda_handler(event, context):
     :param context: Context object
     :return: JSON string
     """
-    current_module = "Atypicals - Method"
+    current_module = "Imputation Atypicals - Method."
     error_message = ""
     log_message = ""
     logger = logging.getLogger("Atypicals")
     try:
 
-        logger.info("Atypicals Method Begun")
+        logger.info("Starting " + current_module)
 
         # env vars
         config, errors = InputSchema().load(os.environ)

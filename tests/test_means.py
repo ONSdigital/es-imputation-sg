@@ -19,15 +19,15 @@ class TestMeans(unittest.TestCase):
             "os.environ",
             {
                 "error_handler_arn": "mock_arn",
-                "sqs_messageid_name": "mock_message",
+                "sqs_message_group_id": "mock_message",
                 "checkpoint": "mock_checkpoint",
-                "function_name": "mock_method",
-                "queue_url": "mock_queue",
-                "questions_list": "Q601_asphalting_sand Q602_building_soft_sand Q603_concreting_sand Q604_bituminous_gravel Q605_concreting_gravel Q606_other_gravel Q607_constructional_fill",  # noqa: E501
-                "movement_columns": "movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata",  # noqa: E501
+                "method_name": "mock_method",
+                "sqs_queue_url": "mock_queue",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill",  # noqa: E501
+                "movement_columns": "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata",  # noqa: E501
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
-                "arn": "mock_arn",
+                "sns_topic_arn": "mock_arn",
                 "incoming_message_group": "I am GROOP",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
@@ -161,9 +161,9 @@ class TestMeans(unittest.TestCase):
         :return: None.
         """
         # Removing the strata_column to allow for test of missing parameter
-        calculate_means_wrangler.os.environ.pop("function_name")
+        calculate_means_wrangler.os.environ.pop("method_name")
         response = calculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})  # noqa E501
-        calculate_means_wrangler.os.environ["function_name"] = "mock_method"
+        calculate_means_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
     def test_marshmallow_raises_method_exception(self):
@@ -177,7 +177,7 @@ class TestMeans(unittest.TestCase):
             # Removing movement_columns to allow for test of missing parameter
             calculate_means_method.os.environ.pop("movement_columns")
             response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})  # noqa E501
-            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand movement_Q602_building_soft_sand movement_Q603_concreting_sand movement_Q604_bituminous_gravel movement_Q605_concreting_gravel movement_Q606_other_gravel movement_Q607_constructional_fill region strata"  # noqa E501
+            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
@@ -185,7 +185,7 @@ class TestMeans(unittest.TestCase):
         with mock.patch.dict(
             calculate_means_wrangler.os.environ,
             {
-                "queue_url": "An Invalid Queue"
+                "sqs_queue_url": "An Invalid Queue"
             },
         ):
             response = calculate_means_wrangler.lambda_handler(

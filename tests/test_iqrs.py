@@ -14,13 +14,13 @@ class TestWranglerAndMethod():
     @classmethod
     def setup_class(cls):
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
-            'queue_url': 'mock_queue',
+            'sqs_queue_url': 'mock_queue',
             'bucket_name': 'mock_bucket',
             'incoming_message_group': 'mock_group',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
-            'sqs_messageid_name': 'mock_message',
-            'arn': 'mock_arn',
+            'sqs_message_group_id': 'mock_message',
+            'sns_topic_arn': 'mock_arn',
             'checkpoint': 'mock_checkpoint',
             'method_name': 'mock_method',
             'input_data': 'mock_data',
@@ -159,7 +159,7 @@ class TestWranglerAndMethod():
         input_file = "Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             json_content = file.read()
-            # Removing arn to allow for test of missing parameter
+            # Removing sns_topic_arn to allow for test of missing parameter
             iqrs_method.os.environ.pop("iqrs_columns")
             response = iqrs_method.lambda_handler(json_content, {"aws_request_id": "666"})
             iqrs_method.os.environ["iqrs_columns"] = "iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607"  # noqa E501
@@ -170,7 +170,7 @@ class TestWranglerAndMethod():
         with mock.patch.dict(
             iqrs_wrangler.os.environ,
             {
-                "queue_url": "An Invalid Queue"
+                "sqs_queue_url": "An Invalid Queue"
             },
         ):
             response = iqrs_wrangler.lambda_handler(
