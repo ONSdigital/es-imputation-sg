@@ -75,7 +75,8 @@ def lambda_handler(event, context):
                        json_response, queue_url, sqs_messageid_name)
         logger.info("Successfully sent data to sqs")
 
-        sqs.delete_message(QueueUrl=config['queue_url'], ReceiptHandle=receipt_handle)
+        if receipt_handle:
+            sqs.delete_message(QueueUrl=config['queue_url'], ReceiptHandle=receipt_handle)
 
         logger.info("Successfully deleted input data from sqs")
 

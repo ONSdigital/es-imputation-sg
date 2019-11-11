@@ -229,7 +229,10 @@ def lambda_handler(event, context):
             funk.save_data(bucket_name, in_file_name, data, queue_url, sqs_messageid_name)
 
             logger.info("Successfully sent the unchanged data to SQS")
-        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+
+        if receipt_handle:
+            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+
         funk.send_sns_message_with_anomalies(checkpoint,
                                              str(anomalies), arn, imputation_run_type)
 
