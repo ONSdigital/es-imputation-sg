@@ -2,16 +2,16 @@ import json
 import logging
 import os
 
-import marshmallow
 import numpy as np
 import pandas as pd
+from marshmallow import Schema, fields
 
 
-class InputSchema(marshmallow.Schema):
-    atypical_columns = marshmallow.fields.Str(required=True)
-    iqrs_columns = marshmallow.fields.Str(required=True)
-    movement_columns = marshmallow.fields.Str(required=True)
-    mean_columns = marshmallow.fields.Str(required=True)
+class InputSchema(Schema):
+    atypical_columns = fields.Str(required=True)
+    iqrs_columns = fields.Str(required=True)
+    mean_columns = fields.Str(required=True)
+    movement_columns = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -21,13 +21,13 @@ def lambda_handler(event, context):
     :param context: Context object
     :return: JSON string
     """
-    current_module = "Atypicals - Method"
+    current_module = "Imputation Atypicals - Method."
     error_message = ""
     log_message = ""
     logger = logging.getLogger("Atypicals")
     try:
 
-        logger.info("Atypicals Method Begun")
+        logger.info("Starting " + current_module)
 
         # env vars
         config, errors = InputSchema().load(os.environ)
@@ -61,7 +61,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -71,7 +71,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -83,7 +83,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

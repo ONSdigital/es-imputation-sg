@@ -6,7 +6,7 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
-    questions = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
     first_threshold = fields.Str(required=True)
     second_threshold = fields.Str(required=True)
     third_threshold = fields.Str(required=True)
@@ -39,7 +39,7 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # set up variables
-        questions = config["questions"]
+        questions_list = config["questions_list"]
         first_threshold = config["first_threshold"]
         second_threshold = config["second_threshold"]
         third_threshold = config["third_threshold"]
@@ -85,7 +85,7 @@ def lambda_handler(event, context):
 
             return row
 
-        for question in questions.split(" "):
+        for question in questions_list.split(","):
             df = df.apply(lambda x: calculate_imputation_factors(x, question), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
@@ -99,7 +99,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -109,7 +109,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -121,7 +121,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

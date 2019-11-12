@@ -10,17 +10,24 @@ import iqrs_method
 import iqrs_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestWranglerAndMethod():
     @classmethod
     def setup_class(cls):
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
-            'queue_url': 'mock_queue',
+            'sqs_queue_url': 'mock_queue',
             'bucket_name': 'mock_bucket',
             'incoming_message_group': 'mock_group',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
-            'sqs_messageid_name': 'mock_message',
-            'arn': 'mock_arn',
+            'sqs_message_group_id': 'mock_message',
+            'sns_topic_arn': 'mock_arn',
             'checkpoint': 'mock_checkpoint',
             'method_name': 'mock_method',
             'input_data': 'mock_data',
@@ -53,7 +60,7 @@ class TestWranglerAndMethod():
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
                         assert "success" in response
                         assert response["success"] is True
@@ -66,7 +73,7 @@ class TestWranglerAndMethod():
             selected_cols = iqrs_cols.split(',') + sorting_cols
 
             json_content = json.loads(file.read())
-            output = iqrs_method.lambda_handler(json_content, {"aws_request_id": "666"})
+            output = iqrs_method.lambda_handler(json_content, context_object)
 
             response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
 
@@ -86,7 +93,7 @@ class TestWranglerAndMethod():
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
                 None,
-                {"aws_request_id": "666"}
+                context_object
             )
 
             assert "success" in response
@@ -101,7 +108,7 @@ class TestWranglerAndMethod():
                 mocked.side_effect = Exception("General exception")
                 response = iqrs_method.lambda_handler(
                     json_content,
-                    {"aws_request_id": "666"}
+                    context_object
                 )
 
                 assert "success" in response
@@ -118,7 +125,7 @@ class TestWranglerAndMethod():
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
                     None,
-                    {"aws_request_id": "666"},
+                    context_object,
                 )
 
             assert "success" in response
@@ -136,7 +143,7 @@ class TestWranglerAndMethod():
                 content = json.loads(file.read())
 
                 response = iqrs_method.lambda_handler(
-                    content, {"aws_request_id": "666"}
+                    content, context_object
                 )
                 assert """Key Error in""" in response["error"]
 
@@ -147,7 +154,7 @@ class TestWranglerAndMethod():
         """
         # Removing the strata_column to allow for test of missing parameter
         iqrs_wrangler.os.environ.pop("method_name")
-        response = iqrs_wrangler.lambda_handler(None, {"aws_request_id": "666"})
+        response = iqrs_wrangler.lambda_handler(None, context_object)
         iqrs_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -159,9 +166,9 @@ class TestWranglerAndMethod():
         input_file = "Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             json_content = file.read()
-            # Removing arn to allow for test of missing parameter
+            # Removing sns_topic_arn to allow for test of missing parameter
             iqrs_method.os.environ.pop("iqrs_columns")
-            response = iqrs_method.lambda_handler(json_content, {"aws_request_id": "666"})
+            response = iqrs_method.lambda_handler(json_content, context_object)
             iqrs_method.os.environ["iqrs_columns"] = "iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
@@ -170,11 +177,11 @@ class TestWranglerAndMethod():
         with mock.patch.dict(
             iqrs_wrangler.os.environ,
             {
-                "queue_url": "An Invalid Queue"
+                "sqs_queue_url": "An Invalid Queue"
             },
         ):
             response = iqrs_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
+                None, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -195,7 +202,7 @@ class TestWranglerAndMethod():
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = iqrs_wrangler.lambda_handler(
                         None,
-                        {"aws_request_id": "666"},
+                        context_object,
                     )
 
                     assert "success" in response
@@ -218,7 +225,7 @@ class TestWranglerAndMethod():
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response

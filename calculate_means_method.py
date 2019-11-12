@@ -1,13 +1,13 @@
 import logging
 import os
 
-import marshmallow
 import pandas as pd
+from marshmallow import Schema, fields
 
 
-class InputSchema(marshmallow.Schema):
-    movement_columns = marshmallow.fields.Str(required=True)
-    questions_list = marshmallow.fields.Str(required=True)
+class InputSchema(Schema):
+    movement_columns = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -38,7 +38,7 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully retrieved data from event.")
 
-        workingdf = df[config['movement_columns'].split(" ")]
+        workingdf = df[config['movement_columns'].split(",")]
 
         counts = workingdf.groupby(["region", "strata"]).count()
         # Rename columns to fit naming standards
@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         # join on movements and counts on region& strata to df
         df = pd.merge(df, moves, on=["region", "strata"], how="left")
 
-        for question in config['questions_list'].split():
+        for question in config['questions_list'].split(','):
             df["mean_" + question] = df.apply(
                 lambda x: x["movement_" + question + "_sum"]
                 / x["movement_" + question + "_count"],
@@ -99,7 +99,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -109,7 +109,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -121,7 +121,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

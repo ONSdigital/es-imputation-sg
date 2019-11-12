@@ -52,7 +52,7 @@ def lambda_handler(event, context):
         sorted_current = df[df.period == int(current_period)]
         sorted_previous = df[df.period == int(previous_period)]
 
-        for question in questions_list.split():
+        for question in questions_list.split(','):
 
             # Converted to list due to issues with Numpy dtypes and math operations.
             current_list = sorted_current[question].tolist()
@@ -79,10 +79,10 @@ def lambda_handler(event, context):
         final_output = filled_dataframe.to_json(orient='records')
 
     except ValueError as e:
-        error_message = "Parameter validation error" \
+        error_message = "Parameter validation error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -90,7 +90,7 @@ def lambda_handler(event, context):
         error_message = "Key Error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -99,7 +99,7 @@ def lambda_handler(event, context):
                         + current_module + " (" \
                         + str(type(e)) + ") |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

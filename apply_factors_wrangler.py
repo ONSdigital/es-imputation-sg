@@ -10,18 +10,18 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
-    arn = fields.Str(required=True)
-    bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     non_responder_file = fields.Str(required=True)
-    period = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
-    previous_data_file = fields.Str(required=True)
-    sqs_messageid_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
+    period = fields.Str(required=True)
+    previous_data_file = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    sqs_queue_url = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -32,13 +32,13 @@ def lambda_handler(event, context):
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """
-    current_module = "Apply Factors - Wrangler"
+    current_module = "Imputation Apply Factors - Wrangler."
     error_message = ""
     log_message = ""
     logger = logging.getLogger("Apply")
     logger.setLevel(10)
     try:
-        logger.info("Apply Factors Wrangler Begun")
+        logger.info("Starting " + current_module)
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
@@ -47,28 +47,24 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # Set up clients
-        # # S3
+        checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
-        non_responder_data_file = config["non_responder_file"]
-        # Sqs
-        queue_url = config["queue_url"]
-        sqs_messageid_name = config["sqs_messageid_name"]
-
-        #
+        current_period = config["period"]
         incoming_message_group = config["incoming_message_group"]
         in_file_name = config["in_file_name"]
-        out_file_name = config["out_file_name"]
-        checkpoint = config["checkpoint"]
-        current_period = config["period"]
         method_name = config["method_name"]
-        #
-
+        non_responder_data_file = config["non_responder_file"]
+        out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
-        arn = config["arn"]
+        sns_topic_arn = config["sns_topic_arn"]
+        sqs_message_group_id = config["sqs_message_group_id"]
+        sqs_queue_url = config["sqs_queue_url"]
+
+        sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         factors_dataframe, receipt_handler = funk.get_dataframe(
-            queue_url, bucket_name, in_file_name, incoming_message_group)
+            sqs_queue_url, bucket_name, in_file_name, incoming_message_group)
         logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
@@ -145,22 +141,26 @@ def lambda_handler(event, context):
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
         logger.info("Successfully invoked lambda")
 
-        # This bit will want a fix
+        # ----- This bit will want a fix. ----- #
         imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
+        # ------------------------------------- #
         current_responders = factors_dataframe[
             factors_dataframe["period"] == int(current_period)
         ]
 
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
-        imputation_run_type = "Imputation complete"
         message = final_imputed.to_json(orient="records")
 
         funk.save_data(bucket_name, out_file_name, message,
-                       queue_url, sqs_messageid_name)
-        logger.info("Successfully sent to sqs")
-        funk.send_sns_message(checkpoint, imputation_run_type, arn)
-        logger.info("Successfully sent to sns")
+                       sqs_queue_url, sqs_message_group_id)
+        logger.info("Successfully sent data to s3")
+
+        if receipt_handler:
+            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
+
+        funk.send_sns_message(checkpoint, sns_topic_arn, 'Imputation - Apply Factors.')
+        logger.info("Successfully sent message to sns")
         logger.info(funk.delete_data(bucket_name, in_file_name))
 
     except TypeError as e:
@@ -170,17 +170,17 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error"
+            "Parameter validation error in "
             + current_module
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
@@ -192,7 +192,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -202,7 +202,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
@@ -212,7 +212,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -224,7 +224,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

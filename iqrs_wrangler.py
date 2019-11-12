@@ -9,55 +9,54 @@ from marshmallow import Schema, fields
 
 
 class InputSchema(Schema):
-    bucket_name = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
-    sqs_messageid_name = fields.Str(required=True)
-    arn = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
     iqrs_columns = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
+    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
     """
     Add docs here.
     """
-    current_module = "IQRS - Wrangler"
+    current_module = "Imputation IQRS - Wrangler."
     error_message = ""
     log_message = ""
     logger = logging.getLogger("IQRS")
     logger.setLevel(10)
     try:
 
-        logger.info("IQRS Wrangler Begun")
+        logger.info("Starting " + current_module)
 
         # clients
         sqs = boto3.client('sqs', region_name="eu-west-2")
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
-        sns = boto3.client('sns', region_name="eu-west-2")
 
         # env vars
         config, errors = InputSchema().load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
-        bucket_name = config["bucket_name"]
-        queue_url = config["queue_url"]
-        sqs_messageid_name = config["sqs_messageid_name"]
-        method_name = config["method_name"]
-        iqrs_columns = config["iqrs_columns"]
-        checkpoint = config["checkpoint"]
-        arn = config["arn"]
-        incoming_message_group = config["incoming_message_group"]
+        checkpoint = config['checkpoint']
+        bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
+        incoming_message_group = config['incoming_message_group']
+        iqrs_columns = config['iqrs_columns']
+        method_name = config['method_name']
         out_file_name = config["out_file_name"]
+        sns_topic_arn = config['sns_topic_arn']
+        sqs_queue_url = config['sqs_queue_url']
+        sqs_message_group_id = config['sqs_message_group_id']
 
         logger.info("Vaildated params")
 
-        data, receipt_handler = funk.get_dataframe(queue_url, bucket_name,
+        data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
                                                    in_file_name,
                                                    incoming_message_group)
         logger.info("Succesfully retrieved data.")
@@ -81,16 +80,18 @@ def lambda_handler(event, context):
         logger.info("Succesfully invoked method lambda")
 
         funk.save_data(bucket_name, out_file_name,
-                       json_response, queue_url, sqs_messageid_name)
+                       json_response, sqs_queue_url, sqs_message_group_id)
 
-        logger.info("Successfully sent data to sqs")
+        logger.info("Successfully sent data to s3")
 
-        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handler)
+        if receipt_handler:
+            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
+
         logger.info(funk.delete_data(bucket_name, in_file_name))
-        logger.info("Successfully deleted input data from sqs")
-        funk.send_sns_message(checkpoint, sns, arn)
+        logger.info("Successfully deleted input data from s3")
+        funk.send_sns_message(checkpoint, sns_topic_arn, 'Imputation - IQRs.')
 
-        logger.info("Succesfully sent data to sns")
+        logger.info("Succesfully sent message to sns")
 
     except AttributeError as e:
         error_message = (
@@ -99,17 +100,17 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error"
+            "Parameter validation error in "
             + current_module
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
@@ -121,7 +122,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -131,7 +132,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
@@ -141,7 +142,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -153,7 +154,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:
