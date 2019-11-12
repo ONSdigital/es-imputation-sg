@@ -8,6 +8,13 @@ from botocore.response import StreamingBody
 import calculate_movement_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestClass(unittest.TestCase):
 
     @classmethod
@@ -87,7 +94,7 @@ class TestClass(unittest.TestCase):
                                                             StreamingBody(file, 13123)}
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"period": "201809"}}, context_object
             )
 
         output = myvar[0][0][2]
@@ -133,7 +140,7 @@ class TestClass(unittest.TestCase):
         mock_sqs_return.return_value = pd.DataFrame(input_data), 666
 
         response = calculate_movement_wrangler.lambda_handler(
-              {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+              {"RuntimeVariables": {"period": "201809"}}, context_object
         )
 
         self.assertTrue(response["success"])
@@ -170,7 +177,7 @@ class TestClass(unittest.TestCase):
                                                             StreamingBody(file, 2)}
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"period": "201809"}}, context_object
             )
 
         assert "success" in response
@@ -209,7 +216,7 @@ class TestClass(unittest.TestCase):
             }
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"period": "201809"}}, context_object
             )
 
         assert "success" in response
@@ -239,7 +246,7 @@ class TestClass(unittest.TestCase):
         mock_sqs_return.return_value = json.dumps(input_data), 666
 
         response = calculate_movement_wrangler.lambda_handler(
-            {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+            {"RuntimeVariables": {"period": "201809"}}, context_object
         )
 
         assert "success" in response

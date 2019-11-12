@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 import unittest
 import unittest.mock as mock
 
@@ -14,7 +12,12 @@ from pandas.util.testing import assert_frame_equal
 import calculate_imputation_factors_method
 import calculate_imputation_factors_wrangler
 
-sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
+
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
 
 
 class TestWranglerAndMethod(unittest.TestCase):
@@ -142,7 +145,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, {"aws_request_id": "666"}
+                            None, context_object
                         )
                         assert "success" in out
                         assert out["success"]
@@ -192,7 +195,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
 
         response = calculate_imputation_factors_method.lambda_handler(
-            json_data_content, {"aws_request_id": "666"}
+            json_data_content, context_object
         )
         assert not response["success"]
 
@@ -200,7 +203,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         with mock.patch("calculate_imputation_factors_wrangler.boto3.client") as mocked:
             mocked.side_effect = Exception("AARRRRGHH!!")
             response = calculate_imputation_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -210,7 +213,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         with mock.patch("pandas.DataFrame") as mocked:
             mocked.side_effect = Exception("AARRRRGHH!!")
             response = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -228,7 +231,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         ):
             calculate_imputation_factors_wrangler.os.environ.pop("method_name")
             out = calculate_imputation_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             self.assertRaises(ValueError)
             print(out)
@@ -246,7 +249,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         ):
             calculate_imputation_factors_method.os.environ.pop("questions_list")
             out = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             calculate_imputation_factors_method.os.environ[
                 "questions_list"
@@ -272,7 +275,7 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         print(json_content)
         output_file = calculate_imputation_factors_method.lambda_handler(
-            json_content, {"aws_request_id": "666"}
+            json_content, context_object
         )
 
         assert not output_file["success"]
@@ -323,7 +326,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, {"aws_request_id": "666"}
+                            None, context_object
                         )
                         assert "success" in out
                         assert not out["success"]
@@ -337,7 +340,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         ) as mocked:
             mocked.side_effect = KeyError()
             out = calculate_imputation_factors_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
+                None, context_object
             )
             assert "success" in out
             assert not out["success"]
@@ -354,7 +357,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                     {"Error": {"Code": "Mike"}}, "create_stream"
                 )
                 out = calculate_imputation_factors_wrangler.lambda_handler(
-                    None, {"aws_request_id": "666"}
+                    None, context_object
                 )
                 assert "success" in out
                 assert not out["success"]

@@ -8,6 +8,13 @@ import calculate_movement_method
 import calculate_movement_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestStringMethods(unittest.TestCase):
 
     def test_lambda_handler_movement_method(self):
@@ -32,7 +39,7 @@ class TestStringMethods(unittest.TestCase):
             striped_string = string_result.replace(" ", "")
 
             response = calculate_movement_method.lambda_handler(input_data,
-                                                                {"aws_request_id": "666"})
+                                                                context_object)
 
         assert response == striped_string
 
@@ -78,7 +85,7 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"})
+                    {"RuntimeVariables": {"period": 201809}}, context_object)
 
                 assert 'success' in response
                 assert response['success'] is False
@@ -102,7 +109,7 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_method.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"})
+                    {"RuntimeVariables": {"period": 201809}}, context_object)
 
                 assert 'success' in response
                 assert response['success'] is False
@@ -131,7 +138,7 @@ class TestStringMethods(unittest.TestCase):
 
             response = calculate_movement_method.lambda_handler({"RuntimeVariables":
                                                                 {"period": "201809"}},
-                                                                {"aws_request_id": "666"})
+                                                                context_object)
 
             assert (response['error'].__contains__("""Parameter validation error"""))
 
@@ -177,7 +184,7 @@ class TestStringMethods(unittest.TestCase):
             calculate_movement_wrangler.os.environ.pop("checkpoint")
 
             response = calculate_movement_wrangler.lambda_handler({
-                "RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+                "RuntimeVariables": {"period": "201809"}}, context_object
             )
 
             assert (response['error'].__contains__("""Parameter validation error"""))
@@ -216,7 +223,7 @@ class TestStringMethods(unittest.TestCase):
             },
         ):
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": 201809}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"period": 201809}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -243,7 +250,7 @@ class TestStringMethods(unittest.TestCase):
                 json_content = json.loads(content)
 
             output_file = calculate_movement_method.lambda_handler(
-                json_content, {"aws_request_id": "666"}
+                json_content, context_object
             )
 
             assert not output_file["success"]

@@ -12,6 +12,13 @@ import calculate_means_method
 import calculate_means_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestMeans(unittest.TestCase):
     @classmethod
     def setup_class(cls):
@@ -69,7 +76,7 @@ class TestMeans(unittest.TestCase):
 
                         response = calculate_means_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -85,7 +92,7 @@ class TestMeans(unittest.TestCase):
             json_content = json.loads(file.read())
             output = calculate_means_method.lambda_handler(
                 json_content,
-                {"aws_request_id": "666"}
+                context_object
             )
 
             expected_df = (
@@ -112,7 +119,7 @@ class TestMeans(unittest.TestCase):
             mock_client.return_value = mock_client_object
             response = calculate_means_wrangler.lambda_handler(
                 None,
-                {"aws_request_id": "666"}
+                context_object
             )
 
             assert "success" in response
@@ -127,7 +134,7 @@ class TestMeans(unittest.TestCase):
                 mocked.side_effect = Exception("General exception")
                 response = calculate_means_method.lambda_handler(
                     json_content,
-                    {"aws_request_id": "666"}
+                    context_object
                 )
 
                 assert "success" in response
@@ -143,7 +150,7 @@ class TestMeans(unittest.TestCase):
             mock_client.return_value = mock_client_object
             response = calculate_means_wrangler.lambda_handler(
                  None,
-                 {"aws_request_id": "666"},
+                 context_object,
             )
 
             assert "success" in response
@@ -152,7 +159,7 @@ class TestMeans(unittest.TestCase):
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
-        response = calculate_means_method.lambda_handler(None, {"aws_request_id": "666"})
+        response = calculate_means_method.lambda_handler(None, context_object)
         assert """Key Error""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
@@ -162,7 +169,7 @@ class TestMeans(unittest.TestCase):
         """
         # Removing the strata_column to allow for test of missing parameter
         calculate_means_wrangler.os.environ.pop("method_name")
-        response = calculate_means_wrangler.lambda_handler(None, {"aws_request_id": "666"})  # noqa E501
+        response = calculate_means_wrangler.lambda_handler(None, context_object)  # noqa E501
         calculate_means_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -176,7 +183,7 @@ class TestMeans(unittest.TestCase):
             json_content = json.loads(file.read())
             # Removing movement_columns to allow for test of missing parameter
             calculate_means_method.os.environ.pop("movement_columns")
-            response = calculate_means_method.lambda_handler(json_content, {"aws_request_id": "666"})  # noqa E501
+            response = calculate_means_method.lambda_handler(json_content, context_object)  # noqa E501
             calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
@@ -189,7 +196,7 @@ class TestMeans(unittest.TestCase):
             },
         ):
             response = calculate_means_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
+                None, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -211,7 +218,7 @@ class TestMeans(unittest.TestCase):
 
                     response = calculate_means_wrangler.lambda_handler(
                         None,
-                        {"aws_request_id": "666"},
+                        context_object,
                     )
 
                     assert "success" in response
@@ -235,7 +242,7 @@ class TestMeans(unittest.TestCase):
 
                         response = calculate_means_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response

@@ -10,6 +10,13 @@ from moto import mock_lambda, mock_s3, mock_sqs
 import recalculate_means_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestRecalculateMeans(unittest.TestCase):
     """
     Test Class Recalculate Means Wrangler.
@@ -78,7 +85,7 @@ class TestRecalculateMeans(unittest.TestCase):
 
                         response = recalculate_means_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -92,7 +99,7 @@ class TestRecalculateMeans(unittest.TestCase):
         :return: mock response
         """
         response = recalculate_means_wrangler.lambda_handler(None,
-                                                             {"aws_request_id": "666"})
+                                                             context_object)
         assert not response['success']
 
     @mock_sqs
@@ -116,14 +123,14 @@ class TestRecalculateMeans(unittest.TestCase):
             response = recalculate_means_wrangler.lambda_handler(
                 {"RuntimeVariables":
 
-                 {"checkpoint": 123}}, {"aws_request_id": "666"})
+                 {"checkpoint": 123}}, context_object)
             assert """Error validating environment parameters:""" in response['error']
 
     @mock_sqs
     def test_client_error(self):
         response = recalculate_means_wrangler.lambda_handler(
             {"RuntimeVariables":
-                {"checkpoint": 123}}, {"aws_request_id": "666"})
+                {"checkpoint": 123}}, context_object)
         assert 'success' in response
         assert not response['success']
         assert "AWS Error" in response['error']
@@ -141,8 +148,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 mocked_client.invoke.return_value = {"Payload": "mike"}
 
                 response = recalculate_means_wrangler.lambda_handler(None,
-                                                                     {"aws_request_id":
-                                                                      "666"})
+                                                                     context_object)
         assert 'success' in response
         assert not response['success']
         assert "Bad data" in response['error']
@@ -158,8 +164,7 @@ class TestRecalculateMeans(unittest.TestCase):
                                 "Messages": [{"F#": input_data, "ReceiptHandle": 666}]
                             }
             response = recalculate_means_wrangler.lambda_handler(None,
-                                                                 {"aws_request_id":
-                                                                  "666"})
+                                                                 context_object)
         assert 'success' in response
         assert not response['success']
         assert "Key Error" in response['error']
@@ -175,7 +180,7 @@ class TestRecalculateMeans(unittest.TestCase):
             with mock.patch("recalculate_means_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = recalculate_means_wrangler.lambda_handler(
-                    "", {"aws_request_id": "666"}
+                    "", context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -200,7 +205,7 @@ class TestRecalculateMeans(unittest.TestCase):
 
                         response = recalculate_means_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response

@@ -10,6 +10,13 @@ import atypicals_method
 import atypicals_wrangler
 
 
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
+
+
 class TestClass():
     @classmethod
     def setup_class(cls):
@@ -57,7 +64,7 @@ class TestClass():
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = atypicals_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
                         assert "success" in response
                         assert response["success"] is True
@@ -72,7 +79,7 @@ class TestClass():
             json_content = file.read()
             output = atypicals_method.lambda_handler(
                 json_content,
-                {"aws_request_id": "666"}
+                context_object
             )
 
             response_df = (
@@ -101,7 +108,7 @@ class TestClass():
             mock_client.return_value = mock_client_object
             response = atypicals_wrangler.lambda_handler(
                 None,
-                {"aws_request_id": "666"}
+                context_object
             )
 
             assert "success" in response
@@ -116,7 +123,7 @@ class TestClass():
                 mocked.side_effect = Exception("General exception")
                 response = atypicals_method.lambda_handler(
                     json_content,
-                    {"aws_request_id": "666"}
+                    context_object
                 )
 
                 assert "success" in response
@@ -133,7 +140,7 @@ class TestClass():
             mock_client.return_value = mock_client_object
             response = atypicals_wrangler.lambda_handler(
                     None,
-                    {"aws_request_id": "666"},
+                    context_object,
                 )
 
             assert "success" in response
@@ -151,7 +158,7 @@ class TestClass():
                 content = file.read()
 
                 response = atypicals_method.lambda_handler(
-                    content, {"aws_request_id": "666"}
+                    content, context_object
                 )
                 assert """Key Error in""" in response["error"]
 
@@ -162,7 +169,7 @@ class TestClass():
         """
         # Removing the strata_column to allow for test of missing parameter
         atypicals_wrangler.os.environ.pop("method_name")
-        response = atypicals_wrangler.lambda_handler(None, {"aws_request_id": "666"})
+        response = atypicals_wrangler.lambda_handler(None, context_object)
         atypicals_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -178,7 +185,7 @@ class TestClass():
             atypicals_method.os.environ.pop("mean_columns")
             response = atypicals_method.lambda_handler(
                 json_content,
-                {"aws_request_id": "666"}
+                context_object
             )
             atypicals_method.os.environ["mean_columns"] = "mean601,mean602,mean603,mean604,mean605,mean606,mean607"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
@@ -192,7 +199,7 @@ class TestClass():
             },
         ):
             response = atypicals_wrangler.lambda_handler(
-                None, {"aws_request_id": "666"}
+                None, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -213,7 +220,7 @@ class TestClass():
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = atypicals_wrangler.lambda_handler(
                         None,
-                        {"aws_request_id": "666"},
+                        context_object,
                     )
 
                     assert "success" in response
@@ -237,7 +244,7 @@ class TestClass():
 
                         response = atypicals_wrangler.lambda_handler(
                             None,
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response

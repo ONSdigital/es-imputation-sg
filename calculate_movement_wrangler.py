@@ -243,7 +243,7 @@ def lambda_handler(event, context):
         error_message = "Bad data encountered in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -251,7 +251,7 @@ def lambda_handler(event, context):
         error_message = "Parameter validation error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -260,7 +260,7 @@ def lambda_handler(event, context):
                         + str(e.response['Error']['Code']) + ") " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -268,7 +268,7 @@ def lambda_handler(event, context):
         error_message = "Key Error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -276,7 +276,7 @@ def lambda_handler(event, context):
         error_message = "Incomplete Lambda response encountered in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
 
@@ -285,7 +285,7 @@ def lambda_handler(event, context):
                         + current_module + " (" \
                         + str(type(e)) + ") |- " \
                         + str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+                        + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

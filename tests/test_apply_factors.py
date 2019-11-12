@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 import unittest
 import unittest.mock as mock
 
@@ -12,7 +10,12 @@ from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 import apply_factors_method as lambda_method_function
 import apply_factors_wrangler
 
-sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
+
+class MockContext:
+    aws_request_id = 666
+
+
+context_object = MockContext
 
 
 class TestApplyFactors(unittest.TestCase):
@@ -93,7 +96,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = apply_factors_wrangler.lambda_handler(
-                    "", {"aws_request_id": "666"}
+                    "", context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -109,7 +112,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = lambda_method_function.lambda_handler(
-                    "", {"aws_request_id": "666"}
+                    "", context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -229,7 +232,7 @@ class TestApplyFactors(unittest.TestCase):
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, {"aws_request_id": "666"}
+                methodinput, context_object
             )
             outputdf = pd.DataFrame(json.loads(response))
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
@@ -243,7 +246,7 @@ class TestApplyFactors(unittest.TestCase):
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, {"aws_request_id": "666"}
+                methodinput, context_object
             )
             assert response["error"].__contains__("""Input Error""")
 
@@ -256,7 +259,7 @@ class TestApplyFactors(unittest.TestCase):
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, {"aws_request_id": "666"}
+                methodinput, context_object
             )
             assert response["error"].__contains__("""Key Error""")
 
@@ -270,7 +273,7 @@ class TestApplyFactors(unittest.TestCase):
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, {"aws_request_id": "666"}
+                methodinput, context_object
             )
             assert response["error"].__contains__("""Bad Data type""")
 
@@ -285,7 +288,7 @@ class TestApplyFactors(unittest.TestCase):
             {"checkpoint": "1", "sqs_queue_url": sqs_queue_url},
         ):
             out = apply_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             self.assertRaises(ValueError)
             assert out["error"].__contains__("""Error validating environment params""")
@@ -310,7 +313,7 @@ class TestApplyFactors(unittest.TestCase):
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -363,7 +366,7 @@ class TestApplyFactors(unittest.TestCase):
                             "Payload": StreamingBody(file, 1)
                         }
                         response = apply_factors_wrangler.lambda_handler(
-                            "", {"aws_request_id": "666"}
+                            "", context_object
                         )
 
                         assert "success" in response
@@ -405,7 +408,7 @@ class TestApplyFactors(unittest.TestCase):
                     json.loads(message)), 666
                 mock_funk.get_dataframe.side_effect = KeyError()
                 response = apply_factors_wrangler.lambda_handler(
-                    "", {"aws_request_id": "666"}
+                    "", context_object
                 )
 
                 assert "success" in response
@@ -442,7 +445,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_funk.get_dataframe.return_value = 66, 666
 
                 response = apply_factors_wrangler.lambda_handler(
-                    "", {"aws_request_id": "666"}
+                    "", context_object
                 )
                 print(response)
                 assert "success" in response
