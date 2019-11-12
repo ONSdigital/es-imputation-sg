@@ -79,7 +79,7 @@ def lambda_handler(event, context):
         final_output = filled_dataframe.to_json(orient='records')
 
     except ValueError as e:
-        error_message = "Parameter validation error" \
+        error_message = "Parameter validation error in " \
                         + current_module + " |- " \
                         + str(e.args) + " | Request ID: " \
                         + str(context.aws_request_id)
