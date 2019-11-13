@@ -42,6 +42,7 @@ functions:
       non_responder_file: non_responders_output.json
       out_file_name: apply_factors_out.json
       period: 201809
+      previous_data_file: previous_period_enriched_stratared.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-apply-factors-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo

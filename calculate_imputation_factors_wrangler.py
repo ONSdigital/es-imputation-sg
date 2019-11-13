@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 
 import boto3
 from botocore.exceptions import ClientError, IncompleteReadError
@@ -73,7 +74,8 @@ def lambda_handler(event, context):
         calculate_factors = lambda_client.invoke(
             FunctionName=method_name, Payload=data_json
         )
-        json_response = calculate_factors.get("Payload").read().decode("UTF-8")
+        json_response = json.loads(
+            calculate_factors.get("Payload").read().decode("UTF-8"))
 
         logger.info("Successfully invoked lambda")
 
