@@ -150,7 +150,15 @@ def lambda_handler(event, context):
 
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
-        message = final_imputed.to_json(orient="records")
+
+        filtered_data = final_imputed[['Q601_asphalting_sand', 'Q602_building_soft_sand',
+                                       'Q603_concreting_sand', 'Q604_bituminous_gravel',
+                                       'Q605_concreting_gravel', 'Q606_other_gravel',
+                                       'Q607_constructional_fill', 'Q608_total', 'county',
+                                       'county_name', 'enterprise_ref', 'gor_code',
+                                       'land_or_marine', 'name', 'period', 'region',
+                                       'responder_id', 'strata']]
+        message = filtered_data.to_json(orient="records")
 
         funk.save_data(bucket_name, out_file_name, message,
                        sqs_queue_url, sqs_message_group_id)
