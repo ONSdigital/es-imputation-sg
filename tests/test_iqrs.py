@@ -51,11 +51,11 @@ class TestWranglerAndMethod():
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("iqrs_input.json", "rb") as file:
+                with open("tests/fixtures/iqrs_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 228382)
                     }
-                    with open("iqrs_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
@@ -66,7 +66,7 @@ class TestWranglerAndMethod():
                         assert response["success"] is True
 
     def test_method_happy_path(self):
-        input_file = "Iqrs_with_columns.json"
+        input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             iqrs_cols = 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607'
             sorting_cols = ['region', 'strata']
@@ -77,7 +77,7 @@ class TestWranglerAndMethod():
 
             response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
 
-            expected_df = pd.read_csv("iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+            expected_df = pd.read_csv("tests/fixtures/iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
 
             response_df = response_df.round(5)
             expected_df = expected_df.round(5)
@@ -101,7 +101,7 @@ class TestWranglerAndMethod():
             assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
-        input_file = "Iqrs_with_columns.json"
+        input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             json_content = file.read()
             with mock.patch("iqrs_method.pd.read_json") as mocked:
@@ -139,7 +139,7 @@ class TestWranglerAndMethod():
                 "iqrs_columns": "bum"
             }
         ):
-            with open("Iqrs_with_columns.json", "r") as file:
+            with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
                 content = json.loads(file.read())
 
                 response = iqrs_method.lambda_handler(
@@ -163,7 +163,7 @@ class TestWranglerAndMethod():
         Testing the marshmallow raises an exception in method.
         :return: None.
         """
-        input_file = "Iqrs_with_columns.json"
+        input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             json_content = file.read()
             # Removing sns_topic_arn to allow for test of missing parameter
@@ -197,7 +197,7 @@ class TestWranglerAndMethod():
                 mock_client_object.invoke.return_value = {
                     "Payload": StreamingBody("{'boo':'moo':}", 2)
                 }
-                with open("iqrs_input.json", "rb") as queue_file:
+                with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = iqrs_wrangler.lambda_handler(
@@ -216,11 +216,11 @@ class TestWranglerAndMethod():
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("iqrs_input.json", "rb") as file:
+                with open("tests/fixtures/iqrs_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 123456)
                     }
-                    with open("iqrs_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
