@@ -38,7 +38,12 @@ class TestStringMethods(unittest.TestCase):
             string_result = json.dumps(result)
             striped_string = string_result.replace(" ", "")
 
-            response = calculate_movement_method.lambda_handler(input_data,
+            payload_data = {
+                "json_data": input_data,
+                "system_flag": "sand_and_gravel"
+            }
+
+            response = calculate_movement_method.lambda_handler(payload_data,
                                                                 context_object)
 
         assert response == striped_string
@@ -136,8 +141,12 @@ class TestStringMethods(unittest.TestCase):
             # Removing the previous_period to allow for test of missing parameter
             calculate_movement_method.os.environ.pop("previous_period")
 
-            response = calculate_movement_method.lambda_handler({"RuntimeVariables":
-                                                                {"period": "201809"}},
+            payload_data = {
+                "json_data": "input_data",
+                "system_flag": "sand_and_gravel"
+            }
+
+            response = calculate_movement_method.lambda_handler(payload_data,
                                                                 context_object)
 
             assert (response['error'].__contains__("""Parameter validation error"""))
@@ -249,8 +258,13 @@ class TestStringMethods(unittest.TestCase):
                 content = content.replace("Q", "TEST")
                 json_content = json.loads(content)
 
+            payload_data = {
+                "json_data": json_content,
+                "system_flag": "sand_and_gravel"
+            }
+
             output_file = calculate_movement_method.lambda_handler(
-                json_content, context_object
+                payload_data, context_object
             )
 
             assert not output_file["success"]

@@ -1,4 +1,5 @@
 import logging
+import json
 import os
 
 import boto3
@@ -36,6 +37,11 @@ def lambda_handler(event, context):
     final_output = {}
 
     try:
+        # TESTING
+        system_flag = event["system_flag"]
+        with open("movement_calculations.json") as calculation_file:
+            calculation = json.load(calculation_file)
+            calculation = calculation[system_flag]
 
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
@@ -47,7 +53,7 @@ def lambda_handler(event, context):
         previous_period = config['previous_period']
         questions_list = config['questions_list']
 
-        df = pd.DataFrame(event)
+        df = pd.DataFrame(event["json_data"])
 
         sorted_current = df[df.period == int(current_period)]
         sorted_previous = df[df.period == int(previous_period)]
@@ -64,7 +70,8 @@ def lambda_handler(event, context):
 
                 # This check is too prevent the DivdebyZeroError.
                 if previous_list[i] != 0:
-                    number = (current_list[i] - previous_list[i]) / previous_list[i]
+                    # TESTING
+                    number = eval(calculation)
                 else:
                     number = 0.0
 

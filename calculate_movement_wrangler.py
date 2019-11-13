@@ -205,10 +205,15 @@ def lambda_handler(event, context):
 
             json_ordered_data = merged_data.to_json(orient='records')
 
+            json_payload = {
+                "json_data": json_ordered_data,
+                "system_flag": "bricks_blocks"
+            }
+
             logger.info("Successfully created movement columns on the data")
 
             imputed_data = lambda_client.invoke(FunctionName=method_name,
-                                                Payload=json_ordered_data)
+                                                Payload=json.dumps(json_payload))
 
             logger.info("Successfully invoked the movement method lambda")
 
