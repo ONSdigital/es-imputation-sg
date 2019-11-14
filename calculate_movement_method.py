@@ -4,6 +4,7 @@ import os
 
 import boto3
 import pandas as pd
+from esawsfunctions import funk
 from marshmallow import Schema, fields
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
@@ -38,10 +39,12 @@ def lambda_handler(event, context):
 
     try:
         # TESTING
-        system_flag = event["system_flag"]
-        with open("movement_calculations.json") as calculation_file:
-            calculation = json.load(calculation_file)
-            calculation = calculation[system_flag]
+        # Declare event vars
+        calculation_type = event["calculation_type"]
+        json_data = event["json_data"]
+
+        # Get relative calulcation function
+        calculation = getattr(funk, calculation_type)
 
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
@@ -53,7 +56,7 @@ def lambda_handler(event, context):
         previous_period = config['previous_period']
         questions_list = config['questions_list']
 
-        df = pd.DataFrame(event["json_data"])
+        df = pd.DataFrame(json_data)
 
         sorted_current = df[df.period == int(current_period)]
         sorted_previous = df[df.period == int(previous_period)]
@@ -67,14 +70,14 @@ def lambda_handler(event, context):
             previous_list = sorted_previous[question].tolist()
 
             result_list = []
+
             # .Length is used so the correct amount of iterations for the loop.
             for i in range(0, len(sorted_current)):
 
                 # This check is too prevent the DivdebyZeroError.
                 if previous_list[i] != 0:
                     # TESTING
-                    # TODO: Remove eval
-                    number = eval(calculation)
+                    number = calculation(current_list[i], previous_list[i])
                 else:
                     number = 0.0
 
