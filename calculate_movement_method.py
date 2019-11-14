@@ -61,6 +61,8 @@ def lambda_handler(event, context):
         for question in questions_list.split(','):
 
             # Converted to list due to issues with Numpy dtypes and math operations.
+            # NOTE: Shows as unused as not visibly present in code, but gets
+            #       evaluated in the calculation.
             current_list = sorted_current[question].tolist()
             previous_list = sorted_previous[question].tolist()
 
@@ -71,6 +73,7 @@ def lambda_handler(event, context):
                 # This check is too prevent the DivdebyZeroError.
                 if previous_list[i] != 0:
                     # TESTING
+                    # TODO: Remove eval
                     number = eval(calculation)
                 else:
                     number = 0.0
