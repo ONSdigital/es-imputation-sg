@@ -40,7 +40,7 @@ class TestStringMethods(unittest.TestCase):
 
             payload_data = {
                 "json_data": input_data,
-                "system_flag": "sand_and_gravel"
+                "calculation_type": "movement_calculation_a"
             }
 
             response = calculate_movement_method.lambda_handler(payload_data,
@@ -143,7 +143,7 @@ class TestStringMethods(unittest.TestCase):
 
             payload_data = {
                 "json_data": "input_data",
-                "system_flag": "sand_and_gravel"
+                "calculation_type": "movement_calculation_a"
             }
 
             response = calculate_movement_method.lambda_handler(payload_data,
