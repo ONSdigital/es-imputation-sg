@@ -144,13 +144,17 @@ def lambda_handler(event, context):
         # ----- This bit will want a fix. ----- #
         imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
         # ------------------------------------- #
+
+        # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
             factors_dataframe["period"] == int(current_period)
         ]
 
+        # Joining Datasets Together.
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
 
+        # Filter Out The Data Columns From The Temporary Calculated Columns.
         filtered_data = final_imputed[['Q601_asphalting_sand', 'Q602_building_soft_sand',
                                        'Q603_concreting_sand', 'Q604_bituminous_gravel',
                                        'Q605_concreting_gravel', 'Q606_other_gravel',
@@ -158,6 +162,7 @@ def lambda_handler(event, context):
                                        'county_name', 'enterprise_ref', 'gor_code',
                                        'land_or_marine', 'name', 'period', 'region',
                                        'responder_id', 'strata']]
+
         message = filtered_data.to_json(orient="records")
 
         funk.save_data(bucket_name, out_file_name, message,
