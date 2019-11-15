@@ -201,6 +201,7 @@ def lambda_handler(event, context):
             logger.info("Successfully completed strata mismatch detection")
 
             for question in questions_list.split(','):
+                merged_data[question] = pd.to_numeric(merged_data[question]).fillna(0)
                 merged_data['movement_' + question] = 0.0
 
             json_ordered_data = merged_data.to_json(orient='records')
