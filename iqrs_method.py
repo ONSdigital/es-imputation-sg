@@ -89,8 +89,18 @@ def lambda_handler(event, context):
             return final_output
 
 
-def calc_iqrs(input_table, move_cols, iqrs_cols):
-    distinct_strata_region = input_table[['region', 'strata']].drop_duplicates()
+def calc_iqrs(input_table, move_cols, iqrs_cols, distinct_values):
+    """
+    Calculate iqrs.
+    :param input_table: Input data.
+    :param move_cols: Movement column names.
+    :param iqrs_cols: IQRS column names.
+    :param distinct_values: Array of column names to derive distinct values from and store in table.
+
+    :return: Table
+    """
+    distinct_strata_region = input_table[distinct_values].drop_duplicates()
+    print(distinct_strata_region)
     for row in distinct_strata_region.values:
         iqr_filter = (input_table["region"] == row[0]) & (input_table["strata"] == row[1])  # noqa: E501
         filtered_iqr = input_table[iqr_filter]
