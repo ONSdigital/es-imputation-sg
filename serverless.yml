@@ -2,6 +2,8 @@
 service: es-imputation-sg
 provider:
   name: aws
+  deploymentBucket:
+    name: com.serverless.${self:provider.region}.deploys
   role: arn:aws:iam::${self:custom.accountId}:role/lambda_invoke_lambda
   vpc:
     securityGroupIds:
