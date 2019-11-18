@@ -16,8 +16,7 @@ def lambda_handler(event, context):
     """
     Returns JSON data with new IQR columns and respective values.
     :param event: Event object
-    :param contet: Contet object
-
+    :param context: Contet object
     :return: JSON string
     """
     current_module = "IQRS - Method"
@@ -35,14 +34,15 @@ def lambda_handler(event, context):
 
         logger.info("Validated params.")
 
-        input_data = pd.read_json(event)
+        input_data = pd.read_json(event["data"])
 
-        logger.info("Succesfully retrieved data from event.")
+        logger.info("Successfully retrieved data from event.")
 
         iqrs_df = calc_iqrs(
             input_data,
             config['movement_columns'].split(','),
-            config['iqrs_columns'].split(',')
+            config['iqrs_columns'].split(','),
+            event["distinct_values"]
         )
 
         json_out = iqrs_df.to_json(orient='records')
@@ -91,26 +91,28 @@ def lambda_handler(event, context):
 
 def calc_iqrs(input_table, move_cols, iqrs_cols, distinct_values):
     """
-    Calculate iqrs.
+    Calculate IQRS.
     :param input_table: Input data.
     :param move_cols: Movement column names.
     :param iqrs_cols: IQRS column names.
     :param distinct_values: Array of column names to derive distinct values from and store in table.
-
     :return: Table
     """
     distinct_strata_region = input_table[distinct_values].drop_duplicates()
-    print(distinct_strata_region)
+    iqr_filter = ""
+
+    for value in distinct_values:
+        if value != distinct_values[0]:
+            iqr_filter += " & "
+        iqr_filter += "(input_table[\"%s\"] == row[%s])" % (value, distinct_values.index(value))
+
     for row in distinct_strata_region.values:
-        iqr_filter = (input_table["region"] == row[0]) & (input_table["strata"] == row[1])  # noqa: E501
-        filtered_iqr = input_table[iqr_filter]
-        # Pass the question number and region and strata groupping to the
-        # iqr_sum function.
+        filtered_iqr = input_table[pd.eval(iqr_filter)]
+        # Pass the question number and region and strata grouping to the iqr_sum function.
         for i in range(0, len(iqrs_cols)):
             val_one = iqr_sum(filtered_iqr, move_cols[i])
             input_table[iqrs_cols[i]] = np.where(
-                ((input_table["region"] == row[0]) & (input_table["strata"] == row[1])), val_one,  # noqa: E501
-                input_table[iqrs_cols[i]]
+                (pd.eval(iqr_filter)), val_one, input_table[iqrs_cols[i]]
             )
     return input_table
 
@@ -120,21 +122,19 @@ def iqr_sum(df, quest):
     :param df: Working dataset with the month on month question value movements
     filtered by each individual combination of region and strata - Type: DataFrame
     :param quest: Individual question no - Type: String
-
     :return: String
     """
-
     df = df[quest]
-
     df_size = df.size
-    import math
-    if (df_size % 2 == 0):
 
+    import math
+
+    if (df_size % 2 == 0):
         sorted_df = df.sort_values()
         df = sorted_df.reset_index(drop=True)
-        dfbottom = df[0:math.ceil(int(df_size / 2))].median()
-        dftop = df[math.ceil(int(df_size / 2)):].median()
-        iqr = dftop - dfbottom
+        df_bottom = df[0:math.ceil(int(df_size / 2))].median()
+        df_top = df[math.ceil(int(df_size / 2)):].median()
+        iqr = df_top - df_bottom
     else:
         sorted_df = df.sort_values()
         df = sorted_df.reset_index(drop=True)

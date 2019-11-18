@@ -19,6 +19,7 @@ class InputSchema(Schema):
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
+    distinct_values = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -53,6 +54,7 @@ def lambda_handler(event, context):
         sns_topic_arn = config['sns_topic_arn']
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
+        distinct_values = config['distinct_values']
 
         logger.info("Vaildated params")
 
@@ -66,13 +68,22 @@ def lambda_handler(event, context):
 
         logger.info("IQRS columns succesfully added")
 
+        distinct_values_array = []
+        for value in distinct_values.split(','):
+            distinct_values_array.append(value)
+
         data_json = data.to_json(orient='records')
 
         logger.info("Dataframe converted to JSON")
 
+        payload = {
+            "data": json.dumps(data_json),
+            "distinct_values": distinct_values_array
+        }
+
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.dumps(data_json)
+            Payload=payload
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")
