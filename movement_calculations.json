@@ -1,4 +1,0 @@
-{
-    "sand_and_gravel": "(current_list[i] - previous_list[i]) / previous_list[i]",
-    "bricks_blocks": "current_list[i] / previous_list[i]"
-}
