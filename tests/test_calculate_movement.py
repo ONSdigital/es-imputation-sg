@@ -201,34 +201,34 @@ class TestStringMethods(unittest.TestCase):
     @mock_sqs
     def test_fail_to_get_from_sqs(self):
         with mock.patch.dict(calculate_movement_wrangler.os.environ, {
-                'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
-                'previous_period_file': 'file_to_get_from_s3.json',
-                'bucket_name': 'some-bucket-name',
-                'sqs_queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
-                             '82618934671237/SomethingURL.fifo',
-                'sqs_message_group_id': 'output_something_something',
-                'checkpoint': '3',
-                'method_name': 'method_name_here',
-                'time': 'period',
-                'response_type': 'response_type',
-                'questions_list': 'Q601_asphalting_sand,'
-                                  'Q602_building_soft_sand,'
-                                  'Q603_concreting_sand,'
-                                  'Q604_bituminous_gravel,'
-                                  'Q605_concreting_gravel,'
-                                  'Q606_other_gravel,'
-                                  'Q607_constructional_fill',
-                'non_response_file': 'output_file.json',
-                'reference': 'responder_id',
-                'segmentation': 'strata',
-                'stored_segmentation': 'goodstrata',
-                'current_time': 'current_period',
-                'previous_time': 'previous_period',
-                'current_segmentation': 'current_strata',
-                'previous_segmentation': 'previous_strata',
-                'incoming_message_group': 'bananas',
-                'in_file_name': 'Test',
-                'out_file_name': 'Test',
+            'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
+            'previous_period_file': 'file_to_get_from_s3.json',
+            'bucket_name': 'some-bucket-name',
+            'sqs_queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
+                                    '82618934671237/SomethingURL.fifo',
+            'sqs_message_group_id': 'output_something_something',
+            'checkpoint': '3',
+            'method_name': 'method_name_here',
+            'time': 'period',
+            'response_type': 'response_type',
+            'questions_list': 'Q601_asphalting_sand,'
+                              'Q602_building_soft_sand,'
+                              'Q603_concreting_sand,'
+                              'Q604_bituminous_gravel,'
+                              'Q605_concreting_gravel,'
+                              'Q606_other_gravel,'
+                              'Q607_constructional_fill',
+            'non_response_file': 'output_file.json',
+            'reference': 'responder_id',
+            'segmentation': 'strata',
+            'stored_segmentation': 'goodstrata',
+            'current_time': 'current_period',
+            'previous_time': 'previous_period',
+            'current_segmentation': 'current_strata',
+            'previous_segmentation': 'previous_strata',
+            'incoming_message_group': 'bananas',
+            'in_file_name': 'Test',
+            'out_file_name': 'Test',
             },
         ):
             response = calculate_movement_wrangler.lambda_handler(
