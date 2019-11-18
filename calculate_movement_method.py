@@ -3,7 +3,7 @@ import os
 
 import boto3
 import pandas as pd
-from esawsfunctions import funk
+import imputation_functions as imp_func
 from marshmallow import Schema, fields
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         json_data = event["json_data"]
 
         # Get relative calulcation function
-        calculation = getattr(funk, calculation_type)
+        calculation = getattr(imp_func, calculation_type)
 
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
