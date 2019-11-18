@@ -2,6 +2,8 @@
 service: es-imputation-sg
 provider:
   name: aws
+  deploymentBucket:
+    name: com.serverless.${self:provider.region}.results.ons.deploys
   role: arn:aws:iam::${self:custom.accountId}:role/lambda_invoke_lambda
   vpc:
     securityGroupIds:
@@ -13,6 +15,10 @@ provider:
   region: eu-west-2
   package:
     individually: true
+  memorySize: 512
+  timeout: 10
+  tracing:
+    lambda: true
 
 custom:
   accounts: ${ssm:/aws/reference/secretsmanager/results-aws-accounts~true}
@@ -42,6 +48,7 @@ functions:
       non_responder_file: non_responders_output.json
       out_file_name: apply_factors_out.json
       period: 201809
+      previous_data_file: previous_period_enriched_stratared.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-apply-factors-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
@@ -178,7 +185,7 @@ functions:
       out_file_name: calculate_means_output.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputatio-calculate-means-out
+      sqs_message_group_id: imputation-calculate-means-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-calculate-means-method:

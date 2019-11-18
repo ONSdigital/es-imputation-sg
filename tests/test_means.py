@@ -66,11 +66,11 @@ class TestMeans(unittest.TestCase):
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("means_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 226388)
-                    }
-                    with open("means_input.json", "rb") as queue_file:
+                with open("tests/fixtures/means_input.json", "r") as file:
+                    in_file = file.read()
+                    mock_client_object.invoke.return_value.get.return_value.read.\
+                        return_value.decode.return_value = json.dumps(in_file)
+                    with open("tests/fixtures/means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read().decode("UTF-8")
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
@@ -83,7 +83,7 @@ class TestMeans(unittest.TestCase):
                         assert response["success"] is True
 
     def test_method_happy_path(self):
-        input_file = "mean_input_with_columns.json"
+        input_file = "tests/fixtures/mean_input_with_columns.json"
         with open(input_file, "r") as file:
             mean_col = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa: E501
             sorting_cols = ["responder_id", "region", "strata"]
@@ -96,7 +96,7 @@ class TestMeans(unittest.TestCase):
             )
 
             expected_df = (
-                pd.read_csv("means_output.csv")
+                pd.read_csv("tests/fixtures/means_output.csv")
                 .sort_values(sorting_cols)
                 .reset_index()[selected_cols]
             )
@@ -127,7 +127,7 @@ class TestMeans(unittest.TestCase):
             assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
-        input_file = "mean_input_with_columns.json"
+        input_file = "tests/fixtures/mean_input_with_columns.json"
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
             with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
@@ -178,7 +178,7 @@ class TestMeans(unittest.TestCase):
         Testing the marshmallow raises an exception in method.
         :return: None.
         """
-        input_file = "mean_input_with_columns.json"
+        input_file = "tests/fixtures/mean_input_with_columns.json"
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
             # Removing movement_columns to allow for test of missing parameter
@@ -212,7 +212,7 @@ class TestMeans(unittest.TestCase):
                 mock_client_object.invoke.return_value = {
                     "Payload": StreamingBody("{'boo':'moo':}", 2)
                 }
-                with open("means_input.json", "rb") as queue_file:
+                with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read().decode('UTF-8')
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
@@ -232,11 +232,11 @@ class TestMeans(unittest.TestCase):
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("means_input.json", "rb") as file:
+                with open("tests/fixtures/means_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 123456)
                     }
-                    with open("means_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 

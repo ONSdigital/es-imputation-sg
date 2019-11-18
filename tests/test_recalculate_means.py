@@ -74,10 +74,10 @@ class TestRecalculateMeans(unittest.TestCase):
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 with open("tests/fixtures/"
-                          "recalculate_means_method_output.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 9066)
-                    }
+                          "recalculate_means_method_output.json", "r") as file:
+                    in_file = file.read()
+                    mock_client_object.invoke.return_value.get.return_value.read.\
+                        return_value.decode.return_value = json.dumps(in_file)
                     with open("tests/fixtures/"
                               "recalculate_means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read().decode("UTF-8")
