@@ -16,7 +16,7 @@ provider:
   package:
     individually: true
   memorySize: 1024
-  timeout: 20
+  timeout: 40
   tracing:
     lambda: true
 
