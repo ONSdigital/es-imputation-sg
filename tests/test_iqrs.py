@@ -33,7 +33,8 @@ class TestWranglerAndMethod():
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
             'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
-            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
+            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
+            'distinct_values': 'region, strata'
             })
 
         cls.mock_os = cls.mock_os_patcher.start()
@@ -72,7 +73,11 @@ class TestWranglerAndMethod():
             sorting_cols = ['region', 'strata']
             selected_cols = iqrs_cols.split(',') + sorting_cols
 
-            json_content = json.loads(file.read())
+            json_content = {
+                "data":json.loads(file.read()),
+                "distinct_values":sorting_cols
+            }
+
             output = iqrs_method.lambda_handler(json_content, context_object)
 
             response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
@@ -103,7 +108,10 @@ class TestWranglerAndMethod():
     def test_method_general_exception(self):
         input_file = "Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            json_content = file.read()
+            json_content = {
+                "data":json.loads(file.read()),
+                "distinct_values":['region','strata']
+            }
             with mock.patch("iqrs_method.pd.read_json") as mocked:
                 mocked.side_effect = Exception("General exception")
                 response = iqrs_method.lambda_handler(
@@ -140,10 +148,13 @@ class TestWranglerAndMethod():
             }
         ):
             with open("Iqrs_with_columns.json", "r") as file:
-                content = json.loads(file.read())
+                json_content = {
+                    "data": json.loads(file.read()),
+                    "distinct_values": ['region','strata']
+                }
 
                 response = iqrs_method.lambda_handler(
-                    content, context_object
+                    json_content, context_object
                 )
                 assert """Key Error in""" in response["error"]
 
