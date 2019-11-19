@@ -220,8 +220,10 @@ functions:
       in_file_name: previous_period_enriched_stratared.json
       incoming_message_group: strata-out
       method_name: es-calculate-movement-method
+      non_response_file: non_responders_output.json
       out_file_name: calculate_movement_out.json
       output_file: non_responders_output.json
+      previous_period_file: previous_period_enriched_stratared.json
       previous_segmentation: previous_strata
       previous_time: previous_period
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
@@ -320,3 +322,6 @@ functions:
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-recalculate-means-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
+
+plugins:
+  - serverless-step-functions

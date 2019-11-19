@@ -127,9 +127,8 @@ def lambda_handler(event, context):
         logger.info("Setting-up environment configs")
 
         # Event vars
-        # TODO: Change to pick up from event - left as is for testing
-        calculation_type = event["calculation_type"]
-        distinct_values = event["distinct_values"].split(",")
+        calculation_type = event['RuntimeVariables']["calculation_type"]
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
