@@ -23,6 +23,11 @@ def lambda_handler(event, context):
     error_message = ""
     log_message = ""
     logger = logging.getLogger("Means")
+
+    # Env vars
+    json_data = event["json_data"]
+    distinct_values = event["distinct_values"]
+
     try:
 
         logger.info("Means Method Begun")
@@ -34,13 +39,13 @@ def lambda_handler(event, context):
 
         logger.info("Validated params.")
 
-        df = pd.DataFrame(event)
+        df = pd.DataFrame(json_data)
 
         logger.info("Succesfully retrieved data from event.")
 
         workingdf = df[config['movement_columns'].split(",")]
 
-        counts = workingdf.groupby(["region", "strata"]).count()
+        counts = workingdf.groupby(distinct_values).count()
         # Rename columns to fit naming standards
         counts.rename(
             columns={
@@ -56,7 +61,7 @@ def lambda_handler(event, context):
         )
 
         # Create dataframe which sums the movements grouped by region and strata
-        sums = workingdf.groupby(["region", "strata"]).sum()
+        sums = workingdf.groupby(distinct_values).sum()
         # Rename columns to fit naming standards
         sums.rename(
             columns={
@@ -71,17 +76,17 @@ def lambda_handler(event, context):
             inplace=True,
         )
 
-        counts = counts.reset_index(level=["region", "strata"])
-        sums = sums.reset_index(level=["region", "strata"])
+        counts = counts.reset_index(level=distinct_values)
+        sums = sums.reset_index(level=distinct_values)
         moves = sums.merge(
             counts,
-            left_on=["region", "strata"],
-            right_on=["region", "strata"],
+            left_on=distinct_values,
+            right_on=distinct_values,
             how="left",
         )
 
         # join on movements and counts on region& strata to df
-        df = pd.merge(df, moves, on=["region", "strata"], how="left")
+        df = pd.merge(df, moves, on=distinct_values, how="left")
 
         for question in config['questions_list'].split(','):
             df["mean_" + question] = df.apply(

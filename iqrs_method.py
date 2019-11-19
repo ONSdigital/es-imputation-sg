@@ -42,7 +42,8 @@ def lambda_handler(event, context):
         iqrs_df = calc_iqrs(
             input_data,
             config['movement_columns'].split(','),
-            config['iqrs_columns'].split(',')
+            config['iqrs_columns'].split(','),
+            ['region', 'strata']
         )
 
         json_out = iqrs_df.to_json(orient='records')

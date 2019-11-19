@@ -126,6 +126,11 @@ def lambda_handler(event, context):
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
         logger.info("Setting-up environment configs")
 
+        # Event vars
+        # TODO: Change to pick up from event - left as is for testing
+        calculation_type = event["calculation_type"]
+        distinct_values = event["distinct_values"].split(",")
+
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
@@ -205,16 +210,11 @@ def lambda_handler(event, context):
 
             json_ordered_data = merged_data.to_json(orient='records')
 
-            # TODO: Look at survey period (id) for sys flag
-            #       Few options are present here:
-            #       - mainfest_system
-            #       - manifest_runid
-
             json_payload = {
                 "json_data": json_ordered_data,
                 # TODO: This needs to be changed to event("calculation");
                 #       remains this way for testing.
-                "calculation_type": "movements_calculation_a"
+                "calculation_type": calculation_type
             }
 
             logger.info("Successfully created movement columns on the data")
@@ -307,4 +307,9 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
         else:
             logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": checkpoint, "impute": to_be_imputed}
+            return {
+                "success": True,
+                "checkpoint": checkpoint,
+                "impute": to_be_imputed,
+                "distinct_values": distinct_values
+            }

@@ -43,6 +43,8 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
+        distinct_values = event["distinct_values"]
+
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
@@ -70,9 +72,14 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
+        payload = {
+            "json_data": json.dumps(data_json),
+            "distinct_values": distinct_values
+        }
+
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.dumps(data_json)
+            Payload=json.loads(payload)
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")

@@ -51,3 +51,6 @@ venv.bak
 
 # deployment / artifacts
 .serverless/
+
+# Local testing
+event.json

@@ -22,6 +22,7 @@ class EnvironSchema(Schema):
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
+    question_columns = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -59,6 +60,7 @@ def lambda_handler(event, context):
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
+        question_columns = config["question_columns"]
 
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
@@ -79,25 +81,8 @@ def lambda_handler(event, context):
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
-        question_columns = [
-            "Q601_asphalting_sand",
-            "Q602_building_soft_sand",
-            "Q603_concreting_sand",
-            "Q604_bituminous_gravel",
-            "Q605_concreting_gravel",
-            "Q606_other_gravel",
-            "Q607_constructional_fill",
-        ]
-        prev_question_columns = [
-            "prev_Q601_asphalting_sand",
-            "prev_Q602_building_soft_sand",
-            "prev_Q603_concreting_sand",
-            "prev_Q604_bituminous_gravel",
-            "prev_Q605_concreting_gravel",
-            "prev_Q606_other_gravel",
-            "prev_Q607_constructional_fill",
-            "responder_id",
-        ]
+        question_columns = question_columns.split(",")
+        prev_question_columns = produce_columns("prev_", question_columns, ['responder_id'])
 
         for question in question_columns:
             prev_period_data = prev_period_data.rename(
@@ -105,7 +90,15 @@ def lambda_handler(event, context):
             )
         logger.info("Successfully renamed previous period data")
         # Join prev data so we have those who responded in prev but not in current
-
+        pd.set_option('display.max_rows', 500)
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 1000)
+        print(type(non_responder_dataframe))
+        print(non_responder_dataframe)
+        print(type(prev_period_data))
+        print(prev_period_data)
+        print(type(prev_question_columns))
+        print(prev_question_columns)
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_question_columns],
@@ -116,17 +109,7 @@ def lambda_handler(event, context):
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
             factors_dataframe[
-                [
-                    "region",
-                    "strata",
-                    "imputation_factor_Q601_asphalting_sand",
-                    "imputation_factor_Q602_building_soft_sand",
-                    "imputation_factor_Q603_concreting_sand",
-                    "imputation_factor_Q604_bituminous_gravel",
-                    "imputation_factor_Q605_concreting_gravel",
-                    "imputation_factor_Q606_other_gravel",
-                    "imputation_factor_Q607_constructional_fill",
-                ]
+                    produce_columns("imputation_factor_", question_columns, ['region', 'strata'])
             ],
             on=["region", "strata"],
             how="inner",
@@ -234,3 +217,22 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint}
+
+
+def produce_columns(prefix, columns, suffix):
+    """
+    Produces columns with a prefix, based on standard columns.
+    :param prefix: String to be prepended to column name - Type: String
+    :param columns: List of columns - Type: List
+    :param suffix: Any additonal columns to be added on - Type: List
+
+    :return: List of column names with desired prefix - Type: List
+    """
+    new_columns = []
+    for column in columns:
+        new_value = "%s%s" % (prefix, column)
+        new_columns.append(new_value)
+
+    new_columns = new_columns + suffix
+
+    return new_columns
