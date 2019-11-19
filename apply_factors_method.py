@@ -17,17 +17,11 @@ def lambda_handler(event, context):
     logger.setLevel(10)
     try:
         logger.info("Apply Factors Method Begun")
-        working_dataframe = pd.DataFrame(event)
 
-        question_columns = [
-            "Q601_asphalting_sand",
-            "Q602_building_soft_sand",
-            "Q603_concreting_sand",
-            "Q604_bituminous_gravel",
-            "Q605_concreting_gravel",
-            "Q606_other_gravel",
-            "Q607_constructional_fill",
-        ]
+        json_data = event["json_data"]
+        working_dataframe = pd.DataFrame(json_data)
+
+        question_columns = event["question_columns"]
 
         for question in question_columns:
             # Loop through each question value, impute based on factor and previous value

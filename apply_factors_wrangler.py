@@ -47,6 +47,9 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
+        # Event vars
+        distinct_values = event["distinct_values"]
+
         # Set up clients
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
@@ -82,23 +85,18 @@ def lambda_handler(event, context):
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
         question_columns = question_columns.split(",")
-        prev_question_columns = produce_columns("prev_", question_columns, ['responder_id'])
+        prev_question_columns = produce_columns(
+            "prev_",
+            question_columns,
+            ['responder_id']
+        )
 
         for question in question_columns:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
             )
         logger.info("Successfully renamed previous period data")
-        # Join prev data so we have those who responded in prev but not in current
-        pd.set_option('display.max_rows', 500)
-        pd.set_option('display.max_columns', 500)
-        pd.set_option('display.width', 1000)
-        print(type(non_responder_dataframe))
-        print(non_responder_dataframe)
-        print(type(prev_period_data))
-        print(prev_period_data)
-        print(type(prev_question_columns))
-        print(prev_question_columns)
+
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_question_columns],
@@ -109,16 +107,26 @@ def lambda_handler(event, context):
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
             factors_dataframe[
-                    produce_columns("imputation_factor_", question_columns, ['region', 'strata'])
+                    produce_columns(
+                        "imputation_factor_",
+                        question_columns,
+                        distinct_values
+                    )
             ],
-            on=["region", "strata"],
+            on=distinct_values,
             how="inner",
         )
         logger.info("Successfully merged non-responders with factors")
+
+        payload = {
+            "json_data": non_responders_with_factors.to_json(orient="records"),
+            "question_columns": question_columns
+        }
+
         # Non responder data should now contain all previous values and 7 imp columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=non_responders_with_factors.to_json(orient="records"),
+            Payload=json.loads(payload),
         )
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
