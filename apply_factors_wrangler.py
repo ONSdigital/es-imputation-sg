@@ -61,7 +61,6 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
-        sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
         question_columns = config["question_columns"]
 
@@ -135,16 +134,28 @@ def lambda_handler(event, context):
         # ----- This bit will want a fix. ----- #
         imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
         # ------------------------------------- #
+
+        # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
             factors_dataframe["period"] == int(current_period)
         ]
 
+        # Joining Datasets Together.
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
-        message = final_imputed.to_json(orient="records")
 
-        funk.save_data(bucket_name, out_file_name, message,
-                       sqs_queue_url, sqs_message_group_id)
+        # Filter Out The Data Columns From The Temporary Calculated Columns.
+        filtered_data = final_imputed[['Q601_asphalting_sand', 'Q602_building_soft_sand',
+                                       'Q603_concreting_sand', 'Q604_bituminous_gravel',
+                                       'Q605_concreting_gravel', 'Q606_other_gravel',
+                                       'Q607_constructional_fill', 'Q608_total', 'county',
+                                       'county_name', 'enterprise_ref', 'gor_code',
+                                       'land_or_marine', 'name', 'period', 'region',
+                                       'responder_id', 'strata']]
+
+        message = filtered_data.to_json(orient="records")
+
+        funk.save_to_s3(bucket_name, out_file_name, message)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:

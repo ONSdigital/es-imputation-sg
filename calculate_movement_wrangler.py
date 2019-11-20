@@ -224,6 +224,7 @@ def lambda_handler(event, context):
             logger.info("Successfully invoked the movement method lambda")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
+            print(json_response)
 
             imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,
@@ -236,8 +237,13 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
             anomalies = pd.DataFrame
-            funk.save_data(bucket_name, in_file_name, data, sqs_queue_url,
-                           sqs_message_group_id)
+            funk.save_data(
+                bucket_name,
+                in_file_name,
+                data.to_json(orient="records"),
+                sqs_queue_url,
+                sqs_message_group_id
+            )
 
             logger.info("Successfully sent the unchanged data to s3")
 

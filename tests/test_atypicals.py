@@ -55,11 +55,11 @@ class TestClass():
             with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("atypical_input.json", "rb") as file:
+                with open("tests/fixtures/atypical_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 416503)
                     }
-                    with open("atypical_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = atypicals_wrangler.lambda_handler(
@@ -70,7 +70,7 @@ class TestClass():
                         assert response["success"] is True
 
     def test_method_happy_path(self):
-        input_file = "atypical_input.json"
+        input_file = "tests/fixtures/atypical_input.json"
         with open(input_file, "r") as file:
             movement_col = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
             sorting_cols = ['responder_id', 'region', 'strata']
@@ -89,7 +89,7 @@ class TestClass():
             )
 
             expected_df = (
-                pd.read_json('atypical_scala_output.json')
+                pd.read_json('tests/fixtures/atypical_scala_output.json')
                 .sort_values(sorting_cols)
                 .reset_index()[selected_cols]
             )
@@ -116,7 +116,7 @@ class TestClass():
             assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
-        input_file = "atypical_input.json"
+        input_file = "tests/fixtures/atypical_input.json"
         with open(input_file, "r") as file:
             json_content = file.read()
             with mock.patch("atypicals_method.pd.read_json") as mocked:
@@ -154,7 +154,7 @@ class TestClass():
                 "mean_columns": "bum"
             }
         ):
-            with open("atypical_input.json", "r") as file:
+            with open("tests/fixtures/atypical_input.json", "r") as file:
                 content = file.read()
 
                 response = atypicals_method.lambda_handler(
@@ -178,7 +178,7 @@ class TestClass():
         Testing the marshmallow raises an exception in method.
         :return: None.
         """
-        input_file = "atypical_input.json"
+        input_file = "tests/fixtures/atypical_input.json"
         with open(input_file, "r") as file:
             json_content = file.read()
             # Removing sns_topic_arn to allow for test of missing parameter
@@ -215,7 +215,7 @@ class TestClass():
                 mock_client_object.invoke.return_value = {
                     "Payload": StreamingBody("{'boo':'moo':}", 2)
                 }
-                with open("means_input.json", "rb") as queue_file:
+                with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = atypicals_wrangler.lambda_handler(
@@ -234,11 +234,11 @@ class TestClass():
             with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("atypical_input.json", "rb") as file:
+                with open("tests/fixtures/atypical_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 123456)
                     }
-                    with open("atypical_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 

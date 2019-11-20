@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -83,7 +84,7 @@ def lambda_handler(event, context):
 
         returned_data = lambda_client.invoke(FunctionName=method_name, Payload=data_json)
 
-        json_response = returned_data.get('Payload').read().decode("UTF-8")
+        json_response = json.loads(returned_data.get('Payload').read().decode("UTF-8"))
 
         logger.info("Successfully invoked lambda")
 
