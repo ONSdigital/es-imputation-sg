@@ -21,7 +21,6 @@ class EnvironSchema(Schema):
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
     question_columns = fields.Str(required=True)
 
 
@@ -48,7 +47,7 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # Event vars
-        distinct_values = event["distinct_values"]
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
         # Set up clients
         checkpoint = config["checkpoint"]
@@ -118,14 +117,15 @@ def lambda_handler(event, context):
         logger.info("Successfully merged non-responders with factors")
 
         payload = {
-            "json_data": non_responders_with_factors.to_json(orient="records"),
+            "json_data": json.loads(
+                non_responders_with_factors.to_json(orient="records")),
             "question_columns": question_columns
         }
 
         # Non responder data should now contain all previous values and 7 imp columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.loads(payload),
+            Payload=json.dumps(payload),
         )
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))

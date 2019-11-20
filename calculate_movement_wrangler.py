@@ -193,14 +193,19 @@ def lambda_handler(event, context):
 
             logger.info("Successfully filtered and merged the previous period data")
 
+            anomalies = []
+
             # Pass to mismatch detector to look for and fix strata mismatches
-            merged_data, anomalies = strata_mismatch_detector(merged_data, period, time,
-                                                              reference, segmentation,
-                                                              stored_segmentation,
-                                                              current_time,
-                                                              previous_time,
-                                                              current_segmentation,
-                                                              previous_segmentation)
+            if "strata" in distinct_values:
+                merged_data, anomalies = strata_mismatch_detector(
+                    merged_data,
+                    period, time,
+                    reference, segmentation,
+                    stored_segmentation,
+                    current_time,
+                    previous_time,
+                    current_segmentation,
+                    previous_segmentation)
 
             logger.info("Successfully completed strata mismatch detection")
 
@@ -224,7 +229,6 @@ def lambda_handler(event, context):
             logger.info("Successfully invoked the movement method lambda")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
-            print(json_response)
 
             imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,

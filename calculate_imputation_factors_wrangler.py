@@ -45,7 +45,8 @@ def lambda_handler(event, context):
 
         sqs = boto3.client("sqs")
         lambda_client = boto3.client("lambda")
-        # environment variables
+
+        # Environment variables
         checkpoint = config["checkpoint"]
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]

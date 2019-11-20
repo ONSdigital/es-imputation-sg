@@ -19,7 +19,6 @@ class InputSchema(Schema):
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
-    distinct_values = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -44,8 +43,6 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
-        distinct_values = event["distinct_values"]
-
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
@@ -56,7 +53,8 @@ def lambda_handler(event, context):
         sns_topic_arn = config['sns_topic_arn']
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
-        distinct_values = config['distinct_values']
+
+        distinct_values = event['RuntimeVariables']["distinct_values"]
 
         logger.info("Vaildated params")
 
@@ -70,18 +68,11 @@ def lambda_handler(event, context):
 
         logger.info("IQRS columns succesfully added")
 
-        distinct_values_array = []
-        for value in distinct_values.split(','):
-            distinct_values_array.append(value)
-
         data_json = data.to_json(orient='records')
 
         logger.info("Dataframe converted to JSON")
 
-        payload = {
-            "data": json.dumps(data_json),
-            "distinct_values": distinct_values_array
-        }
+        payload = "{\"data\": "+json.dumps(data_json)+",\"distinct_values\": \""+distinct_values+" \" }"
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,

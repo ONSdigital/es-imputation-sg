@@ -42,7 +42,7 @@ def lambda_handler(event, context):
             input_data,
             config['movement_columns'].split(','),
             config['iqrs_columns'].split(','),
-            event["distinct_values"]
+            event["distinct_values"].strip().split(',')
         )
 
         json_out = iqrs_df.to_json(orient='records')

@@ -1,4 +1,5 @@
 import logging
+import json
 import os
 
 import boto3
@@ -55,7 +56,7 @@ def lambda_handler(event, context):
         previous_period = config['previous_period']
         questions_list = config['questions_list']
 
-        df = pd.DataFrame(json_data)
+        df = pd.DataFrame(json.loads(json_data))
 
         sorted_current = df[df.period == int(current_period)]
         sorted_previous = df[df.period == int(previous_period)]

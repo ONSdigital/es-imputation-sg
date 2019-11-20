@@ -65,6 +65,8 @@ def lambda_handler(event, context):
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
 
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+
         data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
                                                    in_file_name,
                                                    incoming_message_group)
@@ -82,7 +84,15 @@ def lambda_handler(event, context):
 
         data_json = data.to_json(orient='records')
 
-        returned_data = lambda_client.invoke(FunctionName=method_name, Payload=data_json)
+        payload = {
+            "json_data": json.loads(data_json),
+            "distinct_values": distinct_values
+        }
+
+        returned_data = lambda_client.invoke(
+            FunctionName=method_name,
+            Payload=json.dumps(payload)
+        )
 
         json_response = json.loads(returned_data.get('Payload').read().decode("UTF-8"))
 

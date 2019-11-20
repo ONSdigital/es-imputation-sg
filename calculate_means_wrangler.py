@@ -1,6 +1,5 @@
 import json
 import logging
-import json
 import os
 
 import boto3
@@ -41,7 +40,7 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
-        distinct_values = event["distinct_values"].split(",")
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -72,12 +71,12 @@ def lambda_handler(event, context):
         logger.info("Dataframe converted to JSON")
 
         payload = {
-            "json_data": data_json,
+            "json_data": json.loads(data_json),
             "distinct_values": distinct_values
         }
 
         returned_data = lambda_client.invoke(
-            FunctionName=method_name, Payload=json.loads(payload)
+            FunctionName=method_name, Payload=json.dumps(payload)
         )
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
 
