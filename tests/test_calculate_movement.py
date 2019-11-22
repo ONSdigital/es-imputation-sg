@@ -12,6 +12,24 @@ class MockContext:
     aws_request_id = 666
 
 
+with open("tests/fixtures/method_input_test_data.json", "r") as file:
+    in_file = file.read()
+mock_event =  {
+            "json_data": in_file,
+            "calculation_type": "movement_calculation_a",
+            "distinct_values": "region"
+        }
+
+mock_wrangles_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -38,12 +56,7 @@ class TestStringMethods(unittest.TestCase):
             string_result = json.dumps(result)
             striped_string = string_result.replace(" ", "")
 
-            payload_data = {
-                "json_data": input_data,
-                "calculation_type": "movement_calculation_a"
-            }
-
-            response = calculate_movement_method.lambda_handler(payload_data,
+            response = calculate_movement_method.lambda_handler(mock_event,
                                                                 context_object)
 
         assert response == striped_string
@@ -90,7 +103,7 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, context_object)
+                    mock_wrangles_event, context_object)
 
                 assert 'success' in response
                 assert response['success'] is False
@@ -114,7 +127,7 @@ class TestStringMethods(unittest.TestCase):
                 mocked.side_effect = Exception('SQS Failure')
 
                 response = calculate_movement_method.lambda_handler(
-                    {"RuntimeVariables": {"period": 201809}}, context_object)
+                    mock_event, context_object)
 
                 assert 'success' in response
                 assert response['success'] is False
@@ -141,12 +154,7 @@ class TestStringMethods(unittest.TestCase):
             # Removing the previous_period to allow for test of missing parameter
             calculate_movement_method.os.environ.pop("previous_period")
 
-            payload_data = {
-                "json_data": "input_data",
-                "calculation_type": "movement_calculation_a"
-            }
-
-            response = calculate_movement_method.lambda_handler(payload_data,
+            response = calculate_movement_method.lambda_handler(mock_event,
                                                                 context_object)
 
             assert (response['error'].__contains__("""Parameter validation error"""))
@@ -192,8 +200,7 @@ class TestStringMethods(unittest.TestCase):
             # Removing the previous_period to allow for test of missing parameter
             calculate_movement_wrangler.os.environ.pop("checkpoint")
 
-            response = calculate_movement_wrangler.lambda_handler({
-                "RuntimeVariables": {"period": "201809"}}, context_object
+            response = calculate_movement_wrangler.lambda_handler(mock_wrangles_event, context_object
             )
 
             assert (response['error'].__contains__("""Parameter validation error"""))
@@ -232,7 +239,7 @@ class TestStringMethods(unittest.TestCase):
             },
         ):
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": 201809}}, context_object
+                mock_wrangles_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -251,20 +258,9 @@ class TestStringMethods(unittest.TestCase):
                               'Q607_constructional_fill'
             }
         ):
-            input_file = "tests/fixtures/method_input_test_data.json"
-
-            with open(input_file, "r") as file:
-                content = file.read()
-                content = content.replace("Q", "TEST")
-                json_content = json.loads(content)
-
-            payload_data = {
-                "json_data": json_content,
-                "system_flag": "sand_and_gravel"
-            }
 
             output_file = calculate_movement_method.lambda_handler(
-                payload_data, context_object
+                {"mike":"mike"}, context_object
             )
 
             assert not output_file["success"]

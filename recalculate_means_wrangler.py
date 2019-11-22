@@ -80,7 +80,7 @@ def lambda_handler(event, context):
         for question in questions_list.split(','):
             data.drop(['movement_' + question + '_count'], axis=1, inplace=True)
             data.drop(['movement_' + question + '_sum'], axis=1, inplace=True)
-            data.drop(['atyp_' + question, 'iqrs_' + question], axis=1, inplace=True)
+            data.drop(['atyps_' + question, 'iqrs_' + question], axis=1, inplace=True)
             data['mean_' + question] = 0.0
 
         data_json = data.to_json(orient='records')

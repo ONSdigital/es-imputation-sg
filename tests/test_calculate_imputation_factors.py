@@ -17,6 +17,16 @@ class MockContext:
     aws_request_id = 666
 
 
+mock_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -145,7 +155,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, context_object
+                            mock_event, context_object
                         )
                         assert "success" in out
                         assert out["success"]
@@ -326,7 +336,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, context_object
+                            mock_event, context_object
                         )
                         assert "success" in out
                         assert not out["success"]
@@ -340,7 +350,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         ) as mocked:
             mocked.side_effect = KeyError()
             out = calculate_imputation_factors_wrangler.lambda_handler(
-                None, context_object
+                mock_event, context_object
             )
             assert "success" in out
             assert not out["success"]
@@ -357,7 +367,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                     {"Error": {"Code": "Mike"}}, "create_stream"
                 )
                 out = calculate_imputation_factors_wrangler.lambda_handler(
-                    None, context_object
+                    mock_event, context_object
                 )
                 assert "success" in out
                 assert not out["success"]

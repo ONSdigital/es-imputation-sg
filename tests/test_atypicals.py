@@ -14,6 +14,16 @@ class MockContext:
     aws_request_id = 666
 
 
+mock_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -26,10 +36,10 @@ class TestClass():
                 'sqs_queue_url': '213456',
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
-                'atypical_columns': 'atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607',  # noqa E501
-                'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
+                'atypical_columns': 'atyps_Q601_asphalting_sand,atyps_Q602_building_soft_sand,atyps_Q603_concreting_sand,atyps_Q604_bituminous_gravel,atyps_Q605_concreting_gravel,atyps_Q606_other_gravel,atyps_Q607_constructional_fill',  # noqa E501
+                'iqrs_columns': 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill',
                 'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
-                'mean_columns': 'mean601,mean602,mean603,mean604,mean605,mean606,mean607',
+                'mean_columns': 'mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill',
                 'method_name': 'mock_method_name',
                 'sqs_message_group_id': 'mock_sqs_message_name',
                 'error_handler_arn': 'mock_error_handler_arn',
@@ -63,7 +73,7 @@ class TestClass():
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = atypicals_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
                         assert "success" in response
@@ -107,7 +117,7 @@ class TestClass():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = atypicals_wrangler.lambda_handler(
-                None,
+                mock_event,
                 context_object
             )
 
@@ -139,7 +149,7 @@ class TestClass():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = atypicals_wrangler.lambda_handler(
-                    None,
+                    mock_event,
                     context_object,
                 )
 
@@ -169,7 +179,7 @@ class TestClass():
         """
         # Removing the strata_column to allow for test of missing parameter
         atypicals_wrangler.os.environ.pop("method_name")
-        response = atypicals_wrangler.lambda_handler(None, context_object)
+        response = atypicals_wrangler.lambda_handler(mock_event, context_object)
         atypicals_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -187,7 +197,7 @@ class TestClass():
                 json_content,
                 context_object
             )
-            atypicals_method.os.environ["mean_columns"] = "mean601,mean602,mean603,mean604,mean605,mean606,mean607"  # noqa E501
+            atypicals_method.os.environ["mean_columns"] = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
@@ -199,7 +209,7 @@ class TestClass():
             },
         ):
             response = atypicals_wrangler.lambda_handler(
-                None, context_object
+                mock_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -219,7 +229,7 @@ class TestClass():
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = atypicals_wrangler.lambda_handler(
-                        None,
+                        mock_event,
                         context_object,
                     )
 
@@ -243,7 +253,7 @@ class TestClass():
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                         response = atypicals_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
 

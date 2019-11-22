@@ -14,6 +14,16 @@ class MockContext:
     aws_request_id = 666
 
 
+mock_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -32,7 +42,7 @@ class TestWranglerAndMethod():
             'method_name': 'mock_method',
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
-            'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
+            'iqrs_columns': 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill',
             'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
             'distinct_values': 'region, strata'
             })
@@ -60,7 +70,7 @@ class TestWranglerAndMethod():
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
                         assert "success" in response
@@ -69,13 +79,14 @@ class TestWranglerAndMethod():
     def test_method_happy_path(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            iqrs_cols = 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607'
+            iqrs_cols = 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill'
+
             sorting_cols = ['region', 'strata']
             selected_cols = iqrs_cols.split(',') + sorting_cols
 
             json_content = {
                 "data": json.loads(file.read()),
-                "distinct_values": sorting_cols
+                "distinct_values": "region,strata"
             }
 
             output = iqrs_method.lambda_handler(json_content, context_object)
@@ -97,7 +108,7 @@ class TestWranglerAndMethod():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
-                None,
+                mock_event,
                 context_object
             )
 
@@ -132,7 +143,7 @@ class TestWranglerAndMethod():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
-                    None,
+                    mock_event,
                     context_object,
                 )
 
@@ -147,10 +158,10 @@ class TestWranglerAndMethod():
                 "iqrs_columns": "bum"
             }
         ):
-            with open("Iqrs_with_columns.json", "r") as file:
+            with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
                 json_content = {
                     "data": json.loads(file.read()),
-                    "distinct_values": ['region', 'strata']
+                    "distinct_values": "'region', 'strata'"
                 }
 
                 response = iqrs_method.lambda_handler(
@@ -165,7 +176,7 @@ class TestWranglerAndMethod():
         """
         # Removing the strata_column to allow for test of missing parameter
         iqrs_wrangler.os.environ.pop("method_name")
-        response = iqrs_wrangler.lambda_handler(None, context_object)
+        response = iqrs_wrangler.lambda_handler(mock_event, context_object)
         iqrs_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -180,7 +191,7 @@ class TestWranglerAndMethod():
             # Removing sns_topic_arn to allow for test of missing parameter
             iqrs_method.os.environ.pop("iqrs_columns")
             response = iqrs_method.lambda_handler(json_content, context_object)
-            iqrs_method.os.environ["iqrs_columns"] = "iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607"  # noqa E501
+            iqrs_method.os.environ["iqrs_columns"] = "iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
@@ -192,7 +203,7 @@ class TestWranglerAndMethod():
             },
         ):
             response = iqrs_wrangler.lambda_handler(
-                None, context_object
+                mock_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -212,7 +223,7 @@ class TestWranglerAndMethod():
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = iqrs_wrangler.lambda_handler(
-                        None,
+                        mock_event,
                         context_object,
                     )
 
@@ -235,7 +246,7 @@ class TestWranglerAndMethod():
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
 

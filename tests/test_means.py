@@ -16,6 +16,24 @@ class MockContext:
     aws_request_id = 666
 
 
+with open("tests/fixtures/means_input.json", "r") as file:
+    in_file = file.read()
+
+mock_event =  {
+            "json_data": json.loads(in_file),
+            "distinct_values": ["strata","region"]
+        }
+
+mock_wrangles_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -31,7 +49,7 @@ class TestMeans(unittest.TestCase):
                 "method_name": "mock_method",
                 "sqs_queue_url": "mock_queue",
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill",  # noqa: E501
-                "movement_columns": "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata",  # noqa: E501
+                "movement_columns": "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill",  # noqa: E501
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
                 "sns_topic_arn": "mock_arn",
@@ -75,7 +93,7 @@ class TestMeans(unittest.TestCase):
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                         response = calculate_means_wrangler.lambda_handler(
-                            None,
+                            mock_wrangles_event,
                             context_object,
                         )
 
@@ -91,7 +109,7 @@ class TestMeans(unittest.TestCase):
 
             json_content = json.loads(file.read())
             output = calculate_means_method.lambda_handler(
-                json_content,
+                mock_event,
                 context_object
             )
 
@@ -113,12 +131,12 @@ class TestMeans(unittest.TestCase):
             assert_frame_equal(response_df, expected_df)
 
     def test_wrangler_general_exception(self):
-        with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
-            mock_client.side_effect = Exception()
-            mock_client_object = mock.Mock()
-            mock_client.return_value = mock_client_object
+        with mock.patch("calculate_means_wrangler.InputSchema") as mock_schema:
+            mock_schema.side_effect = Exception()
+            mock_schema_object = mock.Mock()
+            mock_schema.return_value = mock_schema_object
             response = calculate_means_wrangler.lambda_handler(
-                None,
+                mock_wrangles_event,
                 context_object
             )
 
@@ -133,7 +151,7 @@ class TestMeans(unittest.TestCase):
             with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")
                 response = calculate_means_method.lambda_handler(
-                    json_content,
+                    mock_event,
                     context_object
                 )
 
@@ -149,7 +167,7 @@ class TestMeans(unittest.TestCase):
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = calculate_means_wrangler.lambda_handler(
-                 None,
+                 mock_event,
                  context_object,
             )
 
@@ -159,7 +177,8 @@ class TestMeans(unittest.TestCase):
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
-        response = calculate_means_method.lambda_handler(None, context_object)
+        response = calculate_means_method.lambda_handler({"mike":"mike"}, context_object)
+        print(response)
         assert """Key Error""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
@@ -169,7 +188,7 @@ class TestMeans(unittest.TestCase):
         """
         # Removing the strata_column to allow for test of missing parameter
         calculate_means_wrangler.os.environ.pop("method_name")
-        response = calculate_means_wrangler.lambda_handler(None, context_object)  # noqa E501
+        response = calculate_means_wrangler.lambda_handler(mock_event, context_object)  # noqa E501
         calculate_means_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
 
@@ -184,7 +203,7 @@ class TestMeans(unittest.TestCase):
             # Removing movement_columns to allow for test of missing parameter
             calculate_means_method.os.environ.pop("movement_columns")
             response = calculate_means_method.lambda_handler(json_content, context_object)  # noqa E501
-            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata"  # noqa E501
+            calculate_means_method.os.environ["movement_columns"] = "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill"  # noqa E501
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
@@ -196,7 +215,7 @@ class TestMeans(unittest.TestCase):
             },
         ):
             response = calculate_means_wrangler.lambda_handler(
-                None, context_object
+                mock_wrangles_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -217,7 +236,7 @@ class TestMeans(unittest.TestCase):
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                     response = calculate_means_wrangler.lambda_handler(
-                        None,
+                        mock_wrangles_event,
                         context_object,
                     )
 
@@ -241,7 +260,7 @@ class TestMeans(unittest.TestCase):
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                         response = calculate_means_wrangler.lambda_handler(
-                            None,
+                            mock_wrangles_event,
                             context_object,
                         )
 
