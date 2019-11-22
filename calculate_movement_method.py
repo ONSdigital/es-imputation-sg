@@ -1,11 +1,12 @@
-import logging
 import json
+import logging
 import os
 
 import boto3
 import pandas as pd
-import imputation_functions as imp_func
 from marshmallow import Schema, fields
+
+import imputation_functions as imp_func
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')

@@ -11,11 +11,12 @@ import calculate_movement_wrangler
 class MockContext:
     aws_request_id = 666
 
+
 with open("tests/fixtures/wrangler_input_test_data.json", "r") as file:
     in_file = file.read()
-mock_event =  {
+mock_event = {
             "json_data": json.loads(in_file),
-            "distinct_values": ["strata","region"]
+            "distinct_values": ["strata", "region"]
         }
 
 mock_wrangles_event = {

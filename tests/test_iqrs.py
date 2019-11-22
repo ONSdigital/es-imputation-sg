@@ -3,7 +3,7 @@ import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
-from moto import mock_lambda, mock_sqs
+from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import iqrs_method
@@ -42,8 +42,20 @@ class TestWranglerAndMethod():
             'method_name': 'mock_method',
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
-            'iqrs_columns': 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill',
-            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
+            'iqrs_columns': 'iqrs_Q601_asphalting_sand,' +
+                            'iqrs_Q602_building_soft_sand,' +
+                            'iqrs_Q603_concreting_sand,' +
+                            'iqrs_Q604_bituminous_gravel,' +
+                            'iqrs_Q605_concreting_gravel,' +
+                            'iqrs_Q606_other_gravel,' +
+                            'iqrs_Q607_constructional_fill',
+            'movement_columns': 'movement_Q601_asphalting_sand,' +
+                                'movement_Q602_building_soft_sand,' +
+                                'movement_Q603_concreting_sand,' +
+                                'movement_Q604_bituminous_gravel,' +
+                                'movement_Q605_concreting_gravel,' +
+                                'movement_Q606_other_gravel,' +
+                                'movement_Q607_constructional_fill',
             'distinct_values': 'region, strata'
             })
 
@@ -54,6 +66,7 @@ class TestWranglerAndMethod():
         cls.mock_os_patcher.stop()
 
     @mock_sqs
+    @mock_s3
     @mock_lambda
     @mock.patch("iqrs_wrangler.funk.send_sns_message")
     @mock.patch("iqrs_wrangler.funk.save_data")
@@ -79,7 +92,13 @@ class TestWranglerAndMethod():
     def test_method_happy_path(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            iqrs_cols = 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill'
+            iqrs_cols = ('iqrs_Q601_asphalting_sand,' +
+                         'iqrs_Q602_building_soft_sand,' +
+                         'iqrs_Q603_concreting_sand,' +
+                         'iqrs_Q604_bituminous_gravel,' +
+                         'iqrs_Q605_concreting_gravel,' +
+                         'iqrs_Q606_other_gravel,' +
+                         'iqrs_Q607_constructional_fill')
 
             sorting_cols = ['region', 'strata']
             selected_cols = iqrs_cols.split(',') + sorting_cols
@@ -91,9 +110,12 @@ class TestWranglerAndMethod():
 
             output = iqrs_method.lambda_handler(json_content, context_object)
 
-            response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
+            response_df = pd.DataFrame(output).sort_values(sorting_cols)\
+                .reset_index()[selected_cols].drop_duplicates(keep='first')\
+                .reset_index(drop=True)
 
-            expected_df = pd.read_csv("tests/fixtures/iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+            expected_df = pd.read_csv("tests/fixtures/iqrs_scala_output.csv")\
+                .sort_values(sorting_cols).reset_index()[selected_cols]
 
             response_df = response_df.round(5)
             expected_df = expected_df.round(5)
@@ -191,7 +213,14 @@ class TestWranglerAndMethod():
             # Removing sns_topic_arn to allow for test of missing parameter
             iqrs_method.os.environ.pop("iqrs_columns")
             response = iqrs_method.lambda_handler(json_content, context_object)
-            iqrs_method.os.environ["iqrs_columns"] = "iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill"  # noqa E501
+            iqrs_method.os.environ["iqrs_columns"] = (
+                    'iqrs_Q601_asphalting_sand,' +
+                    'iqrs_Q602_building_soft_sand,' +
+                    'iqrs_Q603_concreting_sand,' +
+                    'iqrs_Q604_bituminous_gravel,' +
+                    'iqrs_Q605_concreting_gravel,' +
+                    'iqrs_Q606_other_gravel,' +
+                    'iqrs_Q607_constructional_fill')
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs

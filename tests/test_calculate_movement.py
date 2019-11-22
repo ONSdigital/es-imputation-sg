@@ -14,7 +14,7 @@ class MockContext:
 
 with open("tests/fixtures/method_input_test_data.json", "r") as file:
     in_file = file.read()
-mock_event =  {
+mock_event = {
             "json_data": in_file,
             "calculation_type": "movement_calculation_a",
             "distinct_values": "region"
@@ -48,8 +48,6 @@ class TestStringMethods(unittest.TestCase):
                              'Q607_constructional_fill'
         }):
 
-            with open("tests/fixtures/method_input_test_data.json") as file:
-                input_data = json.load(file)
             with open("tests/fixtures/method_output_compare_result.json") as file:
                 result = json.load(file)
 
@@ -200,12 +198,13 @@ class TestStringMethods(unittest.TestCase):
             # Removing the previous_period to allow for test of missing parameter
             calculate_movement_wrangler.os.environ.pop("checkpoint")
 
-            response = calculate_movement_wrangler.lambda_handler(mock_wrangles_event, context_object
-            )
+            response = calculate_movement_wrangler.lambda_handler(mock_wrangles_event,
+                                                                  context_object)
 
             assert (response['error'].__contains__("""Parameter validation error"""))
 
     @mock_sqs
+    @mock_s3
     def test_fail_to_get_from_sqs(self):
         with mock.patch.dict(calculate_movement_wrangler.os.environ, {
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
@@ -260,7 +259,7 @@ class TestStringMethods(unittest.TestCase):
         ):
 
             output_file = calculate_movement_method.lambda_handler(
-                {"mike":"mike"}, context_object
+                {"mike": "mike"}, context_object
             )
 
             assert not output_file["success"]

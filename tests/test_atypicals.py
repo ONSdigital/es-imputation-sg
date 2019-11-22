@@ -3,7 +3,7 @@ import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
-from moto import mock_lambda, mock_sqs
+from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import atypicals_method
@@ -36,10 +36,34 @@ class TestClass():
                 'sqs_queue_url': '213456',
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
-                'atypical_columns': 'atyps_Q601_asphalting_sand,atyps_Q602_building_soft_sand,atyps_Q603_concreting_sand,atyps_Q604_bituminous_gravel,atyps_Q605_concreting_gravel,atyps_Q606_other_gravel,atyps_Q607_constructional_fill',  # noqa E501
-                'iqrs_columns': 'iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill',
-                'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill',  # noqa: E501
-                'mean_columns': 'mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill',
+                'atypical_columns': 'atyps_Q601_asphalting_sand,' +
+                                    'atyps_Q602_building_soft_sand,' +
+                                    'atyps_Q603_concreting_sand,' +
+                                    'atyps_Q604_bituminous_gravel,' +
+                                    'atyps_Q605_concreting_gravel,' +
+                                    'atyps_Q606_other_gravel,' +
+                                    'atyps_Q607_constructional_fill',
+                'iqrs_columns': 'iqrs_Q601_asphalting_sand,' +
+                                'iqrs_Q602_building_soft_sand,' +
+                                'iqrs_Q603_concreting_sand,' +
+                                'iqrs_Q604_bituminous_gravel,' +
+                                'iqrs_Q605_concreting_gravel,' +
+                                'iqrs_Q606_other_gravel,' +
+                                'iqrs_Q607_constructional_fill',
+                'movement_columns': 'movement_Q601_asphalting_sand,' +
+                                    'movement_Q602_building_soft_sand,' +
+                                    'movement_Q603_concreting_sand,' +
+                                    'movement_Q604_bituminous_gravel,' +
+                                    'movement_Q605_concreting_gravel,' +
+                                    'movement_Q606_other_gravel,' +
+                                    'movement_Q607_constructional_fill',
+                'mean_columns': 'mean_Q601_asphalting_sand,' +
+                                'mean_Q602_building_soft_sand,' +
+                                'mean_Q603_concreting_sand,' +
+                                'mean_Q604_bituminous_gravel,' +
+                                'mean_Q605_concreting_gravel,' +
+                                'mean_Q606_other_gravel,' +
+                                'mean_Q607_constructional_fill',
                 'method_name': 'mock_method_name',
                 'sqs_message_group_id': 'mock_sqs_message_name',
                 'error_handler_arn': 'mock_error_handler_arn',
@@ -58,6 +82,7 @@ class TestClass():
 
     @mock_sqs
     @mock_lambda
+    @mock_s3
     @mock.patch("atypicals_wrangler.funk.send_sns_message")
     @mock.patch("atypicals_wrangler.funk.save_data")
     def test_wrangler_happy_path(self, mock_me, mock_you):
@@ -82,7 +107,13 @@ class TestClass():
     def test_method_happy_path(self):
         input_file = "tests/fixtures/atypical_input.json"
         with open(input_file, "r") as file:
-            movement_col = 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
+            movement_col = ('movement_Q601_asphalting_sand,' +
+                            'movement_Q602_building_soft_sand,' +
+                            'movement_Q603_concreting_sand,' +
+                            'movement_Q604_bituminous_gravel,' +
+                            'movement_Q605_concreting_gravel,' +
+                            'movement_Q606_other_gravel,' +
+                            'movement_Q607_constructional_fill')
             sorting_cols = ['responder_id', 'region', 'strata']
             selected_cols = movement_col.split(',')
 
@@ -197,7 +228,14 @@ class TestClass():
                 json_content,
                 context_object
             )
-            atypicals_method.os.environ["mean_columns"] = "mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill"  # noqa E501
+            atypicals_method.os.environ["mean_columns"] = (
+                    'mean_Q601_asphalting_sand,' +
+                    'mean_Q602_building_soft_sand,' +
+                    'mean_Q603_concreting_sand,' +
+                    'mean_Q604_bituminous_gravel,' +
+                    'mean_Q605_concreting_gravel,' +
+                    'mean_Q606_other_gravel,' +
+                    'mean_Q607_constructional_fill')
             assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
