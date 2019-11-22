@@ -15,7 +15,7 @@ class MockContext:
     aws_request_id = 666
 
 
-mock_event = {
+mock_wrangles_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
     "calculation_type": "movement_calculation_b",
@@ -108,7 +108,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = apply_factors_wrangler.lambda_handler(
-                    mock_event, context_object
+                    mock_wrangles_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -124,7 +124,7 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = lambda_method_function.lambda_handler(
-                    mock_event, context_object
+                    mock_wrangles_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -233,33 +233,42 @@ class TestApplyFactors(unittest.TestCase):
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 1317)
                     }
-                    response = apply_factors_wrangler.lambda_handler(mock_event, None)
+                    response = apply_factors_wrangler.lambda_handler(
+                        mock_wrangles_event, None)
                     assert "success" in response
                     assert response["success"] is True
 
     @mock_sqs
     def test_method(self):
-        methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
+        methodinput = pd.read_json("tests/fixtures/factorsdata.json")
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
+            mock_event = {
+                "json_data": methodinput.to_json(orient="records"),
+                "question_columns": "bill,bob,bill,bob,bill,bob,bill"
+            }
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                mock_event, context_object
             )
-            outputdf = pd.DataFrame(json.loads(response))
+            outputdf = pd.DataFrame(response)
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
             assert valuetotest == 4659
 
     @mock_sqs
     def test_attribute_error_method(self):
-        methodinput = "Potatoes"
+        methodinput = {"potatoes": "seotatop"}
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
+            mock_event = {
+                "json_data": methodinput,
+                "distinct_values": ["strata", "region"]
+            }
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                json.dumps(mock_event), context_object
             )
             assert response["error"].__contains__("""Input Error""")
 
@@ -278,15 +287,19 @@ class TestApplyFactors(unittest.TestCase):
 
     @mock_sqs
     def test_type_error_method(self):
-        methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
+        methodinput = pd.read_json("tests/fixtures/factorsdata.json")
         methodinput["prev_Q601_asphalting_sand"] = "MIKE"
         methodinput["imputation_factor_Q601_asphalting_sand"] = "MIIIKE!"
+        mock_event = {
+            "json_data": methodinput.to_json(orient="records"),
+            "distinct_values": ["strata", "region"]
+        }
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                json.dumps(mock_event), context_object
             )
             assert response["error"].__contains__("""Bad Data type""")
 
@@ -327,7 +340,7 @@ class TestApplyFactors(unittest.TestCase):
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                mock_wrangles_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -383,7 +396,7 @@ class TestApplyFactors(unittest.TestCase):
                             "Payload": StreamingBody(file, 1)
                         }
                         response = apply_factors_wrangler.lambda_handler(
-                            mock_event, context_object
+                            mock_wrangles_event, context_object
                         )
 
                         assert "success" in response
@@ -426,7 +439,7 @@ class TestApplyFactors(unittest.TestCase):
                     json.loads(message)), 666
                 mock_funk.get_dataframe.side_effect = KeyError()
                 response = apply_factors_wrangler.lambda_handler(
-                    mock_event, context_object
+                    mock_wrangles_event, context_object
                 )
 
                 assert "success" in response
@@ -464,7 +477,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_funk.get_dataframe.return_value = 66, 666
 
                 response = apply_factors_wrangler.lambda_handler(
-                    mock_event, context_object
+                    mock_wrangles_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False

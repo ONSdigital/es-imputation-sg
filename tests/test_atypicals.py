@@ -67,7 +67,7 @@ class TestClass():
                 mock_client.return_value = mock_client_object
                 with open("tests/fixtures/atypical_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 416503)
+                        "Payload": StreamingBody(file, 587487)
                     }
                     with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()

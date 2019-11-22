@@ -19,10 +19,10 @@ class MockContext:
 with open("tests/fixtures/means_input.json", "r") as file:
     in_file = file.read()
 
-mock_event =  {
-            "json_data": json.loads(in_file),
-            "distinct_values": ["strata","region"]
-        }
+mock_event = {
+    "json_data": json.loads(in_file),
+    "distinct_values": ["strata","region"]
+}
 
 mock_wrangles_event = {
   "MessageStructure": "json",
