@@ -223,21 +223,21 @@ class TestApplyFactors(unittest.TestCase):
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mock_df:
-                    mock_client_object = mock.Mock()
-                    mock_client.return_value = mock_client_object
-                    mock_df.return_value = pd.DataFrame(
-                        json.loads(message)), 666
+                with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                    with open("tests/fixtures/non_responders_return.json", "r") as norespfile:
+                        mock_client_object = mock.Mock()
+                        mock_client.return_value = mock_client_object
+                        mock_funk.get_dataframe.return_value = pd.DataFrame(
+                            json.loads(message)), 666
+                        mock_funk.read_dataframe_from_s3.return_value = pd.DataFrame(json.loads(norespfile.read()))
+                        with open("tests/fixtures/non_responders_return.json", "r") as file:
 
-                    with open("tests/fixtures/non_responders_return.json", "rb") as file:
+                            mock_client_object.invoke.return_value.get.return_value.read.return_value.decode.return_value = json.dumps(file.read())
 
-                        mock_client_object.invoke.return_value = {
-                            "Payload": StreamingBody(file, 1317)
-                        }
-                        response = apply_factors_wrangler.lambda_handler(
-                            mock_wrangles_event, context_object)
-                        assert "success" in response
-                        assert response["success"] is True
+                            response = apply_factors_wrangler.lambda_handler(
+                                mock_wrangles_event, context_object)
+                            assert "success" in response
+                            assert response["success"] is True
 
     @mock_sqs
     def test_method(self):

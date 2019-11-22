@@ -129,11 +129,10 @@ def lambda_handler(event, context):
             Payload=json.dumps(payload),
         )
 
-        json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
+        json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
         logger.info("Successfully invoked lambda")
-        print(json_response)
 
-        imputed_non_responders = pd.read_json(json.dumps(json_response))
+        imputed_non_responders = pd.DataFrame(json.loads(json_response))
 
         # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
@@ -168,7 +167,7 @@ def lambda_handler(event, context):
                 )
             )
         )
-        print(cols_to_drop)
+
         filtered_data = final_imputed.drop(cols_to_drop, axis=1)
 
         message = filtered_data.to_json(orient="records")
