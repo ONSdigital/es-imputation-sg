@@ -240,19 +240,21 @@ class TestApplyFactors(unittest.TestCase):
 
     @mock_sqs
     def test_method(self):
-        methodinput = pd.read_json("tests/fixtures/factorsdata.json")
+        methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             mock_event = {
-                "json_data": methodinput.to_json(orient="records"),
-                "question_columns": "bill,bob,bill,bob,bill,bob,bill"
+                "json_data": json.loads(methodinput.to_json(orient="records")),
+                "question_columns": ["Q601_asphalting_sand","Q602_building_soft_sand","Q603_concreting_sand","Q604_bituminous_gravel","Q605_concreting_gravel","Q606_other_gravel","Q607_constructional_fill"]
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
             )
-            outputdf = pd.DataFrame(response)
+            print(response)
+            outputdf = pd.DataFrame(json.loads(response))
+
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
             assert valuetotest == 4659
 
@@ -264,11 +266,11 @@ class TestApplyFactors(unittest.TestCase):
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             mock_event = {
-                "json_data": methodinput,
+                "json_data": json.dumps(methodinput),
                 "distinct_values": ["strata", "region"]
             }
             response = lambda_method_function.lambda_handler(
-                json.dumps(mock_event), context_object
+                mock_event, context_object
             )
             assert response["error"].__contains__("""Input Error""")
 
