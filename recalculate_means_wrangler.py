@@ -67,19 +67,20 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
-        data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
-                                                   in_file_name,
-                                                   incoming_message_group)
+        data, receipt_handler = funk.get_dataframe(
+            sqs_queue_url,
+            bucket_name,
+            in_file_name,
+            incoming_message_group
+        )
 
         logger.info("Successfully retrieved data")
 
         # Add means columns
-        qno = 1
         for question in questions_list.split(','):
             data.drop(['movement_' + question + '_count'], axis=1, inplace=True)
             data.drop(['movement_' + question + '_sum'], axis=1, inplace=True)
-            data.drop(['atyp60' + str(qno), "iqrs60" + str(qno)], axis=1, inplace=True)
-            qno += 1
+            data.drop(['atyp_' + question, 'iqrs_' + question], axis=1, inplace=True)
             data['mean_' + question] = 0.0
 
         data_json = data.to_json(orient='records')

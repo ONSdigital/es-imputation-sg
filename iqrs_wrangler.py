@@ -72,7 +72,9 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
-        payload = "{\"data\": "+json.dumps(data_json)+",\"distinct_values\": \""+distinct_values+" \" }"
+        payload = "{\"data\": " + json.dumps(
+            data_json
+        ) + ",\"distinct_values\": \"" + distinct_values + " \" }"
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,

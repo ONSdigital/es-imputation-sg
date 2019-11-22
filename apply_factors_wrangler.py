@@ -88,13 +88,14 @@ def lambda_handler(event, context):
             question_columns,
             ['responder_id']
         )
-
+        pd.set_option('display.max_columns', 30)
         for question in question_columns:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
             )
         logger.info("Successfully renamed previous period data")
-
+        print(prev_period_data)
+        print(non_responder_dataframe)
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_question_columns],
@@ -102,6 +103,9 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully merged previous period data with non-responder df")
         # Merge the factors onto the non responders
+        print(non_responder_dataframe)
+        print(factors_dataframe)
+        print("00000000000000000000000")
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
             factors_dataframe[
@@ -114,6 +118,7 @@ def lambda_handler(event, context):
             on=distinct_values,
             how="inner",
         )
+        print(non_responders_with_factors)
         logger.info("Successfully merged non-responders with factors")
 
         payload = {
@@ -131,9 +136,7 @@ def lambda_handler(event, context):
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
         logger.info("Successfully invoked lambda")
 
-        # ----- This bit will want a fix. ----- #
-        imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
-        # ------------------------------------- #
+        imputed_non_responders = pd.read_json(str(json_response))
 
         # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
@@ -144,14 +147,31 @@ def lambda_handler(event, context):
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
 
-        # Filter Out The Data Columns From The Temporary Calculated Columns.
-        filtered_data = final_imputed[['Q601_asphalting_sand', 'Q602_building_soft_sand',
-                                       'Q603_concreting_sand', 'Q604_bituminous_gravel',
-                                       'Q605_concreting_gravel', 'Q606_other_gravel',
-                                       'Q607_constructional_fill', 'Q608_total', 'county',
-                                       'county_name', 'enterprise_ref', 'gor_code',
-                                       'land_or_marine', 'name', 'period', 'region',
-                                       'responder_id', 'strata']]
+        # See Mike
+        cols_to_drop = produce_columns(
+            "movement_",
+            question_columns,
+            produce_columns(
+                "mean_",
+                question_columns,
+                produce_columns(
+                    "imputation_factor_",
+                    question_columns,
+                    produce_columns(
+                        "movement_",
+                        question_columns,
+                        produce_columns(
+                            "movement_",
+                            question_columns,
+                            [],
+                            suffix="_count"
+                        ), suffix="_sum"
+                    )
+                )
+            )
+        )
+        print(cols_to_drop)
+        filtered_data = final_imputed.drop(cols_to_drop, axis=1)
 
         message = filtered_data.to_json(orient="records")
 
@@ -238,7 +258,7 @@ def lambda_handler(event, context):
             return {"success": True, "checkpoint": checkpoint}
 
 
-def produce_columns(prefix, columns, suffix):
+def produce_columns(prefix, columns, additional, suffix=""):
     """
     Produces columns with a prefix, based on standard columns.
     :param prefix: String to be prepended to column name - Type: String
@@ -249,9 +269,9 @@ def produce_columns(prefix, columns, suffix):
     """
     new_columns = []
     for column in columns:
-        new_value = "%s%s" % (prefix, column)
+        new_value = "%s%s%s" % (prefix, column, suffix)
         new_columns.append(new_value)
 
-    new_columns = new_columns + suffix
+    new_columns = new_columns + additional
 
     return new_columns

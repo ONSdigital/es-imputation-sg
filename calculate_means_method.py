@@ -24,10 +24,6 @@ def lambda_handler(event, context):
     log_message = ""
     logger = logging.getLogger("Means")
 
-    # Env vars
-    json_data = event["json_data"]
-    distinct_values = event["distinct_values"]
-
     try:
 
         logger.info("Means Method Begun")
@@ -37,44 +33,42 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
+        # Env vars
+        json_data = event["json_data"]
+        distinct_values = event["distinct_values"]
+
+        movement_columns = config['movement_columns'].split(',')
+        questions_list = config['questions_list'].split(',')
+
         logger.info("Validated params.")
 
         df = pd.DataFrame(json_data)
 
         logger.info("Succesfully retrieved data from event.")
 
-        workingdf = df[config['movement_columns'].split(",")]
+        workingdf = df[movement_columns+distinct_values]
 
         counts = workingdf.groupby(distinct_values).count()
         # Rename columns to fit naming standards
-        counts.rename(
-            columns={
-                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_count",
-                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_count",  # noqa: E501
-                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_count",
-                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_count",  # noqa: E501
-                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_count",  # noqa: E501
-                "movement_Q606_other_gravel": "movement_Q606_other_gravel_count",
-                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_count",  # noqa: E501
-            },
-            inplace=True,
-        )
+        for column in movement_columns:
+            counts.rename(
+                columns={
+                    column: column + "_count"
+                },
+                inplace=True,
+            )
 
         # Create dataframe which sums the movements grouped by region and strata
         sums = workingdf.groupby(distinct_values).sum()
+
         # Rename columns to fit naming standards
-        sums.rename(
-            columns={
-                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_sum",
-                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_sum",  # noqa: E501
-                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_sum",
-                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_sum",  # noqa: E501
-                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_sum",  # noqa: E501
-                "movement_Q606_other_gravel": "movement_Q606_other_gravel_sum",
-                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_sum",  # noqa: E501
-            },
-            inplace=True,
-        )
+        for column in movement_columns:
+            sums.rename(
+                columns={
+                    column: column + "_sum"
+                },
+                inplace=True,
+            )
 
         counts = counts.reset_index(level=distinct_values)
         sums = sums.reset_index(level=distinct_values)
@@ -88,10 +82,11 @@ def lambda_handler(event, context):
         # join on movements and counts on region& strata to df
         df = pd.merge(df, moves, on=distinct_values, how="left")
 
-        for question in config['questions_list'].split(','):
+        for question in questions_list:
             df["mean_" + question] = df.apply(
                 lambda x: x["movement_" + question + "_sum"]
-                / x["movement_" + question + "_count"],
+                / x["movement_" + question + "_count"]
+                if x["movement_" + question + "_count"] > 0 else 0,
                 axis=1,
             )
 
