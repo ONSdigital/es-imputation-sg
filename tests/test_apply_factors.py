@@ -25,7 +25,7 @@ mock_wrangles_event = {
   }
 }
 
-context_object = MockContext
+context_object = MockContext()
 
 
 class TestApplyFactors(unittest.TestCase):
@@ -223,20 +223,21 @@ class TestApplyFactors(unittest.TestCase):
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = pd.DataFrame(
-                    json.loads(message)), 666
+                with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mock_df:
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+                    mock_df.return_value = pd.DataFrame(
+                        json.loads(message)), 666
 
-                with open("tests/fixtures/non_responders_return.json", "rb") as file:
+                    with open("tests/fixtures/non_responders_return.json", "rb") as file:
 
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 1317)
-                    }
-                    response = apply_factors_wrangler.lambda_handler(
-                        mock_wrangles_event, None)
-                    assert "success" in response
-                    assert response["success"] is True
+                        mock_client_object.invoke.return_value = {
+                            "Payload": StreamingBody(file, 1317)
+                        }
+                        response = apply_factors_wrangler.lambda_handler(
+                            mock_wrangles_event, context_object)
+                        assert "success" in response
+                        assert response["success"] is True
 
     @mock_sqs
     def test_method(self):
@@ -252,7 +253,7 @@ class TestApplyFactors(unittest.TestCase):
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
             )
-            print(response)
+
             outputdf = pd.DataFrame(json.loads(response))
 
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]

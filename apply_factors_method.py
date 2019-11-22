@@ -5,9 +5,9 @@ import pandas as pd
 
 def lambda_handler(event, context):
     """
-    Calculate and applies imputation factors on a question-by-question basis.
-    :param event: N/A
-    :param context: N/A
+    Applies imputation factors on a question-by-question basis.
+    :param event: Json string containing data and parameters from wrangler
+    :param context: AWS Contextobject
     :return: JSON - String
     """
     current_module = "Apply Factors - Method"

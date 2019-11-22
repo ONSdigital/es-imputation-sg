@@ -94,8 +94,7 @@ def lambda_handler(event, context):
                 index=str, columns={question: "prev_" + question}
             )
         logger.info("Successfully renamed previous period data")
-        print(prev_period_data)
-        print(non_responder_dataframe)
+
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_question_columns],
@@ -103,9 +102,6 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully merged previous period data with non-responder df")
         # Merge the factors onto the non responders
-        print(non_responder_dataframe)
-        print(factors_dataframe)
-        print("00000000000000000000000")
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
             factors_dataframe[
@@ -118,7 +114,7 @@ def lambda_handler(event, context):
             on=distinct_values,
             how="inner",
         )
-        print(non_responders_with_factors)
+
         logger.info("Successfully merged non-responders with factors")
 
         payload = {
@@ -135,8 +131,9 @@ def lambda_handler(event, context):
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
         logger.info("Successfully invoked lambda")
+        print(json_response)
 
-        imputed_non_responders = pd.read_json(str(json_response))
+        imputed_non_responders = pd.read_json(json.dumps(json_response))
 
         # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
@@ -145,6 +142,7 @@ def lambda_handler(event, context):
 
         # Joining Datasets Together.
         final_imputed = pd.concat([current_responders, imputed_non_responders])
+
         logger.info("Successfully joined imputed data with responder data")
 
         # See Mike
