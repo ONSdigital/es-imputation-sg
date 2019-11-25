@@ -11,6 +11,10 @@ from imputation_functions import produce_columns
 
 
 class InputSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -25,7 +29,10 @@ class InputSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Add docs here.
+    The wrangler is responsible for preparing the data so the IQRS method can be applied.
+    :param event: Contains all the variables which are required for the specific run.
+    :param context: N/A
+    :return: Returns the Input data with the IQRS added onto the Data set.
     """
     current_module = "Imputation IQRS - Wrangler."
     error_message = ""

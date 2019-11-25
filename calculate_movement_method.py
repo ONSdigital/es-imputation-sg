@@ -25,8 +25,8 @@ def lambda_handler(event, context):
     """
     This method is responsible for creating the movements for each question and then
     recording them in the respective columns.
-    :param event: The data in which you are calculating the movements on, this requires
-                  the current and previous period data - Type: JSON.
+    :param event: JSON payload that contains: calculation_type, json_data, questions_list
+                  Type: JSON.
     :param context: N/A
     :return: final_output: The input data but now with the correct movements for
                            the respective question columns - Type: JSON.
@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         json_data = event["json_data"]
         questions_list = event["questions_list"]
 
-        # Get relative calulcation function
+        # Get relative calculation function
         calculation = getattr(imp_func, calculation_type)
 
         schema = EnvironSchema()

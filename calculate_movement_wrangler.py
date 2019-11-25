@@ -55,7 +55,8 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     :param previous_time: Field name of the previous time used for IAC.
     :param current_segmentation: Field name of the current segmentation used for IAC.
     :param previous_segmentation: Field name of the current segmentation used for IAC.
-    :return: data - Type: DataFrame, data_anomalies - Type: DataFrame
+    :return: Success & Error on Fail or Success, Checkpoint, Impute and distinct_values
+             Type: JSON
     """
     data_anomalies = data[[reference, segmentation, time]]
 
@@ -101,7 +102,8 @@ def lambda_handler(event, context):
     The method requires a column per question to store the movements, named as follows:
     'movement_questionNameAndNumber'. The wrangler checks for non response and if everyone
     has responded the calculate movements is skipped.
-    :param event: N/A
+    :param event: Contains Runtime_variables, which contain both the calculation_type &
+                  distinct_values.
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """

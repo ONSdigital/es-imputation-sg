@@ -10,9 +10,10 @@ from imputation_functions import produce_columns
 def lambda_handler(event, context):
     """
     Returns JSON data with new IQR columns and respective values.
-    :param event: Event object
-    :param context: Context object
-    :return: JSON string
+    :param event: JSON payload that contains: json_data, questions_list, distinct_values.
+                  Type: JSON.
+    :param context: N/A.
+    :return: The means data now with the respective iter quartile ranges added -Type: JSON
     """
     current_module = "IQRS - Method"
     error_message = ""
@@ -22,7 +23,7 @@ def lambda_handler(event, context):
 
         logger.info("IQRS Method Begun")
 
-        # env vars
+        # Environment variables
         questions_list = event['questions_list']
         input_data = pd.read_json(event["data"])
 

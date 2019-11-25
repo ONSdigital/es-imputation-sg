@@ -12,6 +12,10 @@ from imputation_functions import produce_columns
 
 
 class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -30,7 +34,7 @@ def lambda_handler(event, context):
     """
     This wrangler is used to prepare data for the apply factors statistical method.
     The method requires a column per question to store the factors.
-    :param event: N/A
+    :param event:  Contains all the variables which are required for the specific run.
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """
