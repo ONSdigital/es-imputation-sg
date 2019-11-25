@@ -288,7 +288,7 @@ class TestWranglerAndMethod(unittest.TestCase):
             calculate_imputation_factors_method.os.environ,
                 {"sqs_queue_url": sqs_queue_url}
         ):
-            calculate_imputation_factors_method.os.environ.pop("questions_list")
+            calculate_imputation_factors_method.os.environ.pop("first_threshold")
             out = calculate_imputation_factors_method.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666},
                  "data_json": json_data_content,
