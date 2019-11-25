@@ -36,13 +36,13 @@ class TestClass():
                 'sqs_queue_url': '213456',
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
-                'atypical_columns': 'atyps_Q601_asphalting_sand,' +
-                                    'atyps_Q602_building_soft_sand,' +
-                                    'atyps_Q603_concreting_sand,' +
-                                    'atyps_Q604_bituminous_gravel,' +
-                                    'atyps_Q605_concreting_gravel,' +
-                                    'atyps_Q606_other_gravel,' +
-                                    'atyps_Q607_constructional_fill',
+                'question_list': 'Q601_asphalting_sand,' +
+                                 'Q602_building_soft_sand,' +
+                                 'Q603_concreting_sand,' +
+                                 'Q604_bituminous_gravel,' +
+                                 'Q605_concreting_gravel,' +
+                                 'Q606_other_gravel,' +
+                                 'Q607_constructional_fill',
                 'iqrs_columns': 'iqrs_Q601_asphalting_sand,' +
                                 'iqrs_Q602_building_soft_sand,' +
                                 'iqrs_Q603_concreting_sand,' +
@@ -118,8 +118,20 @@ class TestClass():
             selected_cols = movement_col.split(',')
 
             json_content = file.read()
+
+            event = {
+                "json_data": json_content,
+                "question_list": 'Q601_asphalting_sand,' +
+                                 'Q602_building_soft_sand,' +
+                                 'Q603_concreting_sand,' +
+                                 'Q604_bituminous_gravel,' +
+                                 'Q605_concreting_gravel,' +
+                                 'Q606_other_gravel,' +
+                                 'Q607_constructional_fill',
+            }
+
             output = atypicals_method.lambda_handler(
-                json_content,
+                event,
                 context_object
             )
 
@@ -162,8 +174,19 @@ class TestClass():
             json_content = file.read()
             with mock.patch("atypicals_method.pd.read_json") as mocked:
                 mocked.side_effect = Exception("General exception")
+                event = {
+                    "json_data": json_content,
+                    "question_list": 'Q601_asphalting_sand,' +
+                                     'Q602_building_soft_sand,' +
+                                     'Q603_concreting_sand,' +
+                                     'Q604_bituminous_gravel,' +
+                                     'Q605_concreting_gravel,' +
+                                     'Q606_other_gravel,' +
+                                     'Q607_constructional_fill',
+                }
+
                 response = atypicals_method.lambda_handler(
-                    json_content,
+                    event,
                     context_object
                 )
 
@@ -189,19 +212,23 @@ class TestClass():
             assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
-        with mock.patch.dict(
-            "os.environ",
-            {
-                "mean_columns": "bum"
-            }
-        ):
-            with open("tests/fixtures/atypical_input.json", "r") as file:
-                content = file.read()
+        with open("tests/fixtures/atypical_input.json", "r") as file:
+            content = file.read()
+            event = {
+                    "jason_data": content,
+                    "question_list": 'Q601_asphalting_sand,' +
+                                     'Q602_building_soft_sand,' +
+                                     'Q603_concreting_sand,' +
+                                     'Q604_bituminous_gravel,' +
+                                     'Q605_concreting_gravel,' +
+                                     'Q606_other_gravel,' +
+                                     'Q607_constructional_fill',
+                     }
+            response = atypicals_method.lambda_handler(
+                event, context_object
+            )
 
-                response = atypicals_method.lambda_handler(
-                    content, context_object
-                )
-                assert """Key Error in""" in response["error"]
+            assert """Key Error in""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -213,30 +240,6 @@ class TestClass():
         response = atypicals_wrangler.lambda_handler(mock_event, context_object)
         atypicals_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
-
-    def test_marshmallow_raises_method_exception(self):
-        """
-        Testing the marshmallow raises an exception in method.
-        :return: None.
-        """
-        input_file = "tests/fixtures/atypical_input.json"
-        with open(input_file, "r") as file:
-            json_content = file.read()
-            # Removing sns_topic_arn to allow for test of missing parameter
-            atypicals_method.os.environ.pop("mean_columns")
-            response = atypicals_method.lambda_handler(
-                json_content,
-                context_object
-            )
-            atypicals_method.os.environ["mean_columns"] = (
-                    'mean_Q601_asphalting_sand,' +
-                    'mean_Q602_building_soft_sand,' +
-                    'mean_Q603_concreting_sand,' +
-                    'mean_Q604_bituminous_gravel,' +
-                    'mean_Q605_concreting_gravel,' +
-                    'mean_Q606_other_gravel,' +
-                    'mean_Q607_constructional_fill')
-            assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):

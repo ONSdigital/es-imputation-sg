@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     """
     current_period = fields.Str(required=True)
     previous_period = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -43,6 +42,7 @@ def lambda_handler(event, context):
         # Declare event vars
         calculation_type = event["calculation_type"]
         json_data = event["json_data"]
+        questions_list = event["questions_list"]
 
         # Get relative calulcation function
         calculation = getattr(imp_func, calculation_type)
@@ -55,7 +55,6 @@ def lambda_handler(event, context):
         # Declared inside of lambda_handler so that tests work correctly on local.
         current_period = config['current_period']
         previous_period = config['previous_period']
-        questions_list = config['questions_list']
 
         df = pd.DataFrame(json.loads(json_data))
 
