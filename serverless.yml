@@ -31,12 +31,14 @@ functions:
     package:
       include:
         - apply_factors_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
@@ -59,8 +61,10 @@ functions:
     package:
       include:
         - apply_factors_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
@@ -75,17 +79,19 @@ functions:
     package:
       include:
         - atypicals_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
       checkpoint: 3
-      atypical_columns: atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607
+      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       bucket_name: results-s3-bucket
       in_file_name: iqrs_out.json
       incoming_message_group: imputation-iqrs-out
@@ -101,18 +107,15 @@ functions:
     package:
       include:
         - atypicals_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
     tags:
       app: results
-    environment:
-      atypical_columns: atyp601,atyp602,atyp603,atyp604,atyp605,atyp606,atyp607
-      iqrs_columns: iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607
-      mean_columns: mean_Q601_asphalting_sand,mean_Q602_building_soft_sand,mean_Q603_concreting_sand,mean_Q604_bituminous_gravel,mean_Q605_concreting_gravel,mean_Q606_other_gravel,mean_Q607_constructional_fill
-      movement_columns: movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill
 
   deploy-calculate-factors-wrangler:
     name: es-calculate-factors-wrangler
@@ -120,12 +123,14 @@ functions:
     package:
       include:
         - calculate_imputation_factors_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
@@ -146,8 +151,10 @@ functions:
     package:
       include:
         - calculate_imputation_factors_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
@@ -167,12 +174,14 @@ functions:
     package:
       include:
         - calculate_means_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
@@ -193,16 +202,15 @@ functions:
     package:
       include:
         - calculate_means_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
     tags:
       app: results
-    environment:
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
-      movement_columns: movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata
 
   deploy-calculate-movement-wrangler:
     name: es-calculate-movement-wrangler
@@ -210,12 +218,13 @@ functions:
     package:
       include:
         - calculate_movement_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
@@ -248,8 +257,10 @@ functions:
     package:
       include:
         - calculate_movement_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
@@ -258,7 +269,6 @@ functions:
     environment:
       current_period: 201809
       previous_period: 201806
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
 
   deploy-iqrs-wrangler:
     name: es-iqrs-wrangler
@@ -266,12 +276,14 @@ functions:
     package:
       include:
         - iqrs_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
@@ -292,8 +304,10 @@ functions:
     package:
       include:
         - iqrs_method.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
@@ -306,12 +320,14 @@ functions:
     package:
       include:
         - recalculate_means_wrangler.py
+        - imputation_functions.py
       exclude:
         - ./**
+      individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:12
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:13
     tags:
       app: results
     environment:
