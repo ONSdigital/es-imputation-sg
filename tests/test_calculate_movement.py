@@ -14,10 +14,18 @@ class MockContext:
 
 with open("tests/fixtures/method_input_test_data.json", "r") as file:
     in_file = file.read()
+
 mock_event = {
             "json_data": in_file,
             "calculation_type": "movement_calculation_a",
-            "distinct_values": "region"
+            "distinct_values": "region",
+            "questions_list": 'Q601_asphalting_sand,'
+                              'Q602_building_soft_sand,'
+                              'Q603_concreting_sand,'
+                              'Q604_bituminous_gravel,'
+                              'Q605_concreting_gravel,'
+                              'Q606_other_gravel,'
+                              'Q607_constructional_fill'
         }
 
 mock_wrangles_event = {
@@ -38,14 +46,7 @@ class TestStringMethods(unittest.TestCase):
     def test_lambda_handler_movement_method(self):
         with mock.patch.dict(calculate_movement_method.os.environ, {
            'current_period': '201809',
-           'previous_period': '201806',
-           'questions_list': 'Q601_asphalting_sand,'
-                             'Q602_building_soft_sand,'
-                             'Q603_concreting_sand,'
-                             'Q604_bituminous_gravel,'
-                             'Q605_concreting_gravel,'
-                             'Q606_other_gravel,'
-                             'Q607_constructional_fill'
+           'previous_period': '201806'
         }):
 
             with open("tests/fixtures/method_output_compare_result.json") as file:
@@ -111,14 +112,7 @@ class TestStringMethods(unittest.TestCase):
     def test_method_catch_exception(self):
         with mock.patch.dict(calculate_movement_method.os.environ, {
             'current_period': '201809',
-            'previous_period': '201806',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill'
+            'previous_period': '201806'
         }):
 
             with mock.patch('calculate_movement_method.pd.DataFrame') as mocked:
@@ -139,14 +133,7 @@ class TestStringMethods(unittest.TestCase):
         """
         with mock.patch.dict(calculate_movement_method.os.environ, {
             'current_period': '201809',
-            'previous_period': '201806',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill'
+            'previous_period': '201806'
             }
         ):
             # Removing the previous_period to allow for test of missing parameter
@@ -247,14 +234,7 @@ class TestStringMethods(unittest.TestCase):
     def test_method_key_error_exception(self):
         with mock.patch.dict(calculate_movement_method.os.environ, {
             'current_period': '201809',
-            'previous_period': '201806',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill'
+            'previous_period': '201806'
             }
         ):
 

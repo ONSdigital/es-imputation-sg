@@ -216,9 +216,8 @@ def lambda_handler(event, context):
 
             json_payload = {
                 "json_data": json_ordered_data,
-                # TODO: This needs to be changed to event("calculation");
-                #       remains this way for testing.
-                "calculation_type": calculation_type
+                "calculation_type": calculation_type,
+                "questions_list": questions_list
             }
 
             logger.info("Successfully created movement columns on the data")
