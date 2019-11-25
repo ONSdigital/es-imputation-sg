@@ -1,4 +1,4 @@
-iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607,region,strata
+iqrs_Q601_asphalting_sand,iqrs_Q602_building_soft_sand,iqrs_Q603_concreting_sand,iqrs_Q604_bituminous_gravel,iqrs_Q605_concreting_gravel,iqrs_Q606_other_gravel,iqrs_Q607_constructional_fill,region,strata
 0,0,0,0,0,0,0,1,B1
 0.142068731,0.104859242,0.096369742,0,0.053689946,0.403140274,0.131963365,6,D
 0,0,0,0,0,0,0,10,C

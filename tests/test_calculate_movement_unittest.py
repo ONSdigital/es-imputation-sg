@@ -12,6 +12,30 @@ class MockContext:
     aws_request_id = 666
 
 
+with open("tests/fixtures/wrangler_input_test_data.json", "r") as file:
+    in_file = file.read()
+mock_event = {
+    "json_data": json.loads(in_file),
+    "distinct_values": ["strata", "region"],
+    "questions_list": 'Q601_asphalting_sand,'
+                      'Q602_building_soft_sand,'
+                      'Q603_concreting_sand,'
+                      'Q604_bituminous_gravel,'
+                      'Q605_concreting_gravel,'
+                      'Q606_other_gravel,'
+                      'Q607_constructional_fill'
+}
+
+mock_wrangles_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "strata"
+  }
+}
+
 context_object = MockContext
 
 
@@ -94,7 +118,7 @@ class TestClass(unittest.TestCase):
                                                             StreamingBody(file, 13123)}
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, context_object
+                mock_wrangles_event, context_object
             )
 
         output = myvar[0][0][2]
@@ -140,7 +164,7 @@ class TestClass(unittest.TestCase):
         mock_sqs_return.return_value = pd.DataFrame(input_data), 666
 
         response = calculate_movement_wrangler.lambda_handler(
-              {"RuntimeVariables": {"period": "201809"}}, context_object
+              mock_wrangles_event, context_object
         )
 
         self.assertTrue(response["success"])
@@ -177,7 +201,7 @@ class TestClass(unittest.TestCase):
                                                             StreamingBody(file, 2)}
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, context_object
+                mock_wrangles_event, context_object
             )
 
         assert "success" in response
@@ -216,12 +240,11 @@ class TestClass(unittest.TestCase):
             }
 
             response = calculate_movement_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "201809"}}, context_object
+                mock_wrangles_event, context_object
             )
 
         assert "success" in response
         assert response["success"] is False
-        print(response)
         assert response["error"].__contains__("""Bad data encountered""")
 
     @mock.patch('calculate_movement_wrangler.funk.send_sns_message')
@@ -246,7 +269,7 @@ class TestClass(unittest.TestCase):
         mock_sqs_return.return_value = json.dumps(input_data), 666
 
         response = calculate_movement_wrangler.lambda_handler(
-            {"RuntimeVariables": {"period": "201809"}}, context_object
+            mock_wrangles_event, context_object
         )
 
         assert "success" in response

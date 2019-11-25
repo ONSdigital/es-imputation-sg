@@ -6,7 +6,10 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
-    questions_list = fields.Str(required=True)
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     first_threshold = fields.Str(required=True)
     second_threshold = fields.Str(required=True)
     third_threshold = fields.Str(required=True)
@@ -17,12 +20,10 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Calculates the imputation factors,
-    called by the Calculate imputation factors wrangler.
-
-    :param event: lambda event
+    Calculates imputation factor for each question, in each aggregated group.
+    :param event: JSON payload that contains: json_data, questions_list - Type: JSON.
     :param context: lambda context
-    :return: json dataset
+    :return: final_output - Type: JSON
     """
     current_module = "Calculate Factors - Method"
     error_message = ""
@@ -39,7 +40,7 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # set up variables
-        questions_list = config["questions_list"]
+        questions_list = event["questions_list"]
         first_threshold = config["first_threshold"]
         second_threshold = config["second_threshold"]
         third_threshold = config["third_threshold"]
@@ -47,7 +48,7 @@ def lambda_handler(event, context):
         second_imputation_factor = config["second_imputation_factor"]
         third_imputation_factor = config["third_imputation_factor"]
 
-        df = pd.DataFrame(event)
+        df = pd.DataFrame(event["data_json"])
 
         def calculate_imputation_factors(row, question):
             """
@@ -55,7 +56,7 @@ def lambda_handler(event, context):
             - Calculates imputation factor for each question, in each aggregated group,
               by:
                 Region
-                Land or Marine
+                Land or Marine (If applicable)
                 Count of refs within cell
 
             :param row: row of DataFrame

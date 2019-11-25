@@ -17,6 +17,16 @@ class MockContext:
     aws_request_id = 666
 
 
+mock_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -145,7 +155,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, context_object
+                            mock_event, context_object
                         )
                         assert "success" in out
                         assert out["success"]
@@ -165,7 +175,14 @@ class TestWranglerAndMethod(unittest.TestCase):
             json_content = json.loads(file.read())
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            json_content, None
+            {"data_json": json_content, "questions_list": "Q601_asphalting_sand,"
+                                                          + "Q602_building_soft_sand,"
+                                                          + "Q603_concreting_sand,"
+                                                          + "Q604_bituminous_gravel,"
+                                                          + "Q605_concreting_gravel,"
+                                                          + "Q606_other_gravel,"
+                                                          + "Q607_constructional_fill"
+             }, context_object
         )
 
         # final output match
@@ -195,7 +212,15 @@ class TestWranglerAndMethod(unittest.TestCase):
         )
 
         response = calculate_imputation_factors_method.lambda_handler(
-            json_data_content, context_object
+            {"data_json": json_data_content,
+             "questions_list": "Q601_asphalting_sand,"
+             + "Q602_building_soft_sand,"
+             + "Q603_concreting_sand,"
+             + "Q604_bituminous_gravel,"
+             + "Q605_concreting_gravel,"
+             + "Q606_other_gravel,"
+             + "Q607_constructional_fill"
+             }, context_object
         )
         assert not response["success"]
 
@@ -212,8 +237,21 @@ class TestWranglerAndMethod(unittest.TestCase):
     def test_raise_general_exception_method(self):
         with mock.patch("pandas.DataFrame") as mocked:
             mocked.side_effect = Exception("AARRRRGHH!!")
+            json_data_content = (
+                '[{"movement_Q601_asphalting_sand":0.0},'
+                '{"movement_Q601_asphalting_sand":0.857614899}]'
+            )
             response = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                {"RuntimeVariables": {"checkpoint": 666},
+                 "data_json": json_data_content,
+                 "questions_list": "Q601_asphalting_sand,"
+                 + "Q602_building_soft_sand,"
+                 + "Q603_concreting_sand,"
+                 + "Q604_bituminous_gravel,"
+                 + "Q605_concreting_gravel,"
+                 + "Q606_other_gravel,"
+                 + "Q607_constructional_fill"
+                 }, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -234,7 +272,6 @@ class TestWranglerAndMethod(unittest.TestCase):
                 {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             self.assertRaises(ValueError)
-            print(out)
             assert """Parameter validation error""" in out["error"]
 
     @mock_sqs
@@ -243,19 +280,27 @@ class TestWranglerAndMethod(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
+        json_data_content = (
+            '[{"movement_Q601_asphalting_sand":0.0},'
+            '{"movement_Q601_asphalting_sand":0.857614899}]'
+        )
         with mock.patch.dict(
             calculate_imputation_factors_method.os.environ,
                 {"sqs_queue_url": sqs_queue_url}
         ):
-            calculate_imputation_factors_method.os.environ.pop("questions_list")
+            calculate_imputation_factors_method.os.environ.pop("first_threshold")
             out = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                {"RuntimeVariables": {"checkpoint": 666},
+                 "data_json": json_data_content,
+                 "questions_list": "Q601_asphalting_sand,"
+                                   + "Q602_building_soft_sand,"
+                                   + "Q603_concreting_sand,"
+                                   + "Q604_bituminous_gravel,"
+                                   + "Q605_concreting_gravel,"
+                                   + "Q606_other_gravel,"
+                                   + "Q607_constructional_fill"
+                 }, context_object
             )
-            calculate_imputation_factors_method.os.environ[
-                "questions_list"
-            ] = "Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand" \
-                ",Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel," \
-                "Q607_constructional_fill"
             self.assertRaises(ValueError)
 
             assert """Parameter validation error""" in out["error"]
@@ -273,9 +318,15 @@ class TestWranglerAndMethod(unittest.TestCase):
             content = content.replace("Q", "MIKE")
             json_content = json.loads(content)
 
-        print(json_content)
         output_file = calculate_imputation_factors_method.lambda_handler(
-            json_content, context_object
+            {"data_json": json_content, "questions_list": "Q601_asphalting_sand,"
+                                                          + "Q602_building_soft_sand,"
+                                                          + "Q603_concreting_sand,"
+                                                          + "Q604_bituminous_gravel,"
+                                                          + "Q605_concreting_gravel,"
+                                                          + "Q606_other_gravel,"
+                                                          + "Q607_constructional_fill"
+             }, context_object
         )
 
         assert not output_file["success"]
@@ -326,7 +377,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         }
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
-                            None, context_object
+                            mock_event, context_object
                         )
                         assert "success" in out
                         assert not out["success"]
@@ -340,7 +391,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         ) as mocked:
             mocked.side_effect = KeyError()
             out = calculate_imputation_factors_wrangler.lambda_handler(
-                None, context_object
+                mock_event, context_object
             )
             assert "success" in out
             assert not out["success"]
@@ -357,7 +408,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                     {"Error": {"Code": "Mike"}}, "create_stream"
                 )
                 out = calculate_imputation_factors_wrangler.lambda_handler(
-                    None, context_object
+                    mock_event, context_object
                 )
                 assert "success" in out
                 assert not out["success"]

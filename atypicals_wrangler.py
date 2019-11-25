@@ -7,10 +7,16 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+import imputation_functions as imp_func
+
 
 class InputSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
-    atypical_columns = fields.Str(required=True)
+    question_list = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
@@ -22,6 +28,14 @@ class InputSchema(Schema):
 
 
 def lambda_handler(event, context):
+    """
+    The wrangler converts the data from JSON format into a dataframe and then adds 7 new
+    ATypical columns (for the 7 questions) onto the dataframe.
+    These 7 columns are initially populated with 0 values.
+    :param event: Contains all the variables which are required for the specific run.
+    :param context: N/A
+    :return:  Success & Checkpoint/Error - Type: JSON
+    """
     current_module = "Imputation Atypicals - Wrangler."
     error_message = ""
     log_message = ""
@@ -39,7 +53,8 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment params: {errors}")
 
         checkpoint = config["checkpoint"]
-        atypical_columns = config["atypical_columns"]
+        question_list = config["question_list"]
+
         bucket_name = config["bucket_name"]
         in_file_name = config["in_file_name"]
         incoming_message_group = config["incoming_message_group"]
@@ -56,19 +71,25 @@ def lambda_handler(event, context):
                                                    incoming_message_group)
 
         logger.info("Succesfully retrieved data.")
+        atypical_columns = imp_func.produce_columns("atyp_", question_list.split(','), [])
 
-        for col in atypical_columns.split(','):
+        for col in atypical_columns:
             data[col] = 0
 
         logger.info("Atypicals columns succesfully added")
 
         data_json = data.to_json(orient='records')
 
+        payload = {
+            "json_data": json.loads(data_json),
+            "question_list": question_list
+        }
+
         logger.info("Dataframe converted to JSON")
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.dumps(data_json)
+            Payload=json.dumps(payload)
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")

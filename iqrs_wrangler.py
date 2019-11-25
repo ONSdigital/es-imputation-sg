@@ -7,15 +7,21 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+from imputation_functions import produce_columns
+
 
 class InputSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    iqrs_columns = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
@@ -23,7 +29,10 @@ class InputSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Add docs here.
+    The wrangler is responsible for preparing the data so the IQRS method can be applied.
+    :param event: Contains all the variables which are required for the specific run.
+    :param context: N/A
+    :return: Returns the Input data with the IQRS added onto the Data set.
     """
     current_module = "Imputation IQRS - Wrangler."
     error_message = ""
@@ -47,12 +56,14 @@ def lambda_handler(event, context):
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
         incoming_message_group = config['incoming_message_group']
-        iqrs_columns = config['iqrs_columns']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
+        questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
+
+        distinct_values = event['RuntimeVariables']["distinct_values"]
 
         logger.info("Vaildated params")
 
@@ -61,7 +72,7 @@ def lambda_handler(event, context):
                                                    incoming_message_group)
         logger.info("Succesfully retrieved data.")
 
-        for col in iqrs_columns.split(','):
+        for col in produce_columns("iqrs_", questions_list.split(',')):
             data[col] = 0
 
         logger.info("IQRS columns succesfully added")
@@ -70,13 +81,16 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
+        payload = '{"data": ' + json.dumps(data_json) + ',' +\
+                  '"distinct_values": "' + distinct_values + '",' +\
+                  '"questions_list": ' + questions_list + '}'
+
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.dumps(data_json)
+            Payload=payload
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")
-
         logger.info("Succesfully invoked method lambda")
 
         funk.save_data(bucket_name, out_file_name,
