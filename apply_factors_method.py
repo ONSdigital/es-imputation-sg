@@ -21,9 +21,9 @@ def lambda_handler(event, context):
         json_data = event["json_data"]
         working_dataframe = pd.DataFrame(json_data)
 
-        question_columns = event["question_columns"]
+        questions_list = event["questions_list"]
 
-        for question in question_columns:
+        for question in questions_list:
             # Loop through each question value, impute based on factor and previous value
             # then drop the previous value and the imp factor
             working_dataframe[question] = working_dataframe.apply(

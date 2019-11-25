@@ -1,15 +1,10 @@
 import json
 import logging
-import os
 
 import numpy as np
 import pandas as pd
-from marshmallow import Schema, fields
 
-
-class InputSchema(Schema):
-    iqrs_columns = fields.Str(required=True)
-    movement_columns = fields.Str(required=True)
+from imputation_functions import produce_columns
 
 
 def lambda_handler(event, context):
@@ -28,20 +23,15 @@ def lambda_handler(event, context):
         logger.info("IQRS Method Begun")
 
         # env vars
-        config, errors = InputSchema().load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
-
-        logger.info("Validated params.")
-
+        questions_list = event['questions_list']
         input_data = pd.read_json(event["data"])
 
         logger.info("Successfully retrieved data from event.")
 
         iqrs_df = calc_iqrs(
             input_data,
-            config['movement_columns'].split(','),
-            config['iqrs_columns'].split(','),
+            produce_columns("movement_", questions_list.split(',')),
+            produce_columns("iqrs_", questions_list.split(',')),
             event["distinct_values"].strip().split(',')
         )
 
@@ -131,7 +121,7 @@ def iqr_sum(df, quest):
 
     import math
 
-    if (df_size % 2 == 0):
+    if df_size % 2 == 0:
         sorted_df = df.sort_values()
         df = sorted_df.reset_index(drop=True)
         df_bottom = df[0:math.ceil(int(df_size / 2))].median()

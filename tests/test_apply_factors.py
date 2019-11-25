@@ -46,10 +46,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                    "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                    "Q605_concreting_gravel,Q606_other_gravel," +
-                                    "Q607_constructional_fill"
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 
@@ -105,10 +105,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                    "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                    "Q605_concreting_gravel,Q606_other_gravel," +
-                                    "Q607_constructional_fill"
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
             with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
@@ -224,10 +224,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                    "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                    "Q605_concreting_gravel,Q606_other_gravel," +
-                                    "Q607_constructional_fill"
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 
@@ -262,10 +262,10 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.loads(methodinput.to_json(orient="records")),
-                "question_columns": ["Q601_asphalting_sand", "Q602_building_soft_sand",
-                                     "Q603_concreting_sand", "Q604_bituminous_gravel",
-                                     "Q605_concreting_gravel", "Q606_other_gravel",
-                                     "Q607_constructional_fill"]
+                "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
+                                   "Q603_concreting_sand", "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel", "Q606_other_gravel",
+                                   "Q607_constructional_fill"]
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
@@ -356,10 +356,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                    "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                    "Q605_concreting_gravel,Q606_other_gravel," +
-                                    "Q607_constructional_fill"
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
@@ -401,10 +401,10 @@ class TestApplyFactors(unittest.TestCase):
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
-                    "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                        "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                        "Q605_concreting_gravel,Q606_other_gravel," +
-                                        "Q607_constructional_fill"
+                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                      "Q605_concreting_gravel,Q606_other_gravel," +
+                                      "Q607_constructional_fill"
                 },
         ):
             with mock.patch(
@@ -457,10 +457,10 @@ class TestApplyFactors(unittest.TestCase):
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
-                    "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                        "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                        "Q605_concreting_gravel,Q606_other_gravel," +
-                                        "Q607_constructional_fill"
+                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                      "Q605_concreting_gravel,Q606_other_gravel," +
+                                      "Q607_constructional_fill"
                 },
         ):
             with mock.patch("apply_factors_wrangler.funk") as mock_funk:
@@ -498,10 +498,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "question_columns": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                    "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                    "Q605_concreting_gravel,Q606_other_gravel," +
-                                    "Q607_constructional_fill"
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 

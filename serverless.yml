@@ -49,6 +49,7 @@ functions:
       out_file_name: apply_factors_out.json
       period: 201809
       previous_data_file: previous_period_enriched_stratared.json
+      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
@@ -153,7 +154,6 @@ functions:
     tags:
       app: results
     environment:
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       first_threshold: 3
       second_threshold: 3
       third_threshold: 5
@@ -279,9 +279,9 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: calculate_means_out.json
       incoming_message_group: imputation-calculate-means-out
-      iqrs_columns: iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607
       method_name: es-iqrs-method
       out_file_name: iqrs_out.json
+      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-iqrs-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
@@ -299,9 +299,6 @@ functions:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
     tags:
       app: results
-    environment:
-      iqrs_columns: iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607
-      movement_columns: movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill,region,strata
 
   deploy-recalculate-means-wrangler:
     name: es-recalculate-means-wrangler

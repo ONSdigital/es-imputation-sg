@@ -42,20 +42,6 @@ class TestWranglerAndMethod():
             'method_name': 'mock_method',
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
-            'iqrs_columns': 'iqrs_Q601_asphalting_sand,' +
-                            'iqrs_Q602_building_soft_sand,' +
-                            'iqrs_Q603_concreting_sand,' +
-                            'iqrs_Q604_bituminous_gravel,' +
-                            'iqrs_Q605_concreting_gravel,' +
-                            'iqrs_Q606_other_gravel,' +
-                            'iqrs_Q607_constructional_fill',
-            'movement_columns': 'movement_Q601_asphalting_sand,' +
-                                'movement_Q602_building_soft_sand,' +
-                                'movement_Q603_concreting_sand,' +
-                                'movement_Q604_bituminous_gravel,' +
-                                'movement_Q605_concreting_gravel,' +
-                                'movement_Q606_other_gravel,' +
-                                'movement_Q607_constructional_fill',
             'distinct_values': 'region, strata'
             })
 
@@ -105,6 +91,13 @@ class TestWranglerAndMethod():
 
             json_content = {
                 "data": json.loads(file.read()),
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
                 "distinct_values": "region,strata"
             }
 
@@ -143,6 +136,13 @@ class TestWranglerAndMethod():
         with open(input_file, "r") as file:
             json_content = {
                 "data": json.loads(file.read()),
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
                 "distinct_values": ['region', 'strata']
             }
             with mock.patch("iqrs_method.pd.read_json") as mocked:
@@ -183,6 +183,13 @@ class TestWranglerAndMethod():
             with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
                 json_content = {
                     "data": json.loads(file.read()),
+                    "questions_list": "Q601_asphalting_sand,"
+                                      + "Q602_building_soft_sand,"
+                                      + "Q603_concreting_sand,"
+                                      + "Q604_bituminous_gravel,"
+                                      + "Q605_concreting_gravel,"
+                                      + "Q606_other_gravel,"
+                                      + "Q607_constructional_fill",
                     "distinct_values": "'region', 'strata'"
                 }
 
@@ -201,27 +208,6 @@ class TestWranglerAndMethod():
         response = iqrs_wrangler.lambda_handler(mock_event, context_object)
         iqrs_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
-
-    def test_marshmallow_raises_method_exception(self):
-        """
-        Testing the marshmallow raises an exception in method.
-        :return: None.
-        """
-        input_file = "tests/fixtures/Iqrs_with_columns.json"
-        with open(input_file, "r") as file:
-            json_content = file.read()
-            # Removing sns_topic_arn to allow for test of missing parameter
-            iqrs_method.os.environ.pop("iqrs_columns")
-            response = iqrs_method.lambda_handler(json_content, context_object)
-            iqrs_method.os.environ["iqrs_columns"] = (
-                    'iqrs_Q601_asphalting_sand,' +
-                    'iqrs_Q602_building_soft_sand,' +
-                    'iqrs_Q603_concreting_sand,' +
-                    'iqrs_Q604_bituminous_gravel,' +
-                    'iqrs_Q605_concreting_gravel,' +
-                    'iqrs_Q606_other_gravel,' +
-                    'iqrs_Q607_constructional_fill')
-            assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):

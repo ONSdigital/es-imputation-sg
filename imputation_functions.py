@@ -25,7 +25,8 @@ def produce_columns(prefix, columns, additional=[], suffix=""):
     Produces columns with a prefix, based on standard columns.
     :param prefix: String to be prepended to column name - Type: String
     :param columns: List of columns - Type: List
-    :param suffix: Any additonal columns to be added on - Type: List
+    :param additional: Any additional columns to be added on - Type: List
+    :param suffix: String to be appended to column name - Type: String
 
     :return: List of column names with desired prefix - Type: List
     """
