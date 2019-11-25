@@ -1,25 +1,18 @@
 import json
 import logging
-import os
 
 import numpy as np
 import pandas as pd
-from marshmallow import Schema, fields
 
-
-class InputSchema(Schema):
-    atypical_columns = fields.Str(required=True)
-    iqrs_columns = fields.Str(required=True)
-    mean_columns = fields.Str(required=True)
-    movement_columns = fields.Str(required=True)
+import imputation_functions as imp_func
 
 
 def lambda_handler(event, context):
     """
-    Returns JSON daya with new atypicals columns and respective values.
-    :param event: Event object
-    :param context: Context object
-    :return: JSON string
+    Returns JSON data with new atypicals columns and respective values.
+    :param event: JSON payload that contains: json_data and questions_list - Type: JSON.
+    :param context: Context object.
+    :return: JSON string.
     """
     current_module = "Imputation Atypicals - Method."
     error_message = ""
@@ -29,23 +22,22 @@ def lambda_handler(event, context):
 
         logger.info("Starting " + current_module)
 
-        # env vars
-        config, errors = InputSchema().load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
-
-        logger.info("Validated params.")
-
-        input_data = pd.read_json(event)
+        input_data = pd.read_json(event['json_data'])
+        question_list = event['question_list'].split(',')
+        # Produce columns
+        atypical_columns = imp_func.produce_columns("atyp_", question_list, [])
+        movement_columns = imp_func.produce_columns("movement_", question_list, [])
+        iqrs_columns = imp_func.produce_columns("iqrs_", question_list, [])
+        mean_columns = imp_func.produce_columns("mean_", question_list, [])
 
         logger.info("Succesfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,
-            config['atypical_columns'].split(','),
-            config['movement_columns'].split(','),
-            config['iqrs_columns'].split(','),
-            config['mean_columns'].split(',')
+            atypical_columns,
+            movement_columns,
+            iqrs_columns,
+            mean_columns
         )
 
         json_out = atypicals_df.to_json(orient='records')
@@ -54,16 +46,6 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully calculated atypicals.")
 
-    except ValueError as e:
-        error_message = (
-            "Input Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
         error_message = (
             "Key Error in "
@@ -105,6 +87,7 @@ def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):
     :param move_col: String containing movement column names - Type: String
     :param irqs_col: String containing iqrs column names - Type: String
     :param mean_col: String containing means column names - Type: String
+    :return input_table: with the atypicals that have been calculated appended.
     """
     for i in range(0, len(iqrs_col)):
         input_table[atyp_col[i]] = abs(input_table[move_col[i]] - input_table[mean_col[i]]) - 2 * input_table[iqrs_col[i]]  # noqa: E501

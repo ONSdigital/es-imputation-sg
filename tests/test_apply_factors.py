@@ -15,7 +15,17 @@ class MockContext:
     aws_request_id = 666
 
 
-context_object = MockContext
+mock_wrangles_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
+context_object = MockContext()
 
 
 class TestApplyFactors(unittest.TestCase):
@@ -36,6 +46,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 
@@ -91,12 +105,16 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
             with mock.patch("apply_factors_wrangler.funk.get_dataframe") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = apply_factors_wrangler.lambda_handler(
-                    "", context_object
+                    mock_wrangles_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -111,8 +129,16 @@ class TestApplyFactors(unittest.TestCase):
         ):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
+                methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
+                mock_event = {
+                    "json_data": json.loads(methodinput.to_json(orient="records")),
+                    "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
+                                       "Q603_concreting_sand", "Q604_bituminous_gravel",
+                                       "Q605_concreting_gravel", "Q606_other_gravel",
+                                       "Q607_constructional_fill"]
+                }
                 response = lambda_method_function.lambda_handler(
-                    "", context_object
+                    mock_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -206,23 +232,34 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
-                mock_client_object.receive_message.return_value = pd.DataFrame(
-                    json.loads(message)), 666
+                with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                    with open("tests/fixtures/non_responders_return.json", "r")\
+                            as norespfile:
+                        mock_client_object = mock.Mock()
+                        mock_client.return_value = mock_client_object
+                        mock_funk.get_dataframe.return_value = pd.DataFrame(
+                            json.loads(message)), 666
+                        mock_funk.read_dataframe_from_s3.return_value =\
+                            pd.DataFrame(json.loads(norespfile.read()))
+                        with open("tests/fixtures/non_responders_return.json", "r")\
+                                as file:
 
-                with open("tests/fixtures/non_responders_return.json", "rb") as file:
+                            mock_client_object.invoke.return_value.get.return_value\
+                                .read.return_value.decode.return_value =\
+                                json.dumps(file.read())
 
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 1317)
-                    }
-                    response = apply_factors_wrangler.lambda_handler("", None)
-                    assert "success" in response
-                    assert response["success"] is True
+                            response = apply_factors_wrangler.lambda_handler(
+                                mock_wrangles_event, context_object)
+                            assert "success" in response
+                            assert response["success"] is True
 
     @mock_sqs
     def test_method(self):
@@ -231,22 +268,35 @@ class TestApplyFactors(unittest.TestCase):
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
+            mock_event = {
+                "json_data": json.loads(methodinput.to_json(orient="records")),
+                "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
+                                   "Q603_concreting_sand", "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel", "Q606_other_gravel",
+                                   "Q607_constructional_fill"]
+            }
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                mock_event, context_object
             )
+
             outputdf = pd.DataFrame(json.loads(response))
+
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
             assert valuetotest == 4659
 
     @mock_sqs
     def test_attribute_error_method(self):
-        methodinput = "Potatoes"
+        methodinput = {"potatoes": "seotatop"}
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
+            mock_event = {
+                "json_data": json.dumps(methodinput),
+                "distinct_values": ["strata", "region"]
+            }
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                mock_event, context_object
             )
             assert response["error"].__contains__("""Input Error""")
 
@@ -265,15 +315,19 @@ class TestApplyFactors(unittest.TestCase):
 
     @mock_sqs
     def test_type_error_method(self):
-        methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
+        methodinput = pd.read_json("tests/fixtures/factorsdata.json")
         methodinput["prev_Q601_asphalting_sand"] = "MIKE"
         methodinput["imputation_factor_Q601_asphalting_sand"] = "MIIIKE!"
+        mock_event = {
+            "json_data": methodinput.to_json(orient="records"),
+            "distinct_values": ["strata", "region"]
+        }
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
         ):
             response = lambda_method_function.lambda_handler(
-                methodinput, context_object
+                json.dumps(mock_event), context_object
             )
             assert response["error"].__contains__("""Bad Data type""")
 
@@ -310,10 +364,14 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                mock_wrangles_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -349,6 +407,10 @@ class TestApplyFactors(unittest.TestCase):
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
+                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                      "Q605_concreting_gravel,Q606_other_gravel," +
+                                      "Q607_constructional_fill"
                 },
         ):
             with mock.patch(
@@ -366,7 +428,7 @@ class TestApplyFactors(unittest.TestCase):
                             "Payload": StreamingBody(file, 1)
                         }
                         response = apply_factors_wrangler.lambda_handler(
-                            "", context_object
+                            mock_wrangles_event, context_object
                         )
 
                         assert "success" in response
@@ -401,6 +463,10 @@ class TestApplyFactors(unittest.TestCase):
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
+                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                      "Q605_concreting_gravel,Q606_other_gravel," +
+                                      "Q607_constructional_fill"
                 },
         ):
             with mock.patch("apply_factors_wrangler.funk") as mock_funk:
@@ -408,7 +474,7 @@ class TestApplyFactors(unittest.TestCase):
                     json.loads(message)), 666
                 mock_funk.get_dataframe.side_effect = KeyError()
                 response = apply_factors_wrangler.lambda_handler(
-                    "", context_object
+                    mock_wrangles_event, context_object
                 )
 
                 assert "success" in response
@@ -438,6 +504,10 @@ class TestApplyFactors(unittest.TestCase):
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
             },
         ):
 
@@ -445,9 +515,8 @@ class TestApplyFactors(unittest.TestCase):
                 mock_funk.get_dataframe.return_value = 66, 666
 
                 response = apply_factors_wrangler.lambda_handler(
-                    "", context_object
+                    mock_wrangles_event, context_object
                 )
-                print(response)
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Bad data type""")

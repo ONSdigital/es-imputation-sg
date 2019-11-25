@@ -3,7 +3,7 @@ import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
-from moto import mock_lambda, mock_sqs
+from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import iqrs_method
@@ -13,6 +13,16 @@ import iqrs_wrangler
 class MockContext:
     aws_request_id = 666
 
+
+mock_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
 
 context_object = MockContext
 
@@ -32,8 +42,7 @@ class TestWranglerAndMethod():
             'method_name': 'mock_method',
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
-            'iqrs_columns': 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607',
-            'movement_columns': 'movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill'  # noqa: E501
+            'distinct_values': 'region, strata'
             })
 
         cls.mock_os = cls.mock_os_patcher.start()
@@ -43,6 +52,7 @@ class TestWranglerAndMethod():
         cls.mock_os_patcher.stop()
 
     @mock_sqs
+    @mock_s3
     @mock_lambda
     @mock.patch("iqrs_wrangler.funk.send_sns_message")
     @mock.patch("iqrs_wrangler.funk.save_data")
@@ -59,7 +69,7 @@ class TestWranglerAndMethod():
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
                         assert "success" in response
@@ -68,16 +78,37 @@ class TestWranglerAndMethod():
     def test_method_happy_path(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            iqrs_cols = 'iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607'
+            iqrs_cols = ('iqrs_Q601_asphalting_sand,' +
+                         'iqrs_Q602_building_soft_sand,' +
+                         'iqrs_Q603_concreting_sand,' +
+                         'iqrs_Q604_bituminous_gravel,' +
+                         'iqrs_Q605_concreting_gravel,' +
+                         'iqrs_Q606_other_gravel,' +
+                         'iqrs_Q607_constructional_fill')
+
             sorting_cols = ['region', 'strata']
             selected_cols = iqrs_cols.split(',') + sorting_cols
 
-            json_content = json.loads(file.read())
+            json_content = {
+                "data": json.loads(file.read()),
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
+                "distinct_values": "region,strata"
+            }
+
             output = iqrs_method.lambda_handler(json_content, context_object)
 
-            response_df = pd.DataFrame(output).sort_values(sorting_cols).reset_index()[selected_cols].drop_duplicates(keep='first').reset_index(drop=True)  # noqa: E501
+            response_df = pd.DataFrame(output).sort_values(sorting_cols)\
+                .reset_index()[selected_cols].drop_duplicates(keep='first')\
+                .reset_index(drop=True)
 
-            expected_df = pd.read_csv("tests/fixtures/iqrs_scala_output.csv").sort_values(sorting_cols).reset_index()[selected_cols]  # noqa: E501
+            expected_df = pd.read_csv("tests/fixtures/iqrs_scala_output.csv")\
+                .sort_values(sorting_cols).reset_index()[selected_cols]
 
             response_df = response_df.round(5)
             expected_df = expected_df.round(5)
@@ -92,7 +123,7 @@ class TestWranglerAndMethod():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
-                None,
+                mock_event,
                 context_object
             )
 
@@ -103,7 +134,17 @@ class TestWranglerAndMethod():
     def test_method_general_exception(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
-            json_content = file.read()
+            json_content = {
+                "data": json.loads(file.read()),
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
+                "distinct_values": ['region', 'strata']
+            }
             with mock.patch("iqrs_method.pd.read_json") as mocked:
                 mocked.side_effect = Exception("General exception")
                 response = iqrs_method.lambda_handler(
@@ -124,7 +165,7 @@ class TestWranglerAndMethod():
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
             response = iqrs_wrangler.lambda_handler(
-                    None,
+                    mock_event,
                     context_object,
                 )
 
@@ -140,10 +181,20 @@ class TestWranglerAndMethod():
             }
         ):
             with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
-                content = json.loads(file.read())
+                json_content = {
+                    "data": json.loads(file.read()),
+                    "questions_list": "Q601_asphalting_sand,"
+                                      + "Q602_building_soft_sand,"
+                                      + "Q603_concreting_sand,"
+                                      + "Q604_bituminous_gravel,"
+                                      + "Q605_concreting_gravel,"
+                                      + "Q606_other_gravel,"
+                                      + "Q607_constructional_fill",
+                    "distinct_values": "'region', 'strata'"
+                }
 
                 response = iqrs_method.lambda_handler(
-                    content, context_object
+                    json_content, context_object
                 )
                 assert """Key Error in""" in response["error"]
 
@@ -154,23 +205,9 @@ class TestWranglerAndMethod():
         """
         # Removing the strata_column to allow for test of missing parameter
         iqrs_wrangler.os.environ.pop("method_name")
-        response = iqrs_wrangler.lambda_handler(None, context_object)
+        response = iqrs_wrangler.lambda_handler(mock_event, context_object)
         iqrs_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
-
-    def test_marshmallow_raises_method_exception(self):
-        """
-        Testing the marshmallow raises an exception in method.
-        :return: None.
-        """
-        input_file = "tests/fixtures/Iqrs_with_columns.json"
-        with open(input_file, "r") as file:
-            json_content = file.read()
-            # Removing sns_topic_arn to allow for test of missing parameter
-            iqrs_method.os.environ.pop("iqrs_columns")
-            response = iqrs_method.lambda_handler(json_content, context_object)
-            iqrs_method.os.environ["iqrs_columns"] = "iqrs601,iqrs602,iqrs603,iqrs604,iqrs605,iqrs606,iqrs607"  # noqa E501
-            assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
@@ -181,7 +218,7 @@ class TestWranglerAndMethod():
             },
         ):
             response = iqrs_wrangler.lambda_handler(
-                None, context_object
+                mock_event, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -201,7 +238,7 @@ class TestWranglerAndMethod():
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = iqrs_wrangler.lambda_handler(
-                        None,
+                        mock_event,
                         context_object,
                     )
 
@@ -224,7 +261,7 @@ class TestWranglerAndMethod():
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = iqrs_wrangler.lambda_handler(
-                            None,
+                            mock_event,
                             context_object,
                         )
 

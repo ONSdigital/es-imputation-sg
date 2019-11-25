@@ -14,6 +14,31 @@ class MockContext:
     aws_request_id = 666
 
 
+with open("tests/fixtures/recalculate_means_input.json", "r") as file:
+    in_file = file.read()
+
+mock_event = {
+    "json_data": json.loads(in_file),
+    "distinct_values": ["strata", "region"],
+    "questions_list": 'Q601_asphalting_sand,'
+                      'Q602_building_soft_sand,'
+                      'Q603_concreting_sand,'
+                      'Q604_bituminous_gravel,'
+                      'Q605_concreting_gravel,'
+                      'Q606_other_gravel,'
+                      'Q607_constructional_fill'
+}
+
+mock_wrangles_event = {
+  "MessageStructure": "json",
+  "RuntimeVariables": {
+    "calculation_type": "movement_calculation_b",
+    "period": 201809,
+    "id": "example",
+    "distinct_values": "region"
+  }
+}
+
 context_object = MockContext
 
 
@@ -84,7 +109,7 @@ class TestRecalculateMeans(unittest.TestCase):
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                         response = recalculate_means_wrangler.lambda_handler(
-                            None,
+                            mock_wrangles_event,
                             context_object,
                         )
 
@@ -98,7 +123,7 @@ class TestRecalculateMeans(unittest.TestCase):
         :param self:
         :return: mock response
         """
-        response = recalculate_means_wrangler.lambda_handler(None,
+        response = recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                              context_object)
         assert not response['success']
 
@@ -121,16 +146,13 @@ class TestRecalculateMeans(unittest.TestCase):
             # Removing the checkpoint to allow for test of missing parameter
             recalculate_means_wrangler.os.environ.pop("questions_list")
             response = recalculate_means_wrangler.lambda_handler(
-                {"RuntimeVariables":
-
-                 {"checkpoint": 123}}, context_object)
+                mock_wrangles_event, context_object)
             assert """Error validating environment parameters:""" in response['error']
 
     @mock_sqs
     def test_client_error(self):
         response = recalculate_means_wrangler.lambda_handler(
-            {"RuntimeVariables":
-                {"checkpoint": 123}}, context_object)
+            mock_wrangles_event, context_object)
         assert 'success' in response
         assert not response['success']
         assert "AWS Error" in response['error']
@@ -147,7 +169,7 @@ class TestRecalculateMeans(unittest.TestCase):
 
                 mocked_client.invoke.return_value = {"Payload": "mike"}
 
-                response = recalculate_means_wrangler.lambda_handler(None,
+                response = recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                                      context_object)
         assert 'success' in response
         assert not response['success']
@@ -163,7 +185,7 @@ class TestRecalculateMeans(unittest.TestCase):
             mocked_client.receive_message.return_value = {
                                 "Messages": [{"F#": input_data, "ReceiptHandle": 666}]
                             }
-            response = recalculate_means_wrangler.lambda_handler(None,
+            response = recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                                  context_object)
         assert 'success' in response
         assert not response['success']
@@ -204,7 +226,7 @@ class TestRecalculateMeans(unittest.TestCase):
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
                         response = recalculate_means_wrangler.lambda_handler(
-                            None,
+                            mock_wrangles_event,
                             context_object,
                         )
 

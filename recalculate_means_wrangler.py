@@ -18,10 +18,10 @@ class EnvironSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -65,24 +65,36 @@ def lambda_handler(event, context):
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
 
-        data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
-                                                   in_file_name,
-                                                   incoming_message_group)
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+
+        data, receipt_handler = funk.get_dataframe(
+            sqs_queue_url,
+            bucket_name,
+            in_file_name,
+            incoming_message_group
+        )
 
         logger.info("Successfully retrieved data")
 
         # Add means columns
-        qno = 1
         for question in questions_list.split(','):
             data.drop(['movement_' + question + '_count'], axis=1, inplace=True)
             data.drop(['movement_' + question + '_sum'], axis=1, inplace=True)
-            data.drop(['atyp60' + str(qno), "iqrs60" + str(qno)], axis=1, inplace=True)
-            qno += 1
+            data.drop(['atyps_' + question, 'iqrs_' + question], axis=1, inplace=True)
             data['mean_' + question] = 0.0
 
         data_json = data.to_json(orient='records')
 
-        returned_data = lambda_client.invoke(FunctionName=method_name, Payload=data_json)
+        payload = {
+            "json_data": json.loads(data_json),
+            "distinct_values": distinct_values,
+            "questions_list": questions_list
+        }
+
+        returned_data = lambda_client.invoke(
+            FunctionName=method_name,
+            Payload=json.dumps(payload)
+        )
 
         json_response = json.loads(returned_data.get('Payload').read().decode("UTF-8"))
 

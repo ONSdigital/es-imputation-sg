@@ -8,8 +8,14 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+from imputation_functions import produce_columns
+
 
 class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -21,13 +27,14 @@ class EnvironSchema(Schema):
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
     """
     This wrangler is used to prepare data for the apply factors statistical method.
     The method requires a column per question to store the factors.
-    :param event: N/A
+    :param event:  Contains all the variables which are required for the specific run.
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """
@@ -45,6 +52,9 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
+        # Event vars
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+
         # Set up clients
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
@@ -57,6 +67,7 @@ def lambda_handler(event, context):
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_queue_url = config["sqs_queue_url"]
+        questions_list = config["questions_list"]
 
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
@@ -77,36 +88,22 @@ def lambda_handler(event, context):
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
-        question_columns = [
-            "Q601_asphalting_sand",
-            "Q602_building_soft_sand",
-            "Q603_concreting_sand",
-            "Q604_bituminous_gravel",
-            "Q605_concreting_gravel",
-            "Q606_other_gravel",
-            "Q607_constructional_fill",
-        ]
-        prev_question_columns = [
-            "prev_Q601_asphalting_sand",
-            "prev_Q602_building_soft_sand",
-            "prev_Q603_concreting_sand",
-            "prev_Q604_bituminous_gravel",
-            "prev_Q605_concreting_gravel",
-            "prev_Q606_other_gravel",
-            "prev_Q607_constructional_fill",
-            "responder_id",
-        ]
-
-        for question in question_columns:
+        questions_list = questions_list.split(",")
+        prev_questions_list = produce_columns(
+            "prev_",
+            questions_list,
+            ['responder_id']
+        )
+        pd.set_option('display.max_columns', 30)
+        for question in questions_list:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
             )
         logger.info("Successfully renamed previous period data")
-        # Join prev data so we have those who responded in prev but not in current
 
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
-            prev_period_data[prev_question_columns],
+            prev_period_data[prev_questions_list],
             on="responder_id",
         )
         logger.info("Successfully merged previous period data with non-responder df")
@@ -114,34 +111,34 @@ def lambda_handler(event, context):
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
             factors_dataframe[
-                [
-                    "region",
-                    "strata",
-                    "imputation_factor_Q601_asphalting_sand",
-                    "imputation_factor_Q602_building_soft_sand",
-                    "imputation_factor_Q603_concreting_sand",
-                    "imputation_factor_Q604_bituminous_gravel",
-                    "imputation_factor_Q605_concreting_gravel",
-                    "imputation_factor_Q606_other_gravel",
-                    "imputation_factor_Q607_constructional_fill",
-                ]
+                    produce_columns(
+                        "imputation_factor_",
+                        questions_list,
+                        distinct_values
+                    )
             ],
-            on=["region", "strata"],
+            on=distinct_values,
             how="inner",
         )
+
         logger.info("Successfully merged non-responders with factors")
+
+        payload = {
+            "json_data": json.loads(
+                non_responders_with_factors.to_json(orient="records")),
+            "questions_list": questions_list
+        }
+
         # Non responder data should now contain all previous values and 7 imp columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=non_responders_with_factors.to_json(orient="records"),
+            Payload=json.dumps(payload),
         )
 
-        json_response = json.loads(imputed_data.get("Payload").read().decode("ascii"))
+        json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
         logger.info("Successfully invoked lambda")
 
-        # ----- This bit will want a fix. ----- #
-        imputed_non_responders = pd.read_json(str(json_response).replace("'", '"'))
-        # ------------------------------------- #
+        imputed_non_responders = pd.DataFrame(json.loads(json_response))
 
         # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
@@ -150,16 +147,38 @@ def lambda_handler(event, context):
 
         # Joining Datasets Together.
         final_imputed = pd.concat([current_responders, imputed_non_responders])
+
         logger.info("Successfully joined imputed data with responder data")
 
-        # Filter Out The Data Columns From The Temporary Calculated Columns.
-        filtered_data = final_imputed[['Q601_asphalting_sand', 'Q602_building_soft_sand',
-                                       'Q603_concreting_sand', 'Q604_bituminous_gravel',
-                                       'Q605_concreting_gravel', 'Q606_other_gravel',
-                                       'Q607_constructional_fill', 'Q608_total', 'county',
-                                       'county_name', 'enterprise_ref', 'gor_code',
-                                       'land_or_marine', 'name', 'period', 'region',
-                                       'responder_id', 'strata']]
+        # Create A List Of Movement Columns Plus (
+        #   A List Of Means Columns Plus (
+        #       A List Of Factor Columns Plus (
+        #           A List Of Movement Sum Columns Plus (
+        #               A List Of Movement Count Columns))))
+        # See Mike For Why This Way And Not Variables Appended Together.
+        cols_to_drop = produce_columns(
+            "movement_",
+            questions_list,
+            produce_columns(
+                "mean_",
+                questions_list,
+                produce_columns(
+                    "imputation_factor_",
+                    questions_list,
+                    produce_columns(
+                        "movement_",
+                        questions_list,
+                        produce_columns(
+                            "movement_",
+                            questions_list,
+                            suffix="_count"
+                        ), suffix="_sum"
+                    )
+                )
+            )
+        )
+
+        filtered_data = final_imputed.drop(cols_to_drop, axis=1)
 
         message = filtered_data.to_json(orient="records")
 

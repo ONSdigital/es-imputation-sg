@@ -9,6 +9,10 @@ from marshmallow import Schema, fields
 
 
 class InputSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -22,6 +26,13 @@ class InputSchema(Schema):
 
 
 def lambda_handler(event, context):
+    """
+    The wrangler ingests data from the movements step, checks for anomalies (TBC), and
+    formats the data to be passed through to the method.
+    :param event: Contains all the variables which are required for the specific run.
+    :param context: N/A
+    :return: Success & Checkpoint/Error - Type: JSON
+    """
     current_module = "Imputation Means - Wrangler."
     error_message = ""
     log_message = ""
@@ -35,10 +46,12 @@ def lambda_handler(event, context):
         sqs = boto3.client("sqs", region_name="eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        # ENV vars
+        # Environment variables
         config, errors = InputSchema().load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
+
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -68,8 +81,14 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
+        payload = {
+            "json_data": json.loads(data_json),
+            "distinct_values": distinct_values,
+            "questions_list": questions_list
+        }
+
         returned_data = lambda_client.invoke(
-            FunctionName=method_name, Payload=data_json
+            FunctionName=method_name, Payload=json.dumps(payload)
         )
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
 

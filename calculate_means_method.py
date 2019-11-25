@@ -1,13 +1,8 @@
 import logging
-import os
 
 import pandas as pd
-from marshmallow import Schema, fields
 
-
-class InputSchema(Schema):
-    movement_columns = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
+import imputation_functions as impfunc
 
 
 def lambda_handler(event, context):
@@ -15,7 +10,8 @@ def lambda_handler(event, context):
     Generates an aggregated DataFrame containing the mean value for
     each of the period on period percentage movements, grouped by
     region and strata.
-    :param event: Event object
+    :param event: JSON payload that contains: calculation_type, json_data, questions_list
+                  Type: JSON.
     :param context: Context object
     :return: JSON string
     """
@@ -23,85 +19,69 @@ def lambda_handler(event, context):
     error_message = ""
     log_message = ""
     logger = logging.getLogger("Means")
-    try:
 
+    try:
         logger.info("Means Method Begun")
 
-        # env vars
-        config, errors = InputSchema().load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
+        # Environment variables
+        json_data = event["json_data"]
+        distinct_values = event["distinct_values"]
+        questions_list = event["questions_list"].split(",")
+
+        movement_columns = impfunc.produce_columns("movement_", questions_list)
 
         logger.info("Validated params.")
 
-        df = pd.DataFrame(event)
+        df = pd.DataFrame(json_data)
 
         logger.info("Succesfully retrieved data from event.")
 
-        workingdf = df[config['movement_columns'].split(",")]
+        workingdf = df[movement_columns+distinct_values]
 
-        counts = workingdf.groupby(["region", "strata"]).count()
+        counts = workingdf.groupby(distinct_values).count()
         # Rename columns to fit naming standards
-        counts.rename(
-            columns={
-                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_count",
-                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_count",  # noqa: E501
-                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_count",
-                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_count",  # noqa: E501
-                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_count",  # noqa: E501
-                "movement_Q606_other_gravel": "movement_Q606_other_gravel_count",
-                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_count",  # noqa: E501
-            },
-            inplace=True,
-        )
+        for column in movement_columns:
+            counts.rename(
+                columns={
+                    column: column + "_count"
+                },
+                inplace=True,
+            )
 
-        # Create dataframe which sums the movements grouped by region and strata
-        sums = workingdf.groupby(["region", "strata"]).sum()
+        # Create DataFrame which sums the movements grouped by region and strata
+        sums = workingdf.groupby(distinct_values).sum()
+
         # Rename columns to fit naming standards
-        sums.rename(
-            columns={
-                "movement_Q601_asphalting_sand": "movement_Q601_asphalting_sand_sum",
-                "movement_Q602_building_soft_sand": "movement_Q602_building_soft_sand_sum",  # noqa: E501
-                "movement_Q603_concreting_sand": "movement_Q603_concreting_sand_sum",
-                "movement_Q604_bituminous_gravel": "movement_Q604_bituminous_gravel_sum",  # noqa: E501
-                "movement_Q605_concreting_gravel": "movement_Q605_concreting_gravel_sum",  # noqa: E501
-                "movement_Q606_other_gravel": "movement_Q606_other_gravel_sum",
-                "movement_Q607_constructional_fill": "movement_Q607_constructional_fill_sum",  # noqa: E501
-            },
-            inplace=True,
-        )
+        for column in movement_columns:
+            sums.rename(
+                columns={
+                    column: column + "_sum"
+                },
+                inplace=True,
+            )
 
-        counts = counts.reset_index(level=["region", "strata"])
-        sums = sums.reset_index(level=["region", "strata"])
+        counts = counts.reset_index(level=distinct_values)
+        sums = sums.reset_index(level=distinct_values)
         moves = sums.merge(
             counts,
-            left_on=["region", "strata"],
-            right_on=["region", "strata"],
+            left_on=distinct_values,
+            right_on=distinct_values,
             how="left",
         )
 
-        # join on movements and counts on region& strata to df
-        df = pd.merge(df, moves, on=["region", "strata"], how="left")
+        # Join on movements and counts on region & strata to DataFrame
+        df = pd.merge(df, moves, on=distinct_values, how="left")
 
-        for question in config['questions_list'].split(','):
+        for question in questions_list:
             df["mean_" + question] = df.apply(
                 lambda x: x["movement_" + question + "_sum"]
-                / x["movement_" + question + "_count"],
+                / x["movement_" + question + "_count"]
+                if x["movement_" + question + "_count"] > 0 else 0,
                 axis=1,
             )
 
         logger.info("Succesfully calculated means.")
 
-    except ValueError as e:
-        error_message = (
-            "Input Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
         error_message = (
             "Key Error in "

@@ -55,7 +55,8 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     :param previous_time: Field name of the previous time used for IAC.
     :param current_segmentation: Field name of the current segmentation used for IAC.
     :param previous_segmentation: Field name of the current segmentation used for IAC.
-    :return: data - Type: DataFrame, data_anomalies - Type: DataFrame
+    :return: Success & Error on Fail or Success, Checkpoint, Impute and distinct_values
+             Type: JSON
     """
     data_anomalies = data[[reference, segmentation, time]]
 
@@ -101,7 +102,8 @@ def lambda_handler(event, context):
     The method requires a column per question to store the movements, named as follows:
     'movement_questionNameAndNumber'. The wrangler checks for non response and if everyone
     has responded the calculate movements is skipped.
-    :param event: N/A
+    :param event: Contains Runtime_variables, which contain both the calculation_type &
+                  distinct_values.
     :param context: N/A
     :return: Success - True/False & Checkpoint
     """
@@ -125,6 +127,10 @@ def lambda_handler(event, context):
         sqs = boto3.client('sqs', region_name='eu-west-2')
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
         logger.info("Setting-up environment configs")
+
+        # Event vars
+        calculation_type = event['RuntimeVariables']["calculation_type"]
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -189,26 +195,37 @@ def lambda_handler(event, context):
 
             logger.info("Successfully filtered and merged the previous period data")
 
-            # Pass to mismatch detector to look for and fix strata mismatches
-            merged_data, anomalies = strata_mismatch_detector(merged_data, period, time,
-                                                              reference, segmentation,
-                                                              stored_segmentation,
-                                                              current_time,
-                                                              previous_time,
-                                                              current_segmentation,
-                                                              previous_segmentation)
+            anomalies = []
 
-            logger.info("Successfully completed strata mismatch detection")
+            # Pass to mismatch detector to look for and fix strata mismatches
+            if "strata" in distinct_values:
+                merged_data, anomalies = strata_mismatch_detector(
+                    merged_data,
+                    period, time,
+                    reference, segmentation,
+                    stored_segmentation,
+                    current_time,
+                    previous_time,
+                    current_segmentation,
+                    previous_segmentation)
+
+                logger.info("Successfully completed strata mismatch detection")
 
             for question in questions_list.split(','):
                 merged_data['movement_' + question] = 0.0
 
             json_ordered_data = merged_data.to_json(orient='records')
 
+            json_payload = {
+                "json_data": json_ordered_data,
+                "calculation_type": calculation_type,
+                "questions_list": questions_list
+            }
+
             logger.info("Successfully created movement columns on the data")
 
             imputed_data = lambda_client.invoke(FunctionName=method_name,
-                                                Payload=json_ordered_data)
+                                                Payload=json.dumps(json_payload))
 
             logger.info("Successfully invoked the movement method lambda")
 
@@ -225,8 +242,13 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
             anomalies = pd.DataFrame
-            funk.save_data(bucket_name, in_file_name, data, sqs_queue_url,
-                           sqs_message_group_id)
+            funk.save_data(
+                bucket_name,
+                in_file_name,
+                data.to_json(orient="records"),
+                sqs_queue_url,
+                sqs_message_group_id
+            )
 
             logger.info("Successfully sent the unchanged data to s3")
 
@@ -295,4 +317,9 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
         else:
             logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": checkpoint, "impute": to_be_imputed}
+            return {
+                "success": True,
+                "checkpoint": checkpoint,
+                "impute": to_be_imputed,
+                "distinct_values": distinct_values
+            }

@@ -5,10 +5,10 @@ import pandas as pd
 
 def lambda_handler(event, context):
     """
-    Calculate and applies imputation factors on a question-by-question basis.
-    :param event: N/A
+    Applies imputation factors on a question-by-question basis.
+    :param event:  JSON payload that contains: json_data and questions_list - Type: JSON.
     :param context: N/A
-    :return: JSON - String
+    :return: Working_dataframe - Type: JSON
     """
     current_module = "Apply Factors - Method"
     error_message = ""
@@ -17,19 +17,13 @@ def lambda_handler(event, context):
     logger.setLevel(10)
     try:
         logger.info("Apply Factors Method Begun")
-        working_dataframe = pd.DataFrame(event)
 
-        question_columns = [
-            "Q601_asphalting_sand",
-            "Q602_building_soft_sand",
-            "Q603_concreting_sand",
-            "Q604_bituminous_gravel",
-            "Q605_concreting_gravel",
-            "Q606_other_gravel",
-            "Q607_constructional_fill",
-        ]
+        json_data = event["json_data"]
+        working_dataframe = pd.DataFrame(json_data)
 
-        for question in question_columns:
+        questions_list = event["questions_list"]
+
+        for question in questions_list:
             # Loop through each question value, impute based on factor and previous value
             # then drop the previous value and the imp factor
             working_dataframe[question] = working_dataframe.apply(

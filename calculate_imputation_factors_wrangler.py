@@ -9,6 +9,10 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -23,12 +27,11 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Prepares data for and calls the Calculate imputation factors method.
-    - adds on the required columns needed by the method.
-
-    :param event: lambda event
+    Prepares data for and calls the Calculate imputation factors method by adding on the
+    required columns needed by the method.
+    :param event: Contains all the variables which are required for the specific run.
     :param context: lambda context
-    :return: string
+    :return: Success & Checkpoint/Error - Type: JSON
     """
     current_module = "Imputation Calculate Factors - Wrangler."
     error_message = ""
@@ -45,7 +48,8 @@ def lambda_handler(event, context):
 
         sqs = boto3.client("sqs")
         lambda_client = boto3.client("lambda")
-        # environment variables
+
+        # Environment variables
         checkpoint = config["checkpoint"]
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
@@ -67,12 +71,16 @@ def lambda_handler(event, context):
         for question in questions_list.split(","):
             data["imputation_factor_" + question] = 0
 
-        data_json = data.to_json(orient="records")
-
         logger.info("Successfully wrangled data from sqs")
+
+        payload = {
+            "data_json": data.to_json(orient="records"),
+            "questions_list": questions_list
+        }
+
         # invoke the method to calculate the factors
         calculate_factors = lambda_client.invoke(
-            FunctionName=method_name, Payload=data_json
+            FunctionName=method_name, Payload=payload
         )
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))
