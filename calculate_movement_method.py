@@ -38,7 +38,6 @@ def lambda_handler(event, context):
     final_output = {}
 
     try:
-        # TESTING
         # Declare event vars
         calculation_type = event["calculation_type"]
         json_data = event["json_data"]
@@ -64,19 +63,16 @@ def lambda_handler(event, context):
         for question in questions_list.split(','):
 
             # Converted to list due to issues with Numpy dtypes and math operations.
-            # NOTE: Shows as unused as not visibly present in code, but gets
-            #       evaluated in the calculation.
             current_list = sorted_current[question].tolist()
             previous_list = sorted_previous[question].tolist()
 
             result_list = []
 
-            # .Length is used so the correct amount of iterations for the loop.
+            # .len is used so the correct amount of iterations for the loop.
             for i in range(0, len(sorted_current)):
 
                 # This check is too prevent the DivdebyZeroError.
                 if previous_list[i] != 0:
-                    # TESTING
                     number = calculation(current_list[i], previous_list[i])
                 else:
                     number = 0.0
