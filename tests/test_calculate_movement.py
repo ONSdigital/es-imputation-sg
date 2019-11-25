@@ -28,6 +28,19 @@ mock_event = {
                               'Q607_constructional_fill'
         }
 
+mock_event_b = {
+            "json_data": in_file,
+            "calculation_type": "movement_calculation_b",
+            "distinct_values": "region",
+            "questions_list": 'Q601_asphalting_sand,'
+                              'Q602_building_soft_sand,'
+                              'Q603_concreting_sand,'
+                              'Q604_bituminous_gravel,'
+                              'Q605_concreting_gravel,'
+                              'Q606_other_gravel,'
+                              'Q607_constructional_fill'
+        }
+
 mock_wrangles_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
@@ -57,6 +70,22 @@ class TestStringMethods(unittest.TestCase):
 
             response = calculate_movement_method.lambda_handler(mock_event,
                                                                 context_object)
+        assert response == striped_string
+
+    def test_lambda_handler_movement_method_b(self):
+        with mock.patch.dict(calculate_movement_method.os.environ, {
+           'current_period': '201809',
+           'previous_period': '201806'
+        }):
+
+            with open("tests/fixtures/method_2_output_compare_result.json") as file:
+                result = json.load(file)
+
+            string_result = json.dumps(result)
+            striped_string = string_result.replace(" ", "")
+
+            response = calculate_movement_method.lambda_handler(mock_event_b,
+                                                                context_object)
 
         assert response == striped_string
 
@@ -70,6 +99,7 @@ class TestStringMethods(unittest.TestCase):
             'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
                          '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
+            'sqs_queue_url': 'Test',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'time': 'period',
@@ -92,6 +122,9 @@ class TestStringMethods(unittest.TestCase):
             'incoming_message_group': 'bananas',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
+            'previous_period_file': 'test',
+            'period': '202020',
+            'non_response_file': 'Test',
         }):
 
             # using get_from_s3 to force exception early on.
