@@ -84,10 +84,6 @@ def lambda_handler(event, context):
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")
-        import pandas as pd
-        json_response   # HERERERERERERE
-        dataframeresponse = pd.DataFrame(json.loads(json_response))
-        dataframeresponse.to_json("newiqrsout.json", orient='records')
         logger.info("Succesfully invoked method lambda")
 
         funk.save_data(bucket_name, out_file_name,

@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     """
     Returns JSON data with new IQR columns and respective values.
     :param event: Event object
-    :param context: Contet object
+    :param context: Context object
     :return: JSON string
     """
     current_module = "IQRS - Method"
@@ -82,12 +82,12 @@ def lambda_handler(event, context):
 def calc_iqrs(input_table, move_cols, iqrs_cols, distinct_values):
     """
     Calculate IQRS.
-    :param input_table: Input data.
-    :param move_cols: Movement column names.
-    :param iqrs_cols: IQRS column names.
+    :param input_table: Input DataFrame. - Type: DataFrame
+    :param move_cols: Movement column list. - Type: List
+    :param iqrs_cols: IQRS column list. - Type: List
     :param distinct_values: Array of column names to derive distinct values from
-                            and store in table.
-    :return: Table
+                            and store in table. - Type: List
+    :return: Table. - Type: DataFrame
     """
     distinct_strata_region = input_table[distinct_values].drop_duplicates()
     iqr_filter = ""
