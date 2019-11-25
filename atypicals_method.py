@@ -1,17 +1,10 @@
 import json
 import logging
-import os
 
 import numpy as np
 import pandas as pd
-from marshmallow import Schema, fields
 
-
-class InputSchema(Schema):
-    atypical_columns = fields.Str(required=True)
-    iqrs_columns = fields.Str(required=True)
-    mean_columns = fields.Str(required=True)
-    movement_columns = fields.Str(required=True)
+import imputation_functions as imp_func
 
 
 def lambda_handler(event, context):
@@ -29,23 +22,22 @@ def lambda_handler(event, context):
 
         logger.info("Starting " + current_module)
 
-        # env vars
-        config, errors = InputSchema().load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
-
-        logger.info("Validated params.")
-
-        input_data = pd.read_json(event)
+        input_data = pd.read_json(event['json_data'])
+        question_list = event['question_list'].split(',')
+        # Produce columns
+        atypical_columns = imp_func.produce_columns("atyp_", question_list, [])
+        movement_columns = imp_func.produce_columns("movement_", question_list, [])
+        iqrs_columns = imp_func.produce_columns("iqrs_", question_list, [])
+        mean_columns = imp_func.produce_columns("mean_", question_list, [])
 
         logger.info("Succesfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,
-            config['atypical_columns'].split(','),
-            config['movement_columns'].split(','),
-            config['iqrs_columns'].split(','),
-            config['mean_columns'].split(',')
+            atypical_columns,
+            movement_columns,
+            iqrs_columns,
+            mean_columns
         )
 
         json_out = atypicals_df.to_json(orient='records')

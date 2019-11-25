@@ -7,10 +7,12 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+import imputation_functions as imp_func
+
 
 class InputSchema(Schema):
     checkpoint = fields.Str(required=True)
-    atypical_columns = fields.Str(required=True)
+    question_list = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
@@ -39,7 +41,8 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment params: {errors}")
 
         checkpoint = config["checkpoint"]
-        atypical_columns = config["atypical_columns"]
+        question_list = config["question_list"]
+
         bucket_name = config["bucket_name"]
         in_file_name = config["in_file_name"]
         incoming_message_group = config["incoming_message_group"]
@@ -56,19 +59,25 @@ def lambda_handler(event, context):
                                                    incoming_message_group)
 
         logger.info("Succesfully retrieved data.")
+        atypical_columns = imp_func.produce_columns("atyp_", question_list.split(','), [])
 
-        for col in atypical_columns.split(','):
+        for col in atypical_columns:
             data[col] = 0
 
         logger.info("Atypicals columns succesfully added")
 
         data_json = data.to_json(orient='records')
 
+        payload = {
+            "json_data": json.loads(data_json),
+            "question_list": question_list
+        }
+
         logger.info("Dataframe converted to JSON")
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=json.dumps(data_json)
+            Payload=json.dumps(payload)
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")
