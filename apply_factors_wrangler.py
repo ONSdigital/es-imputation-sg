@@ -8,6 +8,8 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+from imputation_functions import produce_columns
+
 
 class EnvironSchema(Schema):
     checkpoint = fields.Str(required=True)
@@ -21,7 +23,7 @@ class EnvironSchema(Schema):
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
-    question_columns = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -61,7 +63,7 @@ def lambda_handler(event, context):
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_queue_url = config["sqs_queue_url"]
-        question_columns = config["question_columns"]
+        questions_list = config["questions_list"]
 
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
@@ -82,14 +84,14 @@ def lambda_handler(event, context):
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
-        question_columns = question_columns.split(",")
-        prev_question_columns = produce_columns(
+        questions_list = questions_list.split(",")
+        prev_questions_list = produce_columns(
             "prev_",
-            question_columns,
+            questions_list,
             ['responder_id']
         )
         pd.set_option('display.max_columns', 30)
-        for question in question_columns:
+        for question in questions_list:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
             )
@@ -97,7 +99,7 @@ def lambda_handler(event, context):
 
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
-            prev_period_data[prev_question_columns],
+            prev_period_data[prev_questions_list],
             on="responder_id",
         )
         logger.info("Successfully merged previous period data with non-responder df")
@@ -107,7 +109,7 @@ def lambda_handler(event, context):
             factors_dataframe[
                     produce_columns(
                         "imputation_factor_",
-                        question_columns,
+                        questions_list,
                         distinct_values
                     )
             ],
@@ -120,7 +122,7 @@ def lambda_handler(event, context):
         payload = {
             "json_data": json.loads(
                 non_responders_with_factors.to_json(orient="records")),
-            "question_columns": question_columns
+            "questions_list": questions_list
         }
 
         # Non responder data should now contain all previous values and 7 imp columns
@@ -147,19 +149,19 @@ def lambda_handler(event, context):
         # See Mike
         cols_to_drop = produce_columns(
             "movement_",
-            question_columns,
+            questions_list,
             produce_columns(
                 "mean_",
-                question_columns,
+                questions_list,
                 produce_columns(
                     "imputation_factor_",
-                    question_columns,
+                    questions_list,
                     produce_columns(
                         "movement_",
-                        question_columns,
+                        questions_list,
                         produce_columns(
                             "movement_",
-                            question_columns,
+                            questions_list,
                             [],
                             suffix="_count"
                         ), suffix="_sum"
@@ -253,22 +255,3 @@ def lambda_handler(event, context):
         else:
             logger.info("Successfully completed module: " + current_module)
             return {"success": True, "checkpoint": checkpoint}
-
-
-def produce_columns(prefix, columns, additional, suffix=""):
-    """
-    Produces columns with a prefix, based on standard columns.
-    :param prefix: String to be prepended to column name - Type: String
-    :param columns: List of columns - Type: List
-    :param suffix: Any additonal columns to be added on - Type: List
-
-    :return: List of column names with desired prefix - Type: List
-    """
-    new_columns = []
-    for column in columns:
-        new_value = "%s%s%s" % (prefix, column, suffix)
-        new_columns.append(new_value)
-
-    new_columns = new_columns + additional
-
-    return new_columns

@@ -6,7 +6,6 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
-    questions_list = fields.Str(required=True)
     first_threshold = fields.Str(required=True)
     second_threshold = fields.Str(required=True)
     third_threshold = fields.Str(required=True)
@@ -39,7 +38,7 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # set up variables
-        questions_list = config["questions_list"]
+        questions_list = event["questions_list"]
         first_threshold = config["first_threshold"]
         second_threshold = config["second_threshold"]
         third_threshold = config["third_threshold"]
@@ -47,7 +46,7 @@ def lambda_handler(event, context):
         second_imputation_factor = config["second_imputation_factor"]
         third_imputation_factor = config["third_imputation_factor"]
 
-        df = pd.DataFrame(event)
+        df = pd.DataFrame(event["data_json"])
 
         def calculate_imputation_factors(row, question):
             """

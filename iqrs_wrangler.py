@@ -7,15 +7,17 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 from marshmallow import Schema, fields
 
+from imputation_functions import produce_columns
+
 
 class InputSchema(Schema):
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
-    iqrs_columns = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
@@ -47,9 +49,9 @@ def lambda_handler(event, context):
         bucket_name = config['bucket_name']
         in_file_name = config["in_file_name"]
         incoming_message_group = config['incoming_message_group']
-        iqrs_columns = config['iqrs_columns']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
+        questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
@@ -63,7 +65,7 @@ def lambda_handler(event, context):
                                                    incoming_message_group)
         logger.info("Succesfully retrieved data.")
 
-        for col in iqrs_columns.split(','):
+        for col in produce_columns("iqrs_", questions_list.split(',')):
             data[col] = 0
 
         logger.info("IQRS columns succesfully added")
@@ -72,9 +74,9 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
-        payload = "{\"data\": " + json.dumps(
-            data_json
-        ) + ",\"distinct_values\": \"" + distinct_values + " \" }"
+        payload = '{"data": ' + json.dumps(data_json) + ',' +\
+                  '"distinct_values": "' + distinct_values + '",' +\
+                  '"questions_list": ' + questions_list + '}'
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,

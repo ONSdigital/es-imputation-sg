@@ -68,12 +68,16 @@ def lambda_handler(event, context):
         for question in questions_list.split(","):
             data["imputation_factor_" + question] = 0
 
-        data_json = data.to_json(orient="records")
-
         logger.info("Successfully wrangled data from sqs")
+
+        payload = {
+            "data_json": data.to_json(orient="records"),
+            "questions_list": questions_list
+        }
+
         # invoke the method to calculate the factors
         calculate_factors = lambda_client.invoke(
-            FunctionName=method_name, Payload=data_json
+            FunctionName=method_name, Payload=payload
         )
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))
