@@ -5,9 +5,8 @@ import os
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
-from marshmallow import Schema, fields
-
 from esawsfunctions import funk
+from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
