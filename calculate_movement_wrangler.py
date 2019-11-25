@@ -208,7 +208,7 @@ def lambda_handler(event, context):
                     current_segmentation,
                     previous_segmentation)
 
-            logger.info("Successfully completed strata mismatch detection")
+                logger.info("Successfully completed strata mismatch detection")
 
             for question in questions_list.split(','):
                 merged_data['movement_' + question] = 0.0
