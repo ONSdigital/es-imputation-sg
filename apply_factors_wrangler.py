@@ -146,7 +146,12 @@ def lambda_handler(event, context):
 
         logger.info("Successfully joined imputed data with responder data")
 
-        # See Mike
+        # Create A List Of Movement Columns Plus (
+        #   A List Of Means Columns Plus (
+        #       A List Of Factor Columns Plus (
+        #           A List Of Movement Sum Columns Plus (
+        #               A List Of Movement Count Columns))))
+        # See Mike For Why This Way And Not Variables Appended Together.
         cols_to_drop = produce_columns(
             "movement_",
             questions_list,
@@ -162,7 +167,6 @@ def lambda_handler(event, context):
                         produce_columns(
                             "movement_",
                             questions_list,
-                            [],
                             suffix="_count"
                         ), suffix="_sum"
                     )
