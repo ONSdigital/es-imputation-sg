@@ -18,10 +18,10 @@ class EnvironSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -87,7 +87,8 @@ def lambda_handler(event, context):
 
         payload = {
             "json_data": json.loads(data_json),
-            "distinct_values": distinct_values
+            "distinct_values": distinct_values,
+            "questions_list": questions_list
         }
 
         returned_data = lambda_client.invoke(
