@@ -245,7 +245,6 @@ class TestClass(unittest.TestCase):
 
         assert "success" in response
         assert response["success"] is False
-        print(response)
         assert response["error"].__contains__("""Bad data encountered""")
 
     @mock.patch('calculate_movement_wrangler.funk.send_sns_message')

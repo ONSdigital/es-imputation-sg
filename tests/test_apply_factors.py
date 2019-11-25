@@ -381,10 +381,8 @@ class TestApplyFactors(unittest.TestCase):
             message = file.read()
         with open("tests/fixtures/test_data.json", "r") as file:
             prevfile = pd.DataFrame(json.loads(file.read()))
-            print(type(prevfile))
         with open("tests/fixtures/non_responders_output.json", "r") as file:
             nonresponderfile = pd.DataFrame(json.loads(file.read()))
-            print(type(nonresponderfile))
 
         with mock.patch.dict(
                 apply_factors_wrangler.os.environ,

@@ -272,7 +272,6 @@ class TestWranglerAndMethod(unittest.TestCase):
                 {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             self.assertRaises(ValueError)
-            print(out)
             assert """Parameter validation error""" in out["error"]
 
     @mock_sqs
