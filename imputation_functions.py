@@ -18,3 +18,22 @@ def movement_calculation_b(current_value, previous_value):
     """
     number = current_value / previous_value
     return number
+
+
+def produce_columns(prefix, columns, additional, suffix=""):
+    """
+    Produces columns with a prefix, based on standard columns.
+    :param prefix: String to be prepended to column name - Type: String
+    :param columns: List of columns - Type: List
+    :param suffix: Any additonal columns to be added on - Type: List
+
+    :return: List of column names with desired prefix - Type: List
+    """
+    new_columns = []
+    for column in columns:
+        new_value = "%s%s%s" % (prefix, column, suffix)
+        new_columns.append(new_value)
+
+    new_columns = new_columns + additional
+
+    return new_columns
