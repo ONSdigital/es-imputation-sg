@@ -9,6 +9,10 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
@@ -23,12 +27,11 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Prepares data for and calls the Calculate imputation factors method.
-    - adds on the required columns needed by the method.
-
-    :param event: lambda event
+    Prepares data for and calls the Calculate imputation factors method by adding on the
+    required columns needed by the method.
+    :param event: Contains all the variables which are required for the specific run.
     :param context: lambda context
-    :return: string
+    :return: Success & Checkpoint/Error - Type: JSON
     """
     current_module = "Imputation Calculate Factors - Wrangler."
     error_message = ""

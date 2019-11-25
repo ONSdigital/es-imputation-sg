@@ -10,7 +10,8 @@ def lambda_handler(event, context):
     Generates an aggregated DataFrame containing the mean value for
     each of the period on period percentage movements, grouped by
     region and strata.
-    :param event: Event object
+    :param event: JSON payload that contains: calculation_type, json_data, questions_list
+                  Type: JSON.
     :param context: Context object
     :return: JSON string
     """
@@ -22,7 +23,7 @@ def lambda_handler(event, context):
     try:
         logger.info("Means Method Begun")
 
-        # Env vars
+        # Environment variables
         json_data = event["json_data"]
         distinct_values = event["distinct_values"]
         questions_list = event["questions_list"].split(",")
@@ -47,7 +48,7 @@ def lambda_handler(event, context):
                 inplace=True,
             )
 
-        # Create dataframe which sums the movements grouped by region and strata
+        # Create DataFrame which sums the movements grouped by region and strata
         sums = workingdf.groupby(distinct_values).sum()
 
         # Rename columns to fit naming standards
@@ -68,7 +69,7 @@ def lambda_handler(event, context):
             how="left",
         )
 
-        # join on movements and counts on region& strata to df
+        # Join on movements and counts on region & strata to DataFrame
         df = pd.merge(df, moves, on=distinct_values, how="left")
 
         for question in questions_list:

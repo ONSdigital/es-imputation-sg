@@ -6,6 +6,10 @@ from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
+    """
+    Schema to ensure that environment variables are present and in the correct format.
+    :return: None
+    """
     first_threshold = fields.Str(required=True)
     second_threshold = fields.Str(required=True)
     third_threshold = fields.Str(required=True)
@@ -16,12 +20,10 @@ class EnvironSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    Calculates the imputation factors,
-    called by the Calculate imputation factors wrangler.
-
-    :param event: lambda event
+    Calculates imputation factor for each question, in each aggregated group.
+    :param event: JSON payload that contains: json_data, questions_list - Type: JSON.
     :param context: lambda context
-    :return: json dataset
+    :return: final_output - Type: JSON
     """
     current_module = "Calculate Factors - Method"
     error_message = ""
@@ -54,7 +56,7 @@ def lambda_handler(event, context):
             - Calculates imputation factor for each question, in each aggregated group,
               by:
                 Region
-                Land or Marine
+                Land or Marine (If applicable)
                 Count of refs within cell
 
             :param row: row of DataFrame

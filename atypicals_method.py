@@ -9,10 +9,10 @@ import imputation_functions as imp_func
 
 def lambda_handler(event, context):
     """
-    Returns JSON daya with new atypicals columns and respective values.
-    :param event: Event object
-    :param context: Context object
-    :return: JSON string
+    Returns JSON data with new atypicals columns and respective values.
+    :param event: JSON payload that contains: json_data and questions_list - Type: JSON.
+    :param context: Context object.
+    :return: JSON string.
     """
     current_module = "Imputation Atypicals - Method."
     error_message = ""
@@ -97,6 +97,7 @@ def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):
     :param move_col: String containing movement column names - Type: String
     :param irqs_col: String containing iqrs column names - Type: String
     :param mean_col: String containing means column names - Type: String
+    :return input_table: with the atypicals that have been calculated appended.
     """
     for i in range(0, len(iqrs_col)):
         input_table[atyp_col[i]] = abs(input_table[move_col[i]] - input_table[mean_col[i]]) - 2 * input_table[iqrs_col[i]]  # noqa: E501
