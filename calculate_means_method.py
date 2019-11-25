@@ -1,13 +1,8 @@
 import logging
-import os
 
 import pandas as pd
-from marshmallow import Schema, fields
 
-
-class InputSchema(Schema):
-    movement_columns = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
+import imputation_functions as impfunc
 
 
 def lambda_handler(event, context):
@@ -25,20 +20,14 @@ def lambda_handler(event, context):
     logger = logging.getLogger("Means")
 
     try:
-
         logger.info("Means Method Begun")
-
-        # env vars
-        config, errors = InputSchema().load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
 
         # Env vars
         json_data = event["json_data"]
         distinct_values = event["distinct_values"]
+        questions_list = event["questions_list"].split(",")
 
-        movement_columns = config['movement_columns'].split(',')
-        questions_list = config['questions_list'].split(',')
+        movement_columns = impfunc.produce_columns("movement_", questions_list)
 
         logger.info("Validated params.")
 

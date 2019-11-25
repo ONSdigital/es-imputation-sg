@@ -21,7 +21,14 @@ with open("tests/fixtures/means_input.json", "r") as file:
 
 mock_event = {
     "json_data": json.loads(in_file),
-    "distinct_values": ["strata", "region"]
+    "distinct_values": ["strata", "region"],
+    "questions_list": 'Q601_asphalting_sand,'
+                      'Q602_building_soft_sand,'
+                      'Q603_concreting_sand,'
+                      'Q604_bituminous_gravel,'
+                      'Q605_concreting_gravel,'
+                      'Q606_other_gravel,'
+                      'Q607_constructional_fill'
 }
 
 mock_wrangles_event = {
@@ -185,27 +192,6 @@ class TestMeans(unittest.TestCase):
         response = calculate_means_wrangler.lambda_handler(mock_event, context_object)
         calculate_means_wrangler.os.environ["method_name"] = "mock_method"
         assert """Error validating environment params:""" in response["error"]
-
-    def test_marshmallow_raises_method_exception(self):
-        """
-        Testing the marshmallow raises an exception in method.
-        :return: None.
-        """
-        input_file = "tests/fixtures/mean_input_with_columns.json"
-        with open(input_file, "r") as file:
-            json_content = json.loads(file.read())
-            # Removing movement_columns to allow for test of missing parameter
-            calculate_means_method.os.environ.pop("movement_columns")
-            response = calculate_means_method.lambda_handler(json_content, context_object)
-            calculate_means_method.os.environ["movement_columns"] = (
-                "movement_Q601_asphalting_sand," +
-                "movement_Q602_building_soft_sand," +
-                "movement_Q603_concreting_sand," +
-                "movement_Q604_bituminous_gravel," +
-                "movement_Q605_concreting_gravel," +
-                "movement_Q606_other_gravel," +
-                "movement_Q607_constructional_fill")
-            assert """Error validating environment params:""" in response["error"]
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):

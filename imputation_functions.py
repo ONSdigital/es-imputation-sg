@@ -20,7 +20,7 @@ def movement_calculation_b(current_value, previous_value):
     return number
 
 
-def produce_columns(prefix, columns, additional, suffix=""):
+def produce_columns(prefix, columns, additional=[], suffix=""):
     """
     Produces columns with a prefix, based on standard columns.
     :param prefix: String to be prepended to column name - Type: String
