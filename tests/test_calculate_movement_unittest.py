@@ -15,9 +15,16 @@ class MockContext:
 with open("tests/fixtures/wrangler_input_test_data.json", "r") as file:
     in_file = file.read()
 mock_event = {
-            "json_data": json.loads(in_file),
-            "distinct_values": ["strata", "region"]
-        }
+    "json_data": json.loads(in_file),
+    "distinct_values": ["strata", "region"],
+    "questions_list": 'Q601_asphalting_sand,'
+                      'Q602_building_soft_sand,'
+                      'Q603_concreting_sand,'
+                      'Q604_bituminous_gravel,'
+                      'Q605_concreting_gravel,'
+                      'Q606_other_gravel,'
+                      'Q607_constructional_fill'
+}
 
 mock_wrangles_event = {
   "MessageStructure": "json",
