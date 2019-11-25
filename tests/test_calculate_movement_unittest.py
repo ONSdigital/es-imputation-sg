@@ -32,7 +32,7 @@ mock_wrangles_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": "strata"
   }
 }
 
@@ -245,7 +245,6 @@ class TestClass(unittest.TestCase):
 
         assert "success" in response
         assert response["success"] is False
-        print(response)
         assert response["error"].__contains__("""Bad data encountered""")
 
     @mock.patch('calculate_movement_wrangler.funk.send_sns_message')

@@ -179,7 +179,6 @@ class TestMeans(unittest.TestCase):
     def test_method_key_error(self):
         # pass none value to trigger key index error
         response = calculate_means_method.lambda_handler({"mike": "mike"}, context_object)
-        print(response)
         assert """Key Error""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):

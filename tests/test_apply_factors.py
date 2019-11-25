@@ -129,8 +129,16 @@ class TestApplyFactors(unittest.TestCase):
         ):
             with mock.patch("apply_factors_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("SQS Failure")
+                methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
+                mock_event = {
+                    "json_data": json.loads(methodinput.to_json(orient="records")),
+                    "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
+                                       "Q603_concreting_sand", "Q604_bituminous_gravel",
+                                       "Q605_concreting_gravel", "Q606_other_gravel",
+                                       "Q607_constructional_fill"]
+                }
                 response = lambda_method_function.lambda_handler(
-                    mock_wrangles_event, context_object
+                    mock_event, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -381,10 +389,8 @@ class TestApplyFactors(unittest.TestCase):
             message = file.read()
         with open("tests/fixtures/test_data.json", "r") as file:
             prevfile = pd.DataFrame(json.loads(file.read()))
-            print(type(prevfile))
         with open("tests/fixtures/non_responders_output.json", "r") as file:
             nonresponderfile = pd.DataFrame(json.loads(file.read()))
-            print(type(nonresponderfile))
 
         with mock.patch.dict(
                 apply_factors_wrangler.os.environ,
