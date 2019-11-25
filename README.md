@@ -52,7 +52,7 @@ The factors data is merged on to the non responder data next, adding imputation_
 
 The result of the method is imputed values for each non responder, this is joined back onto the responder data(used to calculate factors) and sent to the SQS queue.
 
-## Recalculate Means Wrangler
+### Recalculate Means Wrangler
 
 This wrangler recalculates the means of movement after the atypical values have been removed.
 
@@ -98,7 +98,7 @@ An iqrs_*question* column should be created for each question in the data wrangl
 
 **Outputs:** A Json string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
 
-## Calculate ATypicals Method
+### Calculate ATypicals Method
 
 **Name of Lambda:** atypicals_method  - This Method will be re-named to be inkeeping with the standards soon_
 
@@ -136,3 +136,29 @@ An atyp_*question* column should be created for each question in the data wrangl
 **Inputs:** This method requires all question value columns for current period, question_value columns for previous period, and imputation factors for each question value column. Note: Method recieves rows that have not responded in current period but did in previous.
 
 **Outputs:** A Json string which represents the input - (prev_question_columns & imputation_factor columns) . Current question value columns are now imputed.
+
+## Imputation Functions
+
+### Movement Calculation A
+
+**Intro:** Movements calculation for Sand and Gravel.
+
+**Inputs:** Current and Previous values.
+
+**Outputs:** Calculated Value.
+
+### Movement Calculation B
+
+**Intro:** Movements calculation for Bricks/Blocks.
+
+**Inputs:** Current and Previous values.
+
+**Outputs:** Calculated Value.
+
+### Produce Columns
+
+**Intro:** Produces columns with a prefix, suffix and extra columns, based on standard columns.
+
+**Inputs:** Prefix String, List of Columns, Suffix String, List of Extra Columns.
+
+**Outputs:** New List of Columns.
