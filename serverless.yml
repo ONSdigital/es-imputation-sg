@@ -341,6 +341,3 @@ functions:
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-recalculate-means-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
-
-plugins:
-  - serverless-step-functions

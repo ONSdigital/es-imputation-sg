@@ -81,13 +81,13 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
-        payload = '{"data": ' + json.dumps(data_json) + ',' +\
-                  '"distinct_values": "' + distinct_values + '",' +\
-                  '"questions_list": ' + questions_list + '}'
+        payload = {"data": json.loads(data_json),
+                   "distinct_values": distinct_values,
+                   "questions_list": questions_list}
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,
-            Payload=payload
+            Payload=json.dumps(payload)
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")

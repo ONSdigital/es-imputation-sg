@@ -74,13 +74,13 @@ def lambda_handler(event, context):
         logger.info("Successfully wrangled data from sqs")
 
         payload = {
-            "data_json": data.to_json(orient="records"),
+            "data_json": json.loads(data.to_json(orient="records")),
             "questions_list": questions_list
         }
 
         # invoke the method to calculate the factors
         calculate_factors = lambda_client.invoke(
-            FunctionName=method_name, Payload=payload
+            FunctionName=method_name, Payload=json.dumps(payload)
         )
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))

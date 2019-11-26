@@ -89,8 +89,11 @@ class TestWranglerAndMethod():
             sorting_cols = ['region', 'strata']
             selected_cols = iqrs_cols.split(',') + sorting_cols
 
-            json_content = {
-                "data": json.loads(file.read()),
+            json_dataframe = pd.read_json(file.read())
+            json_content = json.loads(json_dataframe.to_json(orient="records"))
+
+            event = {
+                "data": json_content,
                 "questions_list": "Q601_asphalting_sand,"
                                   + "Q602_building_soft_sand,"
                                   + "Q603_concreting_sand,"
@@ -101,7 +104,7 @@ class TestWranglerAndMethod():
                 "distinct_values": "region,strata"
             }
 
-            output = iqrs_method.lambda_handler(json_content, context_object)
+            output = iqrs_method.lambda_handler(event, context_object)
 
             response_df = pd.DataFrame(output).sort_values(sorting_cols)\
                 .reset_index()[selected_cols].drop_duplicates(keep='first')\
@@ -145,7 +148,7 @@ class TestWranglerAndMethod():
                                   + "Q607_constructional_fill",
                 "distinct_values": ['region', 'strata']
             }
-            with mock.patch("iqrs_method.pd.read_json") as mocked:
+            with mock.patch("iqrs_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")
                 response = iqrs_method.lambda_handler(
                     json_content,
@@ -174,29 +177,23 @@ class TestWranglerAndMethod():
             assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
-        with mock.patch.dict(
-            "os.environ",
-            {
-                "iqrs_columns": "bum"
+        with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
+            json_content = {
+                "datadatadatadata": json.loads(file.read()),
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
+                "distinct_values": "'region', 'strata'"
             }
-        ):
-            with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
-                json_content = {
-                    "data": json.loads(file.read()),
-                    "questions_list": "Q601_asphalting_sand,"
-                                      + "Q602_building_soft_sand,"
-                                      + "Q603_concreting_sand,"
-                                      + "Q604_bituminous_gravel,"
-                                      + "Q605_concreting_gravel,"
-                                      + "Q606_other_gravel,"
-                                      + "Q607_constructional_fill",
-                    "distinct_values": "'region', 'strata'"
-                }
 
-                response = iqrs_method.lambda_handler(
-                    json_content, context_object
-                )
-                assert """Key Error in""" in response["error"]
+            response = iqrs_method.lambda_handler(
+                json_content, context_object
+            )
+            assert """Key Error in""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
