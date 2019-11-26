@@ -82,7 +82,7 @@ def lambda_handler(event, context):
 
         payload = {
             "json_data": json.loads(data_json),
-            "question_list": questions_list
+            "questions_list": questions_list
         }
 
         logger.info("Dataframe converted to JSON")
