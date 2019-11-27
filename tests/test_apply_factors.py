@@ -520,3 +520,85 @@ class TestApplyFactors(unittest.TestCase):
                 assert "success" in response
                 assert response["success"] is False
                 assert response["error"].__contains__("""Bad data type""")
+
+    @mock_sqs
+    @mock_s3
+    @mock_lambda
+    @mock.patch("apply_factors_wrangler.funk.get_dataframe")
+    @mock.patch("apply_factors_wrangler.funk.send_sns_message")
+    @mock.patch("apply_factors_wrangler.funk.save_to_s3")
+    def test_wrangles_sad_path(self, mock_me, mock_you, mock_everyone):
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test-queue")
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
+
+        with open("tests/fixtures/factorsdata.json", "r") as file:
+            message = file.read()
+
+            apply_factors_wrangler.funk.save_data("bucket_name", "Test",
+                                                  message, sqs_queue_url, "")
+            # s3 bit
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="MIKE")
+        client.upload_file(
+            Filename="tests/fixtures/test_data.json",
+            Bucket="MIKE",
+            Key="previous_period_enriched_stratared.json",
+        )
+        client.upload_file(
+            Filename="tests/fixtures/non_responders_output.json",
+            Bucket="MIKE",
+            Key="non_responders_output.json",
+        )
+
+        with mock.patch.dict(
+            apply_factors_wrangler.os.environ,
+            {
+                "sns_topic_arn": "mike",
+                "bucket_name": "MIKE",
+                "checkpoint": "3",
+                "method_name": "apply_factors_method",
+                "non_responder_file": "non_responders_output.json",
+                "period": "201809",
+                "sqs_queue_url": sqs_queue_url,
+                "previous_data_file": "previous_period_enriched_stratared.json",
+                "sqs_message_group_id": "apply_factors_out",
+                "incoming_message_group": "Sheep",
+                "in_file_name": "Test",
+                "out_file_name": "Test",
+                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
+                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
+                                  "Q605_concreting_gravel,Q606_other_gravel," +
+                                  "Q607_constructional_fill"
+            },
+        ):
+
+            with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
+                with mock.patch("apply_factors_wrangler.funk") as mock_funk:
+                    with open("tests/fixtures/non_responders_return.json", "r")\
+                            as norespfile:
+                        mock_client_object = mock.Mock()
+                        mock_client.return_value = mock_client_object
+                        mock_funk.get_dataframe.return_value = pd.DataFrame(
+                            json.loads(message)), 666
+                        mock_funk.read_dataframe_from_s3.return_value =\
+                            pd.DataFrame(json.loads(norespfile.read()))
+                        with open("tests/fixtures/non_responders_return.json", "r")\
+                                as file:
+
+                            mock_client_object.invoke.return_value.get.return_value\
+                                .read.return_value.decode.return_value =\
+                                json.dumps({"ADictThatWillTriggerError": "someValue",
+                                            "error": "This is an error message"})
+
+                            response = apply_factors_wrangler.lambda_handler(
+                                mock_wrangles_event, context_object)
+                            assert "success" in response
+                            print(response)
+                            assert response["success"] is True
