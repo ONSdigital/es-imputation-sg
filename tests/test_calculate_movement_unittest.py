@@ -97,7 +97,7 @@ class TestClass(unittest.TestCase):
             input_data = json.load(file)
 
         with open('tests/fixtures/method_output_compare_result.json') as file:
-            method_output = json.load(file)
+            method_output = json.dumps(json.load(file))
 
         with open('tests/fixtures/s3_previous_period_data.json') as file:
             previous_data = json.load(file)
