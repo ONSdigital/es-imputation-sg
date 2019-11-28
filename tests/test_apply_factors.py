@@ -528,8 +528,8 @@ class TestApplyFactors(unittest.TestCase):
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
     @mock.patch("apply_factors_wrangler.funk.save_to_s3")
     @mock.patch("apply_factors_wrangler.funk.read_dataframe_from_s3")
-    def test_wrangles_sad_path(self, mock_read_dataframe_from_s3,
-                               mock_sns, mock_save_to_s3, mock_get_dataframe):
+    def test_wrangles_method_fail(self, mock_read_dataframe_from_s3,
+                                  mock_sns, mock_save_to_s3, mock_get_dataframe):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url

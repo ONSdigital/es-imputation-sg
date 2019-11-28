@@ -283,9 +283,9 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
     @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
     @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
-    def test_wrangler_sad_path(self, mock_s3_return, mock_sqs_return, mock_s3_save,
-                               mock_strata, mock_lambda, mock_send_sqs,
-                               mock_sns_message):
+    def test_wrangler_method_fail(self, mock_s3_return, mock_sqs_return,
+                                  mock_s3_save, mock_strata, mock_lambda,
+                                  mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data.json') as file:
             input_data = json.load(file)

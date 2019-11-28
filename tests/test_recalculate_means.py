@@ -237,7 +237,7 @@ class TestRecalculateMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     @mock_s3
-    def test_wrangler_sad_path(self):
+    def test_wrangler_method_fail(self):
         client = boto3.client(
             "s3",
             region_name="eu-west-1",

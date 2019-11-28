@@ -273,7 +273,7 @@ class TestWranglerAndMethod():
     @mock_lambda
     @mock.patch("iqrs_wrangler.funk.send_sns_message")
     @mock.patch("iqrs_wrangler.funk.save_data")
-    def test_wrangler_sad_path(self, mock_me, mock_you):
+    def test_wrangler_method_fail(self, mock_me, mock_you):
         with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()

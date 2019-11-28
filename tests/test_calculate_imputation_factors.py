@@ -416,7 +416,7 @@ class TestWranglerAndMethod(unittest.TestCase):
 
     @mock_sns
     @mock_sqs
-    def test_wrangler_sad_path(self):
+    def test_wrangler_method_fail(self):
         """
         mocks functionality of the wrangler:
         - load json file. (uses the calc_imps_test_data.json file)
