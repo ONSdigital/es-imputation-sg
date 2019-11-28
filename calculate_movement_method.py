@@ -119,4 +119,4 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
 
-    return final_output
+    return json.loads(final_output)

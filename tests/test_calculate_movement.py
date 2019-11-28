@@ -70,7 +70,7 @@ class TestStringMethods(unittest.TestCase):
 
             response = calculate_movement_method.lambda_handler(mock_event,
                                                                 context_object)
-        assert response == striped_string
+        assert response == json.loads(striped_string)
 
     def test_lambda_handler_movement_method_b(self):
         with mock.patch.dict(calculate_movement_method.os.environ, {
@@ -87,7 +87,7 @@ class TestStringMethods(unittest.TestCase):
             response = calculate_movement_method.lambda_handler(mock_event_b,
                                                                 context_object)
 
-        assert response == striped_string
+        assert response == json.loads(striped_string)
 
     @mock_sqs
     @mock_lambda
