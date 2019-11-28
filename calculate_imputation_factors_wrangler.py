@@ -90,7 +90,7 @@ def lambda_handler(event, context):
         logger.info("Successfully invoked lambda")
 
         funk.save_data(bucket_name, out_file_name,
-                       json_response, sqs_queue_url, sqs_message_group_id)
+                       json.dumps(json_response), sqs_queue_url, sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
 

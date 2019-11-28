@@ -193,7 +193,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         with open(expected_output_file, "r") as file:
             expected_dataframe = json.loads(file.read())
 
-        actual_outcome_dataframe = pd.DataFrame(json.loads(output_file))
+        actual_outcome_dataframe = pd.DataFrame(output_file)
         expected_output_dataframe = pd.DataFrame(expected_dataframe)
         assert_frame_equal(
             actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str)
