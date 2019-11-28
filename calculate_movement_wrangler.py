@@ -230,7 +230,7 @@ def lambda_handler(event, context):
             logger.info("Successfully invoked the movement method lambda")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
-            if str(type(json.loads(json_response))) != "<class 'list'>":
+            if str(type(json_response)) != "<class 'list'>":
                 raise funk.MethodFailure(json_response['error'])
             imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,
