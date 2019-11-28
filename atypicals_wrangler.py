@@ -16,7 +16,7 @@ class InputSchema(Schema):
     :return: None
     """
     checkpoint = fields.Str(required=True)
-    question_list = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
@@ -53,7 +53,7 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment params: {errors}")
 
         checkpoint = config["checkpoint"]
-        question_list = config["question_list"]
+        questions_list = config["questions_list"]
 
         bucket_name = config["bucket_name"]
         in_file_name = config["in_file_name"]
@@ -71,7 +71,7 @@ def lambda_handler(event, context):
                                                    incoming_message_group)
 
         logger.info("Succesfully retrieved data.")
-        atypical_columns = imp_func.produce_columns("atyp_", question_list.split(','), [])
+        atypical_columns = imp_func.produce_columns("atyp_", questions_list.split(','))
 
         for col in atypical_columns:
             data[col] = 0
@@ -82,7 +82,7 @@ def lambda_handler(event, context):
 
         payload = {
             "json_data": json.loads(data_json),
-            "question_list": question_list
+            "questions_list": questions_list
         }
 
         logger.info("Dataframe converted to JSON")
@@ -93,7 +93,8 @@ def lambda_handler(event, context):
         )
 
         json_response = wrangled_data.get('Payload').read().decode("UTF-8")
-
+        if str(type(json_response)) != "<class 'str'>":
+            raise funk.MethodFailure(json_response['error'])
         logger.info("Succesfully invoked method lambda")
 
         funk.save_data(bucket_name, out_file_name,
@@ -175,6 +176,9 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     finally:
         if (len(error_message)) > 0:
             logger.error(log_message)

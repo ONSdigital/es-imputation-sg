@@ -74,17 +74,19 @@ def lambda_handler(event, context):
         logger.info("Successfully wrangled data from sqs")
 
         payload = {
-            "data_json": data.to_json(orient="records"),
+            "data_json": json.loads(data.to_json(orient="records")),
             "questions_list": questions_list
         }
 
         # invoke the method to calculate the factors
         calculate_factors = lambda_client.invoke(
-            FunctionName=method_name, Payload=payload
+            FunctionName=method_name, Payload=json.dumps(payload)
         )
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))
 
+        if str(type(json_response)) != "<class 'list'>":
+            raise funk.MethodFailure(json_response['error'])
         logger.info("Successfully invoked lambda")
 
         funk.save_data(bucket_name, out_file_name,
@@ -145,6 +147,9 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     except Exception as e:
         error_message = (
             "General Error in "

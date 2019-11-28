@@ -25,7 +25,7 @@ def lambda_handler(event, context):
 
         # Environment variables
         questions_list = event['questions_list']
-        input_data = pd.read_json(event["data"])
+        input_data = pd.DataFrame(event["data"])
 
         logger.info("Successfully retrieved data from event.")
 
