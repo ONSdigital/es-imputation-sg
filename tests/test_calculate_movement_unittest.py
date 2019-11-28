@@ -275,3 +275,40 @@ class TestClass(unittest.TestCase):
         assert "success" in response
         assert not response["success"]
         assert "Key Error" in response["error"]
+
+    @mock.patch('calculate_movement_wrangler.funk.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.boto3.client')
+    @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
+    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    def test_wrangler_sad_path(self, mock_s3_return, mock_sqs_return, mock_s3_save,
+                               mock_strata, mock_lambda, mock_send_sqs,
+                               mock_sns_message):
+
+        with open('tests/fixtures/wrangler_input_test_data.json') as file:
+            input_data = json.load(file)
+
+        with open('tests/fixtures/s3_previous_period_data.json') as file:
+            previous_data = json.load(file)
+
+        with open('tests/fixtures/merged_data.json') as file:
+            merged_data = json.load(file)
+
+        mock_s3_return.return_value = pd.DataFrame(previous_data)
+
+        mock_sqs_return.return_value = pd.DataFrame(input_data), 666
+
+        mock_strata.return_value = pd.DataFrame(merged_data), pd.DataFrame()
+
+        mock_lambda.return_value.invoke.return_value.get.return_value \
+            .read.return_value.decode.return_value = \
+            json.dumps({"ADictThatWillTriggerError": "someValue",
+                        "error": "This is an error message"})
+        response = calculate_movement_wrangler.lambda_handler(
+            mock_wrangles_event, context_object
+        )
+
+        assert not response["success"]
+        assert "error message" in response["error"]

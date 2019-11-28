@@ -20,8 +20,9 @@ mock_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": "region",
   }
+
 }
 
 context_object = MockContext
@@ -33,6 +34,7 @@ class TestWranglerAndMethod():
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'sqs_queue_url': 'mock_queue',
             'bucket_name': 'mock_bucket',
+            'questions_list': "why?",
             'incoming_message_group': 'mock_group',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
@@ -265,3 +267,27 @@ class TestWranglerAndMethod():
                         assert "success" in response
                         assert response["success"] is False
                         assert """Incomplete Lambda response""" in response["error"]
+
+    @mock_sqs
+    @mock_s3
+    @mock_lambda
+    @mock.patch("iqrs_wrangler.funk.send_sns_message")
+    @mock.patch("iqrs_wrangler.funk.save_data")
+    def test_wrangler_sad_path(self, mock_me, mock_you):
+        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
+            with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value.get.return_value \
+                    .read.return_value.decode.return_value = \
+                    {"ADictThatWillTriggerError": "someValue",
+                     "error": "This is an error message"}
+                with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+                    response = iqrs_wrangler.lambda_handler(
+                        mock_event,
+                        context_object,
+                    )
+                    assert not response["success"]
+                    assert "error message" in response["error"]

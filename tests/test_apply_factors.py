@@ -527,7 +527,9 @@ class TestApplyFactors(unittest.TestCase):
     @mock.patch("apply_factors_wrangler.funk.get_dataframe")
     @mock.patch("apply_factors_wrangler.funk.send_sns_message")
     @mock.patch("apply_factors_wrangler.funk.save_to_s3")
-    def test_wrangles_sad_path(self, mock_me, mock_you, mock_everyone):
+    @mock.patch("apply_factors_wrangler.funk.read_dataframe_from_s3")
+    def test_wrangles_sad_path(self, mock_read_dataframe_from_s3,
+                               mock_sns, mock_save_to_s3, mock_get_dataframe):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
@@ -580,25 +582,23 @@ class TestApplyFactors(unittest.TestCase):
         ):
 
             with mock.patch("apply_factors_wrangler.boto3.client") as mock_client:
-                with mock.patch("apply_factors_wrangler.funk") as mock_funk:
-                    with open("tests/fixtures/non_responders_return.json", "r")\
-                            as norespfile:
-                        mock_client_object = mock.Mock()
-                        mock_client.return_value = mock_client_object
-                        mock_funk.get_dataframe.return_value = pd.DataFrame(
-                            json.loads(message)), 666
-                        mock_funk.read_dataframe_from_s3.return_value =\
-                            pd.DataFrame(json.loads(norespfile.read()))
-                        with open("tests/fixtures/non_responders_return.json", "r")\
-                                as file:
 
-                            mock_client_object.invoke.return_value.get.return_value\
-                                .read.return_value.decode.return_value =\
-                                json.dumps({"ADictThatWillTriggerError": "someValue",
-                                            "error": "This is an error message"})
+                with open("tests/fixtures/non_responders_return.json", "r")\
+                        as norespfile:
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+                    mock_read_dataframe_from_s3.return_value = \
+                        pd.DataFrame(json.loads(norespfile.read()))
+                    mock_get_dataframe.return_value = \
+                        pd.DataFrame(json.loads(message)), 666
 
-                            response = apply_factors_wrangler.lambda_handler(
-                                mock_wrangles_event, context_object)
-                            assert "success" in response
-                            print(response)
-                            assert response["success"] is True
+                    mock_client_object.invoke.return_value.get.return_value\
+                        .read.return_value.decode.return_value =\
+                        json.dumps({"ADictThatWillTriggerError": "someValue",
+                                    "error": "This is an error message"})
+
+                    response = apply_factors_wrangler.lambda_handler(
+                        mock_wrangles_event, context_object)
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert "error message" in response["error"]

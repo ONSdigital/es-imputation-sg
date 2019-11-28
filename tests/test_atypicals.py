@@ -301,3 +301,28 @@ class TestClass():
                         assert "success" in response
                         assert response["success"] is False
                         assert """Incomplete Lambda response""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    @mock_s3
+    @mock.patch("atypicals_wrangler.funk.send_sns_message")
+    @mock.patch("atypicals_wrangler.funk.save_data")
+    def test_wrangler_sad_path(self, mock_me, mock_you):
+        with mock.patch("atypicals_wrangler.funk.get_dataframe") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value.get.return_value \
+                    .read.return_value.decode.return_value = \
+                    {"ADictThatWillTriggerError": "someValue",
+                     "error": "This is an error message"}
+                with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+                    response = atypicals_wrangler.lambda_handler(
+                        mock_event,
+                        context_object,
+                    )
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert "error message" in response["error"]

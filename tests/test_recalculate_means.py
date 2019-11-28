@@ -233,3 +233,36 @@ class TestRecalculateMeans(unittest.TestCase):
                         assert "success" in response
                         assert response["success"] is False
                         assert """Incomplete Lambda response""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    @mock_s3
+    def test_wrangler_sad_path(self):
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="Mike")
+        with mock.patch("recalculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+            with mock.patch("recalculate_means_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value.get.return_value \
+                    .read.return_value.decode.return_value = \
+                    json.dumps({"ADictThatWillTriggerError": "someValue",
+                                "error": "This is an error message"})
+                with open("tests/fixtures/"
+                          "recalculate_means_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read().decode("UTF-8")
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+
+                    response = recalculate_means_wrangler.lambda_handler(
+                        mock_wrangles_event,
+                        context_object,
+                    )
+
+                    assert not response["success"]
+                    assert "error message" in response["error"]
