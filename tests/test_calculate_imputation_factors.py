@@ -413,3 +413,53 @@ class TestWranglerAndMethod(unittest.TestCase):
                 assert "success" in out
                 assert not out["success"]
                 assert "AWS Error" in out["error"]
+
+    @mock_sns
+    @mock_sqs
+    def test_wrangler_method_fail(self):
+        """
+        mocks functionality of the wrangler:
+        - load json file. (uses the calc_imps_test_data.json file)
+        - invoke the method lambda.
+        - retrieve the payload from the method.
+        :return: None.
+
+        """
+        # load json file.
+
+        method_input_file = (
+            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        )
+
+        with open(method_input_file, "r") as file:
+            json_content = file.read()
+
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+            calculate_imputation_factors_wrangler.os.environ,
+                {"sqs_queue_url": sqs_queue_url}
+        ):
+            with mock.patch(
+                "calculate_imputation_factors_wrangler.boto3.client"
+            ) as mocked:
+                with mock.patch(
+                        "calculate_imputation_factors_wrangler.funk.get_dataframe"
+                ) as funk_get_dataframe:
+                    mocked_client = mock.Mock()
+                    mocked.return_value = mocked_client
+                    funk_get_dataframe.return_value = \
+                        pd.DataFrame(json.loads(json_content)), 777
+
+                    mocked_client.invoke.return_value.get.return_value \
+                        .read.return_value.decode.return_value = \
+                        json.dumps({"ADictThatWillTriggerError": "someValue",
+                                    "error": "This is an error message"})
+
+                    out = calculate_imputation_factors_wrangler.lambda_handler(
+                        mock_event, context_object
+                    )
+                    assert "success" in out
+                    assert not out["success"]
+                    assert "error message" in out["error"]
