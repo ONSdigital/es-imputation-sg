@@ -29,7 +29,7 @@ This step is a combination of both calculate gb and non gb factors.
 Data is retrieved from the previous step from SQS, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
 
 Once this has been calculated then the data is sent back to the SQS queue to be used by the next method.
-
+Duty
 
 ### Calculate IQRS Wrangler
 
