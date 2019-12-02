@@ -77,7 +77,7 @@ class TestWranglerAndMethod():
                         assert "success" in response
                         assert response["success"] is True
 
-    def test_method_happy_path(self):
+    def test_method_happy_path_iqr(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
         with open(input_file, "r") as file:
             iqrs_cols = ('iqrs_Q601_asphalting_sand,' +
@@ -117,7 +117,6 @@ class TestWranglerAndMethod():
 
             response_df = response_df.round(5)
             expected_df = expected_df.round(5)
-
             assert_frame_equal(response_df, expected_df)
 
     @mock.patch("iqrs_wrangler.boto3")
