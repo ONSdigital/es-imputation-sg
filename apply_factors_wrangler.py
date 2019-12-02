@@ -136,6 +136,8 @@ def lambda_handler(event, context):
         )
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
+        if str(type(json_response)) != "<class 'str'>":
+            raise funk.MethodFailure(json_response['error'])
         logger.info("Successfully invoked lambda")
 
         imputed_non_responders = pd.DataFrame(json.loads(json_response))
@@ -244,6 +246,9 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     except Exception as e:
         error_message = (
             "General Error in "

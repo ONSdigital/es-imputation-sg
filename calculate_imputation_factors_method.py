@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -132,4 +133,4 @@ def lambda_handler(event, context):
 
     final_output = factors_dataframe.to_json(orient="records")
 
-    return final_output
+    return json.loads(final_output)

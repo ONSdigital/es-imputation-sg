@@ -36,7 +36,7 @@ class TestClass():
                 'sqs_queue_url': '213456',
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
-                'question_list': 'Q601_asphalting_sand,' +
+                'questions_list': 'Q601_asphalting_sand,' +
                                  'Q602_building_soft_sand,' +
                                  'Q603_concreting_sand,' +
                                  'Q604_bituminous_gravel,' +
@@ -117,17 +117,17 @@ class TestClass():
             sorting_cols = ['responder_id', 'region', 'strata']
             selected_cols = movement_col.split(',')
 
-            json_content = file.read()
-
+            json_dataframe = pd.read_json(file.read())
+            json_content = json.loads(json_dataframe.to_json(orient="records"))
             event = {
                 "json_data": json_content,
-                "question_list": 'Q601_asphalting_sand,' +
-                                 'Q602_building_soft_sand,' +
-                                 'Q603_concreting_sand,' +
-                                 'Q604_bituminous_gravel,' +
-                                 'Q605_concreting_gravel,' +
-                                 'Q606_other_gravel,' +
-                                 'Q607_constructional_fill',
+                "questions_list": 'Q601_asphalting_sand,' +
+                                  'Q602_building_soft_sand,' +
+                                  'Q603_concreting_sand,' +
+                                  'Q604_bituminous_gravel,' +
+                                  'Q605_concreting_gravel,' +
+                                  'Q606_other_gravel,' +
+                                  'Q607_constructional_fill',
             }
 
             output = atypicals_method.lambda_handler(
@@ -172,17 +172,17 @@ class TestClass():
         input_file = "tests/fixtures/atypical_input.json"
         with open(input_file, "r") as file:
             json_content = file.read()
-            with mock.patch("atypicals_method.pd.read_json") as mocked:
+            with mock.patch("atypicals_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")
                 event = {
                     "json_data": json_content,
-                    "question_list": 'Q601_asphalting_sand,' +
-                                     'Q602_building_soft_sand,' +
-                                     'Q603_concreting_sand,' +
-                                     'Q604_bituminous_gravel,' +
-                                     'Q605_concreting_gravel,' +
-                                     'Q606_other_gravel,' +
-                                     'Q607_constructional_fill',
+                    "questions_list": 'Q601_asphalting_sand,' +
+                                      'Q602_building_soft_sand,' +
+                                      'Q603_concreting_sand,' +
+                                      'Q604_bituminous_gravel,' +
+                                      'Q605_concreting_gravel,' +
+                                      'Q606_other_gravel,' +
+                                      'Q607_constructional_fill',
                 }
 
                 response = atypicals_method.lambda_handler(
@@ -216,13 +216,13 @@ class TestClass():
             content = file.read()
             event = {
                     "jason_data": content,
-                    "question_list": 'Q601_asphalting_sand,' +
-                                     'Q602_building_soft_sand,' +
-                                     'Q603_concreting_sand,' +
-                                     'Q604_bituminous_gravel,' +
-                                     'Q605_concreting_gravel,' +
-                                     'Q606_other_gravel,' +
-                                     'Q607_constructional_fill',
+                    "questions_list": 'Q601_asphalting_sand,' +
+                                      'Q602_building_soft_sand,' +
+                                      'Q603_concreting_sand,' +
+                                      'Q604_bituminous_gravel,' +
+                                      'Q605_concreting_gravel,' +
+                                      'Q606_other_gravel,' +
+                                      'Q607_constructional_fill',
                      }
             response = atypicals_method.lambda_handler(
                 event, context_object
@@ -301,3 +301,28 @@ class TestClass():
                         assert "success" in response
                         assert response["success"] is False
                         assert """Incomplete Lambda response""" in response["error"]
+
+    @mock_sqs
+    @mock_lambda
+    @mock_s3
+    @mock.patch("atypicals_wrangler.funk.send_sns_message")
+    @mock.patch("atypicals_wrangler.funk.save_data")
+    def test_wrangler_method_fail(self, mock_me, mock_you):
+        with mock.patch("atypicals_wrangler.funk.get_dataframe") as mock_squeues:
+            with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
+                mock_client_object.invoke.return_value.get.return_value \
+                    .read.return_value.decode.return_value = \
+                    {"ADictThatWillTriggerError": "someValue",
+                     "error": "This is an error message"}
+                with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
+                    msgbody = queue_file.read()
+                    mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+                    response = atypicals_wrangler.lambda_handler(
+                        mock_event,
+                        context_object,
+                    )
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert "error message" in response["error"]

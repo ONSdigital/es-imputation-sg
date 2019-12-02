@@ -230,10 +230,11 @@ def lambda_handler(event, context):
             logger.info("Successfully invoked the movement method lambda")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
-
+            if str(type(json_response)) != "<class 'list'>":
+                raise funk.MethodFailure(json_response['error'])
             imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,
-                           json_response, sqs_queue_url, sqs_message_group_id)
+                           json.dumps(json_response), sqs_queue_url, sqs_message_group_id)
 
             logger.info("Successfully sent the data to s3")
 
@@ -301,7 +302,9 @@ def lambda_handler(event, context):
                         + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     except Exception as e:
         error_message = "General Error in " \
                         + current_module + " (" \

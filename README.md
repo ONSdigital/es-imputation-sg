@@ -4,7 +4,7 @@
 
 ### Calculate Movements Wrangler
 
-This is the first step in the imputation section of the process. The Wrangler is responsible for checking for strata miss matches, if an anomaly is detected a notification will be created and handed to the BPM.
+This is the first step in the imputation section of the process. The Wrangler is responsible for checking if the data contains strata, if it does it checks for strata miss matches, if an anomaly is detected a notification will be created and handed to the BPM.
 
 As imputation will not always run, there needs to be some way of checking if it's an imputation run or not, this is known as check for non responsers. This task has been dealt with inside of the wranger and will bypass the imputation processing and pass the data on if there are no non-responders.
 
@@ -14,7 +14,7 @@ Like every wrangler, it is responsible for dealing with sending data to the SQS 
 
 ### Calculate Means Wrangler
 
-This is the second step in the imputation process. The wrangler ingests data from the movements step, checks for anomalies (TBC),
+This is the second step in the imputation process. The wrangler ingests data from the movements step, checks for anomalies,
 and formats the data to be passed through to the method.
 
 Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method
@@ -62,7 +62,7 @@ This uses the same method as calculate means.
 
 ### Calculate Movements Method
 
-**Name of Lambda:** imputation_calculate_movement _This Method will be re-named to be inkeeping with the standards soon_
+**Name of Lambda:** imputation_calculate_movement_method.
 
 **Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
 
@@ -84,11 +84,11 @@ This uses the same method as calculate means.
 
 ### Calculate IQRS method
 
-**Name of Lambda:** iqrs_method  - This Method will be re-named to be inkeeping with the standards soon_
+**Name of Lambda:** iqrs_method
 
-**Intro:** For each distinct Region/Strata group within the dataset, we want to work out the 25th percentile of each movement column - **eg the 25th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.**
+**Intro:** For each distinct Region/Strata group within the dataset, we want to work out the 25th percentile of each movement column - **e.g the 25th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.**
 
- We also want to calculate the 75% percentile of each movement column of the same groups - **eg the 7
+ We also want to calculate the 75% percentile of each movement column of the same groups - **e.g. the 7
  5th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.** 
  
  The iqrs value for each question is calculated as 75th percentile - 25th percentile.
@@ -100,7 +100,7 @@ An iqrs_*question* column should be created for each question in the data wrangl
 
 ### Calculate ATypicals Method
 
-**Name of Lambda:** atypicals_method  - This Method will be re-named to be inkeeping with the standards soon_
+**Name of Lambda:** atypicals_method
 
 **Intro:** The calculate atypical method calculates the atypical value for each row on the dataframe, and for each of the 7 questions, using the following formula (using question 601 as an example)
 
@@ -162,3 +162,4 @@ An atyp_*question* column should be created for each question in the data wrangl
 **Inputs:** Prefix String, List of Columns, Suffix String, List of Extra Columns.
 
 **Outputs:** New List of Columns.
+
