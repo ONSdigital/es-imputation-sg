@@ -138,7 +138,7 @@ class TestClass():
             )
 
             response_df = (
-                pd.DataFrame(output["data"])
+                pd.read_json(output["data"])
                 .sort_values(sorting_cols)
                 .reset_index()[selected_cols]
             )

@@ -94,7 +94,7 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully finished calculations of factors")
 
-        final_output = {"data": json.loads(factors_dataframe.to_json(orient="records"))}
+        final_output = {"data": factors_dataframe.to_json(orient="records")}
 
     except ValueError as e:
         error_message = (

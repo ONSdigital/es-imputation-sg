@@ -95,7 +95,7 @@ class TestMeans(unittest.TestCase):
                     mock_client_object.invoke.return_value\
                         .get.return_value.read\
                         .return_value.decode.return_value = json.dumps({
-                            "data": json.loads(file.read()), "success": True
+                            "data": file.read(), "success": True
                         })
                     with open("tests/fixtures/means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read().decode("UTF-8")

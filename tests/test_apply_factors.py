@@ -255,7 +255,7 @@ class TestApplyFactors(unittest.TestCase):
                             mock_client_object.invoke.return_value\
                             .get.return_value.read\
                             .return_value.decode.return_value = json.dumps({
-                                "data": json.loads(file.read()), "success": True
+                                "data": file.read(), "success": True
                             })
 
                             response = apply_factors_wrangler.lambda_handler(
@@ -281,7 +281,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_event, context_object
             )
 
-            outputdf = pd.DataFrame(response["data"])
+            outputdf = pd.read_json(response["data"])
 
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
             assert valuetotest == 4659

@@ -43,7 +43,7 @@ def lambda_handler(event, context):
 
         json_out = atypicals_df.to_json(orient='records')
 
-        final_output = {"data": json.loads(json_out)}
+        final_output = {"data": json_out}
 
 
     except KeyError as e:

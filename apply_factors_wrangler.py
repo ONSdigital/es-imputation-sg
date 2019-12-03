@@ -142,7 +142,7 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
 
-        imputed_non_responders = pd.DataFrame(json_response["data"])
+        imputed_non_responders = pd.read_json(json_response["data"])
 
         # Filtering Data To Be Current Period Only.
         current_responders = factors_dataframe[
