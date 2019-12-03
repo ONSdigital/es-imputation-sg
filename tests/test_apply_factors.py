@@ -255,7 +255,7 @@ class TestApplyFactors(unittest.TestCase):
                             mock_client_object.invoke.return_value\
                             .get.return_value.read\
                             .return_value.decode.return_value = json.dumps({
-                                "data": file.read(), "success": True
+                                "data": json.loads(file.read()), "success": True
                             })
 
                             response = apply_factors_wrangler.lambda_handler(
