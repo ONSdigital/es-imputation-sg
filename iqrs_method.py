@@ -1,7 +1,6 @@
 import json
 import logging
 
-import numpy as np
 import pandas as pd
 
 from imputation_functions import produce_columns
@@ -35,7 +34,7 @@ def lambda_handler(event, context):
             produce_columns("iqrs_", questions_list.split(',')),
             event["distinct_values"].strip().split(',')
         )
-
+        iqrs_df['region'] = iqrs_df['region'].astype('int64')
         json_out = iqrs_df.to_json(orient='records')
         final_output = json.loads(json_out)
 
@@ -81,22 +80,27 @@ def calc_iqrs(input_table, move_cols, iqrs_cols, distinct_values):
     :return: Table. - Type: DataFrame
     """
     distinct_strata_region = input_table[distinct_values].drop_duplicates()
-    iqr_filter = ""
-
-    for value in distinct_values:
-        if value != distinct_values[0]:
-            iqr_filter += " & "
-        iqr_filter += "(input_table[\"%s\"] == row[%s])"\
-            % (value, distinct_values.index(value))
 
     for row in distinct_strata_region.values:
-        filtered_iqr = input_table[pd.eval(iqr_filter)]
+        iqr_filter = ""
+        for value in distinct_values:
+            if value != distinct_values[0]:
+                iqr_filter += " & "
+            iqr_filter += "(%s == '%s')" \
+                          % (value, row[distinct_values.index(value)])
+
+        filtered_iqr = input_table.query(str(iqr_filter))
+
         # Pass the question number and region and strata grouping to the iqr_sum function.
         for i in range(0, len(iqrs_cols)):
+
             val_one = iqr_sum(filtered_iqr, move_cols[i])
-            input_table[iqrs_cols[i]] = np.where(
-                (pd.eval(iqr_filter)), val_one, input_table[iqrs_cols[i]]
-            )
+
+            config = {iqrs_cols[i]: val_one}
+
+            input_table = input_table.query(str(iqr_filter))\
+                .assign(**config).combine_first(input_table)
+
     return input_table
 
 
