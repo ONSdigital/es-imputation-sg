@@ -94,6 +94,8 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully calculated factors")
 
+        final_output = {"data": json.loads(factors_dataframe.to_json(orient="records"))}
+
     except ValueError as e:
         error_message = (
             "Parameter validation error in "
@@ -131,6 +133,6 @@ def lambda_handler(event, context):
             logger.error(log_message)
             return {"success": False, "error": error_message}
 
-    final_output = factors_dataframe.to_json(orient="records")
-
-    return json.loads(final_output)
+    logger.info("Successfully completed module: " + current_module)
+    final_output["success"] = True
+    return final_output
