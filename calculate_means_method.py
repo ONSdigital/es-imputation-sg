@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+import json
 
 import imputation_functions as impfunc
 
@@ -80,7 +81,10 @@ def lambda_handler(event, context):
                 axis=1,
             )
 
-        logger.info("Succesfully calculated means.")
+        logger.info("Succesfully finished calculations of means.")
+
+        final_output = {"data": df.to_json(orient="records")}
+
 
     except KeyError as e:
         error_message = (
@@ -108,6 +112,7 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return df.to_json(orient="records")
+
+    logger.info("Successfully completed module: " + current_module)
+    final_output["success"] = True
+    return final_output

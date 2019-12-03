@@ -92,7 +92,7 @@ def lambda_handler(event, context):
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
 
-        logger.info("Succesfully calculated factors")
+        logger.info("Succesfully finished calculations of factors")
 
         final_output = {"data": json.loads(factors_dataframe.to_json(orient="records"))}
 

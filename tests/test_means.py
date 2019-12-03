@@ -92,9 +92,11 @@ class TestMeans(unittest.TestCase):
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 with open("tests/fixtures/means_input.json", "r") as file:
-                    in_file = file.read()
-                    mock_client_object.invoke.return_value.get.return_value.read.\
-                        return_value.decode.return_value = json.dumps(in_file)
+                    mock_client_object.invoke.return_value\
+                        .get.return_value.read\
+                        .return_value.decode.return_value = json.dumps({
+                            "data": json.loads(file.read()), "success": True
+                        })
                     with open("tests/fixtures/means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read().decode("UTF-8")
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
@@ -124,7 +126,7 @@ class TestMeans(unittest.TestCase):
         )
 
         response_df = (
-            pd.read_json(output)
+            pd.read_json(output["data"])
             .sort_values(sorting_cols)
             .reset_index()[selected_cols]
         )
@@ -272,7 +274,7 @@ class TestMeans(unittest.TestCase):
                 mock_client.return_value = mock_client_object
                 mock_client_object.invoke.return_value.get.return_value.\
                     read.return_value.decode.return_value \
-                    = json.dumps({"ADictThatWillTriggerError": "someValue",
+                    = json.dumps({"success": False,
                                   "error": "This is an error message"})
                 with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read().decode("UTF-8")
