@@ -134,9 +134,10 @@ def lambda_handler(event, context):
             FunctionName=method_name,
             Payload=json.dumps(payload),
         )
+        logger.info("Succesfully invoked method.")
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
-        logger.info("Successfully invoked lambda")
+        logger.info("JSON extracted from method response.")
 
         if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])

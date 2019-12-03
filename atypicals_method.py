@@ -39,12 +39,12 @@ def lambda_handler(event, context):
             iqrs_columns,
             mean_columns
         )
+        logger.info("Succesfully finished calculations of atypicals.")
 
         json_out = atypicals_df.to_json(orient='records')
 
-        final_output = json.loads(json_out)
+        final_output = {"data": json.loads(json_out)}
 
-        logger.info("Succesfully calculated atypicals.")
 
     except KeyError as e:
         error_message = (
@@ -72,9 +72,10 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return final_output
+        
+    logger.info("Successfully completed module: " + current_module)
+    final_output["success"] = True
+    return final_output
 
 
 def calc_atypicals(input_table, atyp_col, move_col, iqrs_col, mean_col):

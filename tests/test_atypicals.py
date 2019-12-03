@@ -90,10 +90,12 @@ class TestClass():
             with mock.patch("atypicals_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("tests/fixtures/atypical_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 587487)
-                    }
+                with open("tests/fixtures/atypical_input.json", "r") as file:
+                    mock_client_object.invoke.return_value\
+                            .get.return_value.read\
+                            .return_value.decode.return_value = json.dumps({
+                                "data": json.loads(file.read()), "success": True
+                            })
                     with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
@@ -136,7 +138,7 @@ class TestClass():
             )
 
             response_df = (
-                pd.DataFrame(output)
+                pd.DataFrame(output["data"])
                 .sort_values(sorting_cols)
                 .reset_index()[selected_cols]
             )
@@ -314,8 +316,8 @@ class TestClass():
                 mock_client.return_value = mock_client_object
                 mock_client_object.invoke.return_value.get.return_value \
                     .read.return_value.decode.return_value = \
-                    {"ADictThatWillTriggerError": "someValue",
-                     "error": "This is an error message"}
+                    json.dumps({"success": False,
+                        "error": "This is an error message"})
                 with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
