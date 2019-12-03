@@ -252,9 +252,11 @@ class TestApplyFactors(unittest.TestCase):
                         with open("tests/fixtures/non_responders_return.json", "r")\
                                 as file:
 
-                            mock_client_object.invoke.return_value.get.return_value\
-                                .read.return_value.decode.return_value =\
-                                json.dumps(file.read())
+                            mock_client_object.invoke.return_value\
+                            .get.return_value.read\
+                            .return_value.decode.return_value = json.dumps({
+                                "data": file.read(), "success": True
+                            })
 
                             response = apply_factors_wrangler.lambda_handler(
                                 mock_wrangles_event, context_object)
@@ -279,7 +281,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_event, context_object
             )
 
-            outputdf = pd.DataFrame(json.loads(response))
+            outputdf = pd.DataFrame(response["data"])
 
             valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
             assert valuetotest == 4659
@@ -594,7 +596,7 @@ class TestApplyFactors(unittest.TestCase):
 
                     mock_client_object.invoke.return_value.get.return_value\
                         .read.return_value.decode.return_value =\
-                        json.dumps({"ADictThatWillTriggerError": "someValue",
+                        json.dumps({"success": False,
                                     "error": "This is an error message"})
 
                     response = apply_factors_wrangler.lambda_handler(

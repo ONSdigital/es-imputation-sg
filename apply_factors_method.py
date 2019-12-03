@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+import json
 
 
 def lambda_handler(event, context):
@@ -35,7 +36,7 @@ def lambda_handler(event, context):
             )
             logger.info("Completed imputation of " + str(question))
 
-        final_output = {"data": working_dataframe.to_json(orient="records")}
+        final_output = {"data": json.loads(working_dataframe.to_json(orient="records"))}
 
     except TypeError as e:
         error_message = (
