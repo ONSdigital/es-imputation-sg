@@ -90,7 +90,7 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
     @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
     @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
-    def test_wrangler(self, mock_s3_return, mock_sqs_return, mock_s3_save, mock_strata,
+    def test_wrangler(self, mock_s3_return, mock_sqs_return, mock_client, mock_strata,
                       mock_lambda, mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data.json') as file:
@@ -113,9 +113,11 @@ class TestClass(unittest.TestCase):
 
         myvar = mock_send_sqs.call_args_list
 
-        with open('tests/fixtures/method_output_compare_result.json', "rb") as file:
-            mock_lambda.return_value.invoke.return_value = {"Payload":
-                                                            StreamingBody(file, 13123)}
+        with open('tests/fixtures/method_output_compare_result.json', "r") as file:
+            mock_lambda.return_value.invoke.return_value.get.return_value \
+            .read.return_value.decode.return_value = \
+            json.dumps({"success": True,
+                        "data": file.read()})
 
             response = calculate_movement_wrangler.lambda_handler(
                 mock_wrangles_event, context_object
@@ -304,7 +306,7 @@ class TestClass(unittest.TestCase):
 
         mock_lambda.return_value.invoke.return_value.get.return_value \
             .read.return_value.decode.return_value = \
-            json.dumps({"ADictThatWillTriggerError": "someValue",
+            json.dumps({"success": False,
                         "error": "This is an error message"})
         response = calculate_movement_wrangler.lambda_handler(
             mock_wrangles_event, context_object

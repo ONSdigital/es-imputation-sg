@@ -109,13 +109,12 @@ def lambda_handler(event, context):
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
-    logger = logging.getLogger("Starting " + current_module)
+    logger = logging.getLogger(current_module)
     error_message = ''
     log_message = ''
     checkpoint = 0
 
     try:
-
         logger.info("Starting " + current_module)
 
         schema = EnvironSchema()
