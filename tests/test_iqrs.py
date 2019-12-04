@@ -63,17 +63,21 @@ class TestWranglerAndMethod():
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("tests/fixtures/iqrs_input.json", "rb") as file:
-                    mock_client_object.invoke.return_value = {
-                        "Payload": StreamingBody(file, 228382)
-                    }
+                with open("tests/fixtures/iqrs_input.json", "r") as file:
+                    mock_client_object.invoke.return_value\
+                        .get.return_value.read\
+                        .return_value.decode.return_value = json.dumps({
+                            "data": file.read(), "success": True
+                        })
                     with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
-                        msgbody = queue_file.read()
+                        msgbody = queue_file.read().decode("UTF-8")
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
+                        
                         response = iqrs_wrangler.lambda_handler(
                             mock_event,
                             context_object,
                         )
+
                         assert "success" in response
                         assert response["success"] is True
 
@@ -108,7 +112,7 @@ class TestWranglerAndMethod():
 
             output = iqrs_method.lambda_handler(event, context_object)
 
-            response_df = pd.DataFrame(output).sort_values(sorting_cols)\
+            response_df = pd.read_json(output["data"]).sort_values(sorting_cols)\
                 .reset_index()[selected_cols].drop_duplicates(keep='first')\
                 .reset_index(drop=True)
 
@@ -278,9 +282,9 @@ class TestWranglerAndMethod():
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
                 mock_client_object.invoke.return_value.get.return_value \
-                    .read.return_value.decode.return_value = \
-                    {"ADictThatWillTriggerError": "someValue",
-                     "error": "This is an error message"}
+                    .read.return_value.decode.return_value \
+                    = json.dumps({"success": False,
+                                  "error": "This is an error message"})
                 with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666

@@ -35,8 +35,11 @@ def lambda_handler(event, context):
             event["distinct_values"].strip().split(',')
         )
         iqrs_df['region'] = iqrs_df['region'].astype('int64')
+
+        logger.info("Succesfully finished calculations of IQRS.")
+
         json_out = iqrs_df.to_json(orient='records')
-        final_output = json.loads(json_out)
+        final_output = {"data": json_out}
 
     except KeyError as e:
         error_message = (
@@ -64,9 +67,10 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return final_output
+        
+    logger.info("Successfully completed module: " + current_module)
+    final_output["success"] = True
+    return final_output
 
 
 def calc_iqrs(input_table, move_cols, iqrs_cols, distinct_values):
