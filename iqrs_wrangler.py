@@ -89,15 +89,16 @@ def lambda_handler(event, context):
             FunctionName=method_name,
             Payload=json.dumps(payload)
         )
+        logger.info("Succesfully invoked method.")
 
-        json_response = wrangled_data.get('Payload').read().decode("UTF-8")
+        json_response = json.loads(wrangled_data.get('Payload').read().decode("UTF-8"))
+        logger.info("JSON extracted from method response.")
 
-        if str(type(json_response)) != "<class 'str'>":
+        if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
-        logger.info("Succesfully invoked method lambda")
 
         funk.save_data(bucket_name, out_file_name,
-                       json_response, sqs_queue_url, sqs_message_group_id)
+                       json_response["data"], sqs_queue_url, sqs_message_group_id)
 
         logger.info("Successfully sent data to s3")
 

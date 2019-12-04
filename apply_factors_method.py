@@ -35,6 +35,8 @@ def lambda_handler(event, context):
             )
             logger.info("Completed imputation of " + str(question))
 
+        final_output = {"data": working_dataframe.to_json(orient="records")}
+
     except TypeError as e:
         error_message = (
             "Bad Data type in "
@@ -83,4 +85,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    return working_dataframe.to_json(orient="records")
+    final_output['success'] = True
+    return final_output

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -92,7 +91,9 @@ def lambda_handler(event, context):
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
 
-        logger.info("Succesfully calculated factors")
+        logger.info("Succesfully finished calculations of factors")
+
+        final_output = {"data": factors_dataframe.to_json(orient="records")}
 
     except ValueError as e:
         error_message = (
@@ -131,6 +132,6 @@ def lambda_handler(event, context):
             logger.error(log_message)
             return {"success": False, "error": error_message}
 
-    final_output = factors_dataframe.to_json(orient="records")
-
-    return json.loads(final_output)
+    logger.info("Successfully completed module: " + current_module)
+    final_output["success"] = True
+    return final_output

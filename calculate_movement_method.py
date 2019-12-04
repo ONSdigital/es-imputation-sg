@@ -84,8 +84,9 @@ def lambda_handler(event, context):
         final_dataframe = sorted_current.append(sorted_previous, sort=False)
 
         filled_dataframe = final_dataframe.fillna(0.0)
+        logger.info("Succesfully finished calculations of movement.")
 
-        final_output = filled_dataframe.to_json(orient='records')
+        final_output = {"data": filled_dataframe.to_json(orient='records')}
 
     except ValueError as e:
         error_message = "Parameter validation error in " \
@@ -94,7 +95,6 @@ def lambda_handler(event, context):
                         + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-
     except KeyError as e:
         error_message = "Key Error in " \
                         + current_module + " |- " \
@@ -102,7 +102,6 @@ def lambda_handler(event, context):
                         + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-
     except Exception as e:
         error_message = "General Error in " \
                         + current_module + " (" \
@@ -118,5 +117,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-
-    return json.loads(final_output)
+    final_output["success"] = True
+    return final_output

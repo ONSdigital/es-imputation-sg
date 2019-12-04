@@ -82,15 +82,17 @@ def lambda_handler(event, context):
         calculate_factors = lambda_client.invoke(
             FunctionName=method_name, Payload=json.dumps(payload)
         )
+        logger.info("Successfully invoked methond.")
+
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))
+        logger.info("JSON extracted from method response.")
 
-        if str(type(json_response)) != "<class 'list'>":
+        if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
-        logger.info("Successfully invoked lambda")
 
         funk.save_data(bucket_name, out_file_name,
-                       json.dumps(json_response), sqs_queue_url, sqs_message_group_id)
+                       json_response["data"], sqs_queue_url, sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
 

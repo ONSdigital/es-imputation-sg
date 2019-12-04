@@ -109,13 +109,12 @@ def lambda_handler(event, context):
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
-    logger = logging.getLogger("Starting " + current_module)
+    logger = logging.getLogger(current_module)
     error_message = ''
     log_message = ''
     checkpoint = 0
 
     try:
-
         logger.info("Starting " + current_module)
 
         schema = EnvironSchema()
@@ -227,14 +226,17 @@ def lambda_handler(event, context):
             imputed_data = lambda_client.invoke(FunctionName=method_name,
                                                 Payload=json.dumps(json_payload))
 
-            logger.info("Successfully invoked the movement method lambda")
+            logger.info("Succesfully invoked method.")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
-            if str(type(json_response)) != "<class 'list'>":
+            logger.info("JSON extracted from method response.")
+
+            if not json_response['success']:
                 raise funk.MethodFailure(json_response['error'])
+
             imputation_run_type = "Calculate Movement."
             funk.save_data(bucket_name, out_file_name,
-                           json.dumps(json_response), sqs_queue_url, sqs_message_group_id)
+                           json_response["data"], sqs_queue_url, sqs_message_group_id)
 
             logger.info("Successfully sent the data to s3")
 
