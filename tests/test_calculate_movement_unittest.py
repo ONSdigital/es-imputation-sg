@@ -2,8 +2,8 @@ import json
 import unittest
 import unittest.mock as mock
 
-import pandas as pd
 from botocore.response import StreamingBody
+import pandas as pd
 
 import calculate_movement_wrangler
 
@@ -115,8 +115,8 @@ class TestClass(unittest.TestCase):
 
         with open('tests/fixtures/method_output_compare_result.json', "r") as file:
             mock_lambda.return_value.invoke.return_value.get.return_value \
-            .read.return_value.decode.return_value = \
-            json.dumps({"success": True,
+                .read.return_value.decode.return_value = \
+                    json.dumps({"success": True,
                         "data": file.read()})
 
             response = calculate_movement_wrangler.lambda_handler(

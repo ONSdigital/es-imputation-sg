@@ -72,7 +72,7 @@ class TestWranglerAndMethod():
                     with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read().decode("UTF-8")
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                        
+
                         response = iqrs_wrangler.lambda_handler(
                             mock_event,
                             context_object,

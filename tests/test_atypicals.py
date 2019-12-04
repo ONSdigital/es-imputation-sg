@@ -317,7 +317,7 @@ class TestClass():
                 mock_client_object.invoke.return_value.get.return_value \
                     .read.return_value.decode.return_value = \
                     json.dumps({"success": False,
-                        "error": "This is an error message"})
+                                "error": "This is an error message"})
                 with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666

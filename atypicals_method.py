@@ -1,4 +1,3 @@
-import json
 import logging
 
 import numpy as np
@@ -45,7 +44,6 @@ def lambda_handler(event, context):
 
         final_output = {"data": json_out}
 
-
     except KeyError as e:
         error_message = (
             "Key Error in "
@@ -72,7 +70,7 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        
+
     logger.info("Successfully completed module: " + current_module)
     final_output["success"] = True
     return final_output

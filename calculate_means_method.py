@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-import json
 
 import imputation_functions as impfunc
 
@@ -84,7 +83,6 @@ def lambda_handler(event, context):
         logger.info("Succesfully finished calculations of means.")
 
         final_output = {"data": df.to_json(orient="records")}
-
 
     except KeyError as e:
         error_message = (

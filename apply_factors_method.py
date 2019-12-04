@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-import json
 
 
 def lambda_handler(event, context):

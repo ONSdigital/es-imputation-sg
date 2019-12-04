@@ -98,10 +98,8 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
 
-        
-
         funk.save_data(bucket_name, out_file_name,
-                        json_response["data"], sqs_queue_url, sqs_message_group_id)
+                       json_response["data"], sqs_queue_url, sqs_message_group_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
