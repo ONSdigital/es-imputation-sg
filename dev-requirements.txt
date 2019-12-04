@@ -1,5 +1,4 @@
 -i https://pypi.org/simple
-# test
 alabaster==0.7.12
 appdirs==1.4.3
 asn1crypto==0.24.0
