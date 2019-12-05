@@ -364,7 +364,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
                 with mock.patch(
-                        "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
+                    "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
                 ) as get_data:
                     mocked_client = mock.Mock()
                     mocked.return_value = mocked_client
@@ -446,7 +446,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
                 with mock.patch(
-                        "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
+                    "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
                 ) as funk_get_dataframe:
                     mocked_client = mock.Mock()
                     mocked.return_value = mocked_client

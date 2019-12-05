@@ -149,7 +149,8 @@ class TestClass(unittest.TestCase):
 
         assert response2.shape[0] <= 0
 
-    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.' +
+                'aws_functions.send_sns_message_with_anomalies')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
     @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
@@ -279,7 +280,8 @@ class TestClass(unittest.TestCase):
         assert not response["success"]
         assert "Key Error" in response["error"]
 
-    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.' +
+                'aws_functions.send_sns_message_with_anomalies')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')

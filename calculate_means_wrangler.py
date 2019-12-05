@@ -67,8 +67,8 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
-                                                   in_file_name,
-                                                   incoming_message_group)
+                                                            in_file_name,
+                                                            incoming_message_group)
 
         logger.info("Succesfully retrieved data")
 
@@ -99,7 +99,8 @@ def lambda_handler(event, context):
             raise exception_classes.MethodFailure(json_response['error'])
 
         aws_functions.save_data(bucket_name, out_file_name,
-                       json_response["data"], sqs_queue_url, sqs_message_group_id)
+                                json_response["data"], sqs_queue_url,
+                                sqs_message_group_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
@@ -110,7 +111,8 @@ def lambda_handler(event, context):
 
         logger.info(aws_functions.delete_data(bucket_name, in_file_name))
 
-        aws_functions.send_sns_message(checkpoint, sns_topic_arn, "Imputation - Calculate Means.")
+        aws_functions.send_sns_message(checkpoint, sns_topic_arn,
+                                       "Imputation - Calculate Means.")
         logger.info("Succesfully sent message to sns")
 
     except AttributeError as e:

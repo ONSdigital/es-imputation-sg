@@ -111,7 +111,7 @@ def lambda_handler(event, context):
         logger.info("Successfully deleted input data.")
 
         logger.info(aws_functions.send_sns_message(checkpoint, sns_topic_arn,
-                                          "Imputation - Atypicals."))
+                                                   "Imputation - Atypicals."))
 
         logger.info("Succesfully sent message to sns")
 

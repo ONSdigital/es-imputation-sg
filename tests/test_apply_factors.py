@@ -70,7 +70,7 @@ class TestApplyFactors(unittest.TestCase):
         queue = sqs.create_queue(QueueName="test_queue")
         sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         apply_factors_wrangler.aws_functions.save_data("bucket_name", "Test",
-                                              "message", sqs_queue_url, "")
+                                                       "message", sqs_queue_url, "")
 
         messages = queue.receive_messages()
         assert len(messages) == 1
@@ -111,7 +111,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q607_constructional_fill"
             },
         ):
-            with mock.patch("apply_factors_wrangler.aws_functions.get_dataframe") as mocked:
+            with mock.patch("apply_factors_wrangler.aws_functions.get_dataframe")\
+                    as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = apply_factors_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
@@ -196,7 +197,7 @@ class TestApplyFactors(unittest.TestCase):
             message = file.read()
 
             apply_factors_wrangler.aws_functions.save_data("bucket_name", "Test",
-                                                  message, sqs_queue_url, "")
+                                                           message, sqs_queue_url, "")
             # s3 bit
         client = boto3.client(
             "s3",
