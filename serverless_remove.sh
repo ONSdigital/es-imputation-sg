@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-cd imputation-deploy-repository
+cd imputation-repository
 echo Destroying serverless bundle...
 serverless remove --verbose;
