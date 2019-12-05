@@ -38,7 +38,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -86,7 +86,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -130,7 +130,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -181,7 +181,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -224,7 +224,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -283,7 +283,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:
@@ -327,7 +327,7 @@ functions:
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-commonfunctions:15
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
     tags:
       app: results
     environment:

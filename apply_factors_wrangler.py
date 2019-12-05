@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
-from esawsfunctions import funk
+from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
 from imputation_functions import produce_columns
@@ -72,18 +72,19 @@ def lambda_handler(event, context):
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        factors_dataframe, receipt_handler = funk.get_dataframe(
+        factors_dataframe, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url, bucket_name, in_file_name, incoming_message_group)
         logger.info("Successfully retrieved data from sqs")
 
         # Reads in non responder data
-        non_responder_dataframe = funk.read_dataframe_from_s3(
+        non_responder_dataframe = aws_functions.read_dataframe_from_s3(
             bucket_name, non_responder_data_file)
 
         logger.info("Successfully retrieved non-responder data from s3")
 
         # Read in previous period data for current period non-responders
-        prev_period_data = funk.read_dataframe_from_s3(bucket_name, previous_data_file)
+        prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
+                                                                previous_data_file)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
@@ -94,7 +95,7 @@ def lambda_handler(event, context):
             questions_list,
             ['responder_id']
         )
-        pd.set_option('display.max_columns', 30)
+
         for question in questions_list:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
@@ -140,7 +141,7 @@ def lambda_handler(event, context):
         logger.info("JSON extracted from method response.")
 
         if not json_response['success']:
-            raise funk.MethodFailure(json_response['error'])
+            raise exception_classes.MethodFailure(json_response['error'])
 
         imputed_non_responders = pd.read_json(json_response["data"])
 
@@ -186,15 +187,16 @@ def lambda_handler(event, context):
 
         message = filtered_data.to_json(orient="records")
 
-        funk.save_to_s3(bucket_name, out_file_name, message)
+        aws_functions.save_to_s3(bucket_name, out_file_name, message)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
-        funk.send_sns_message(checkpoint, sns_topic_arn, 'Imputation - Apply Factors.')
+        aws_functions.send_sns_message(checkpoint, sns_topic_arn,
+                                       'Imputation - Apply Factors.')
         logger.info("Successfully sent message to sns")
-        logger.info(funk.delete_data(bucket_name, in_file_name))
+        logger.info(aws_functions.delete_data(bucket_name, in_file_name))
 
     except TypeError as e:
         error_message = (
@@ -248,7 +250,7 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except funk.MethodFailure as e:
+    except exception_classes.MethodFailure as e:
         error_message = e.error_message
         log_message = "Error in " + method_name + "."
     except Exception as e:
@@ -267,6 +269,6 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": checkpoint}
+
+    logger.info("Successfully completed module: " + current_module)
+    return {"success": True, "checkpoint": checkpoint}

@@ -83,13 +83,14 @@ class TestClass(unittest.TestCase):
         cls.mock_boto_wrangler_patcher.stop()
         cls.mock_os_patcher.stop()
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message_with_anomalies')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.' +
+                'aws_functions.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def test_wrangler(self, mock_s3_return, mock_sqs_return, mock_client, mock_strata,
                       mock_lambda, mock_send_sqs, mock_sns_message):
 
@@ -148,10 +149,11 @@ class TestClass(unittest.TestCase):
 
         assert response2.shape[0] <= 0
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message_with_anomalies')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.' +
+                'aws_functions.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def test_full_response(self, mock_s3_return, mock_sqs_return,
                            mock_send_sqs, mock_sns_message):
 
@@ -172,13 +174,13 @@ class TestClass(unittest.TestCase):
         self.assertTrue(response["success"])
         self.assertFalse(response["impute"])
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def test_wrangler_incomplete_json(self, mock_s3_return, mock_sqs_return, mock_s3_save,
                                       mock_strata, mock_lambda, mock_send_sqs,
                                       mock_sns_message):
@@ -210,13 +212,13 @@ class TestClass(unittest.TestCase):
         assert response["success"] is False
         assert response["error"].__contains__("""Incomplete Lambda response""")
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def testing_wrangler_bad_data(self, mock_s3_return, mock_sqs_return,
                                   mock_s3_save, mock_strata, mock_lambda,
                                   mock_send_sqs, mock_sns_message):
@@ -249,13 +251,13 @@ class TestClass(unittest.TestCase):
         assert response["success"] is False
         assert response["error"].__contains__("""Bad data encountered""")
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def test_wrangler_key_error_exception(self, mock_s3_return, mock_sqs_return,
                                           mock_s3_save, mock_strata, mock_lambda,
                                           mock_send_sqs, mock_sns_message):
@@ -278,13 +280,14 @@ class TestClass(unittest.TestCase):
         assert not response["success"]
         assert "Key Error" in response["error"]
 
-    @mock.patch('calculate_movement_wrangler.funk.send_sns_message_with_anomalies')
-    @mock.patch('calculate_movement_wrangler.funk.save_data')
+    @mock.patch('calculate_movement_wrangler.' +
+                'aws_functions.send_sns_message_with_anomalies')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.boto3.client')
     @mock.patch('calculate_movement_wrangler.strata_mismatch_detector')
-    @mock.patch('calculate_movement_wrangler.funk.save_to_s3')
-    @mock.patch('calculate_movement_wrangler.funk.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.funk.read_dataframe_from_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
+    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
     def test_wrangler_method_fail(self, mock_s3_return, mock_sqs_return,
                                   mock_s3_save, mock_strata, mock_lambda,
                                   mock_send_sqs, mock_sns_message):

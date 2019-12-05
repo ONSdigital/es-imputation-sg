@@ -87,7 +87,8 @@ class TestMeans(unittest.TestCase):
         )
 
         client.create_bucket(Bucket="Mike")
-        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -212,7 +213,8 @@ class TestMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_wrangles_bad_data(self):
-        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -235,7 +237,8 @@ class TestMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_incomplete_read(self):
-        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -268,7 +271,8 @@ class TestMeans(unittest.TestCase):
         )
 
         client.create_bucket(Bucket="Mike")
-        with mock.patch("calculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("calculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("calculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object

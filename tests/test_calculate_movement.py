@@ -130,7 +130,7 @@ class TestStringMethods(unittest.TestCase):
             # using get_from_s3 to force exception early on.
 
             with mock.patch('calculate_movement_wrangler'
-                            '.funk.read_dataframe_from_s3') as mocked:
+                            '.aws_functions.read_dataframe_from_s3') as mocked:
 
                 mocked.side_effect = Exception('SQS Failure')
 
