@@ -94,7 +94,8 @@ class TestRecalculateMeans(unittest.TestCase):
         )
 
         client.create_bucket(Bucket="Mike")
-        with mock.patch("recalculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("recalculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("recalculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -164,7 +165,8 @@ class TestRecalculateMeans(unittest.TestCase):
         with open('tests/fixtures/recalculate_means_input.json') as file:
             input_data = file.read()
         with mock.patch('recalculate_means_wrangler.boto3.client') as mock_boto:
-            with mock.patch('recalculate_means_wrangler.funk.get_dataframe') as mock_funk:
+            with mock.patch('recalculate_means_wrangler.aws_functions.get_dataframe')\
+                    as mock_funk:
                 mocked_client = mock.Mock()
                 mock_boto.return_value = mocked_client
                 mock_funk.return_value = input_data, 666
@@ -213,7 +215,8 @@ class TestRecalculateMeans(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_incomplete_read(self):
-        with mock.patch("recalculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("recalculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("recalculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -248,7 +251,8 @@ class TestRecalculateMeans(unittest.TestCase):
         )
 
         client.create_bucket(Bucket="Mike")
-        with mock.patch("recalculate_means_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("recalculate_means_wrangler.aws_functions.get_dataframe")\
+                as mock_squeues:
             with mock.patch("recalculate_means_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object

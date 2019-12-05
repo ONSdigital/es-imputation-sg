@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
-from esawsfunctions import funk
+from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
 
@@ -156,13 +156,13 @@ def lambda_handler(event, context):
         segmentation = config['segmentation']  # Set as "strata"
         stored_segmentation = config['stored_segmentation']  # Set as "goodstrata"
 
-        previous_period_data = funk.read_dataframe_from_s3(bucket_name,
-                                                           previous_period_file)
+        previous_period_data = aws_functions.read_dataframe_from_s3(
+            bucket_name, previous_period_file)
         logger.info("Completed reading data from s3")
 
-        data, receipt_handler = funk.get_dataframe(sqs_queue_url, bucket_name,
-                                                   in_file_name,
-                                                   incoming_message_group)
+        data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
+                                                            in_file_name,
+                                                            incoming_message_group)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
@@ -181,7 +181,7 @@ def lambda_handler(event, context):
 
             logger.info("Successfully created non-responders json")
 
-            funk.save_to_s3(bucket_name, non_response_file, non_responders_json)
+            aws_functions.save_to_s3(bucket_name, non_response_file, non_responders_json)
 
             logger.info("Successfully saved to s3 bucket")
 
@@ -232,11 +232,12 @@ def lambda_handler(event, context):
             logger.info("JSON extracted from method response.")
 
             if not json_response['success']:
-                raise funk.MethodFailure(json_response['error'])
+                raise exception_classes.MethodFailure(json_response['error'])
 
             imputation_run_type = "Calculate Movement."
-            funk.save_data(bucket_name, out_file_name,
-                           json_response["data"], sqs_queue_url, sqs_message_group_id)
+            aws_functions.save_data(bucket_name, out_file_name,
+                                    json_response["data"], sqs_queue_url,
+                                    sqs_message_group_id)
 
             logger.info("Successfully sent the data to s3")
 
@@ -245,7 +246,7 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
             anomalies = pd.DataFrame
-            funk.save_data(
+            aws_functions.save_data(
                 bucket_name,
                 in_file_name,
                 data.to_json(orient="records"),
@@ -258,9 +259,9 @@ def lambda_handler(event, context):
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
-        funk.send_sns_message_with_anomalies(checkpoint,
-                                             str(anomalies), sns_topic_arn,
-                                             'Imputation - ' + imputation_run_type)
+        aws_functions.send_sns_message_with_anomalies(
+            checkpoint, str(anomalies), sns_topic_arn,
+            'Imputation - ' + imputation_run_type)
 
         logger.info("Successfully sent the SNS message")
 
@@ -304,7 +305,7 @@ def lambda_handler(event, context):
                         + str(context.aws_request_id)
 
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except funk.MethodFailure as e:
+    except exception_classes.MethodFailure as e:
         error_message = e.error_message
         log_message = "Error in " + method_name + "."
     except Exception as e:
@@ -320,11 +321,10 @@ def lambda_handler(event, context):
         if(len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return {
-                "success": True,
-                "checkpoint": checkpoint,
-                "impute": to_be_imputed,
-                "distinct_values": distinct_values
-            }
+
+    logger.info("Successfully completed module: " + current_module)
+    return {
+        "success": True,
+        "checkpoint": checkpoint,
+        "impute": to_be_imputed
+    }

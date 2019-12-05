@@ -56,10 +56,10 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_s3
     @mock_lambda
-    @mock.patch("iqrs_wrangler.funk.send_sns_message")
-    @mock.patch("iqrs_wrangler.funk.save_data")
+    @mock.patch("iqrs_wrangler.aws_functions.send_sns_message")
+    @mock.patch("iqrs_wrangler.aws_functions.save_data")
     def test_wrangler_happy_path(self, mock_me, mock_you):
-        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("iqrs_wrangler.aws_functions.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -124,7 +124,7 @@ class TestWranglerAndMethod():
             assert_frame_equal(response_df, expected_df)
 
     @mock.patch("iqrs_wrangler.boto3")
-    @mock.patch("iqrs_wrangler.funk.get_dataframe")
+    @mock.patch("iqrs_wrangler.aws_functions.get_dataframe")
     def test_wrangler_general_exception(self, mock_boto, mock_squeues):
         with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
             mock_client.side_effect = Exception()
@@ -166,7 +166,7 @@ class TestWranglerAndMethod():
 
     @mock_sqs
     @mock_lambda
-    @mock.patch("iqrs_wrangler.funk.get_dataframe")
+    @mock.patch("iqrs_wrangler.aws_functions.get_dataframe")
     def test_wrangler_key_error(self, mock_squeues):
         with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
             mock_client.side_effect = KeyError()
@@ -229,7 +229,7 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_lambda
     def test_wrangles_bad_data(self):
-        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("iqrs_wrangler.aws_functions.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -251,7 +251,7 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_lambda
     def test_incomplete_read(self):
-        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("iqrs_wrangler.aws_functions.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
@@ -274,10 +274,10 @@ class TestWranglerAndMethod():
     @mock_sqs
     @mock_s3
     @mock_lambda
-    @mock.patch("iqrs_wrangler.funk.send_sns_message")
-    @mock.patch("iqrs_wrangler.funk.save_data")
+    @mock.patch("iqrs_wrangler.aws_functions.send_sns_message")
+    @mock.patch("iqrs_wrangler.aws_functions.save_data")
     def test_wrangler_method_fail(self, mock_me, mock_you):
-        with mock.patch("iqrs_wrangler.funk.get_dataframe") as mock_squeues:
+        with mock.patch("iqrs_wrangler.aws_functions.get_dataframe") as mock_squeues:
             with mock.patch("iqrs_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object

@@ -137,22 +137,23 @@ class TestWranglerAndMethod(unittest.TestCase):
                 {"sqs_queue_url": sqs_queue_url}
         ):
             with mock.patch(
-                "calculate_imputation_factors_wrangler.boto3.client"
-            ) as mocked:
+                    "calculate_imputation_factors_wrangler.aws_functions"
+            ) as funk:
+                funk.get_dataframe.return_value = \
+                    pd.DataFrame(json.loads(json_content)), 777
+
                 with mock.patch(
-                        "calculate_imputation_factors_wrangler.funk"
-                ) as funk:
+                    "calculate_imputation_factors_wrangler.boto3.client"
+                ) as mocked:
                     mocked_client = mock.Mock()
                     mocked.return_value = mocked_client
-                    funk.get_dataframe.return_value = \
-                        pd.DataFrame(json.loads(json_content)), 777
 
-                    with open(method_input_file, "rb") as file:
-                        invoke_return = file
-
-                        mocked_client.invoke.return_value = {
-                            "Payload": StreamingBody(invoke_return, 2760)
-                        }
+                    with open(method_input_file, "r") as file:
+                        mocked_client.invoke.return_value \
+                            .get.return_value.read \
+                            .return_value.decode.return_value = json.dumps({
+                                "data": file.read(), "success": True
+                            })
 
                         out = calculate_imputation_factors_wrangler.lambda_handler(
                             mock_event, context_object
@@ -363,7 +364,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
                 with mock.patch(
-                        "calculate_imputation_factors_wrangler.funk.get_dataframe"
+                        "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
                 ) as get_data:
                     mocked_client = mock.Mock()
                     mocked.return_value = mocked_client
@@ -387,7 +388,7 @@ class TestWranglerAndMethod(unittest.TestCase):
     @mock_sqs
     def test_wrangler_key_error(self):
         with mock.patch(
-            "calculate_imputation_factors_wrangler.funk.get_dataframe"
+            "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
         ) as mocked:
             mocked.side_effect = KeyError()
             out = calculate_imputation_factors_wrangler.lambda_handler(
@@ -445,7 +446,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "calculate_imputation_factors_wrangler.boto3.client"
             ) as mocked:
                 with mock.patch(
-                        "calculate_imputation_factors_wrangler.funk.get_dataframe"
+                        "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
                 ) as funk_get_dataframe:
                     mocked_client = mock.Mock()
                     mocked.return_value = mocked_client

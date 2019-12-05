@@ -4,7 +4,7 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError, IncompleteReadError
-from esawsfunctions import funk
+from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
 
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
 
-        data, receipt_handler = funk.get_dataframe(
+        data, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url,
             bucket_name,
             in_file_name,
@@ -101,10 +101,11 @@ def lambda_handler(event, context):
         logger.info("JSON extracted from method response.")
 
         if not json_response['success']:
-            raise funk.MethodFailure(json_response['error'])
+            raise exception_classes.MethodFailure(json_response['error'])
 
-        funk.save_data(bucket_name, out_file_name,
-                       json_response["data"], sqs_queue_url, sqs_message_group_id)
+        aws_functions.save_data(bucket_name, out_file_name,
+                                json_response["data"], sqs_queue_url,
+                                sqs_message_group_id)
 
         logger.info("Successfully sent data to s3")
 
@@ -113,10 +114,10 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted message from sqs")
 
-        logger.info(funk.delete_data(bucket_name, in_file_name))
+        logger.info(aws_functions.delete_data(bucket_name, in_file_name))
 
-        funk.send_sns_message(checkpoint, sns_topic_arn,
-                              'Imputation - Recalculate Means.')
+        aws_functions.send_sns_message(checkpoint, sns_topic_arn,
+                                       'Imputation - Recalculate Means.')
         logger.info("Successfully sent message to sns")
 
     except AttributeError as e:
@@ -171,7 +172,7 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except funk.MethodFailure as e:
+    except exception_classes.MethodFailure as e:
         error_message = e.error_message
         log_message = "Error in " + method_name + "."
     except Exception as e:
@@ -190,6 +191,6 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": checkpoint}
+
+    logger.info("Successfully completed module: " + current_module)
+    return {"success": True, "checkpoint": checkpoint}
