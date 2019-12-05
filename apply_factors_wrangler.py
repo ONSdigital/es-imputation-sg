@@ -95,7 +95,7 @@ def lambda_handler(event, context):
             questions_list,
             ['responder_id']
         )
-        pd.set_option('display.max_columns', 30)
+
         for question in questions_list:
             prev_period_data = prev_period_data.rename(
                 index=str, columns={question: "prev_" + question}
