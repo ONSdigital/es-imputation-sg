@@ -68,7 +68,7 @@ This uses the same method as calculate means.
 
 **Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, **e.g. Q601,Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A Json string which contains all the created movements, saved in the respective movement_*question_name* columns.
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created movements, saved in the respective movement_*question_name* columns when successful or an error_message when not.
 
 
 ### Calculate Means Method
@@ -96,7 +96,7 @@ This uses the same method as calculate means.
 **Inputs:** This method will require all of the Movement columns to be on the data which is being sent to the method, **e.g. Movement_Q601_Asphalting_Sand, Movement_Q602_Building_Soft_Sand,....**. There is also a requirement that the Mean columns should be on the data. It's not used for the IQRS calculation, but it should be passed through for use by later steps.
 An iqrs_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A Json string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
+**Outputs:** A JSON string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
 
 ### Calculate ATypicals Method
 
@@ -113,7 +113,7 @@ Following this, if the Atypical value is > 0, we recalculate the movement value 
 **Inputs:** This method will require all of the Movement columns, the Mean columns and the IQRS columns to be on the data which is being sent to the method.
 An atyp_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A Json string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
+**Outputs:** A JSON string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
 
 
 ### Calculate Imputation Factors Method
@@ -135,7 +135,7 @@ An atyp_*question* column should be created for each question in the data wrangl
 
 **Inputs:** This method requires all question value columns for current period, question_value columns for previous period, and imputation factors for each question value column. Note: Method recieves rows that have not responded in current period but did in previous.
 
-**Outputs:** A Json string which represents the input - (prev_question_columns & imputation_factor columns) . Current question value columns are now imputed.
+**Outputs:** A JSON string which represents the input - (prev_question_columns & imputation_factor columns) . Current question value columns are now imputed.
 
 ## Imputation Functions
 

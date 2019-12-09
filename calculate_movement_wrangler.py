@@ -41,11 +41,11 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
                              stored_segmentation, current_time, previous_time,
                              current_segmentation, previous_segmentation):
     """
-    Looks only at id and strata columns. Then drops any duplicated rows(keep=false means
+    Looks only at id and strata columns. Then drops any duplicated rows (keep=false means
     that if there is a dupe it'll drop both). If there are any rows in this DataFrame it
     shows that the reference-strata combination was unique, and therefore the strata is
     different between periods.
-    :param data: The data the miss-match detection will be performed on.
+    :param data: The DataFrame the miss-match detection will be performed on.
     :param current_period: The current period of the run.
     :param time: Field name which is used as a gauge of time'. Added for IAC config.
     :param reference: Field name which is used as a reference for IAC.
@@ -64,7 +64,7 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
                                                     keep=False)
 
     if data_anomalies.size > 0:
-        # Filter so we only have current period stuff
+        # Filter to only include data from the current period
         fix_data = data_anomalies[data_anomalies[time] == int(current_period)][
             [reference, segmentation]]
         fix_data = fix_data.rename(columns={segmentation: stored_segmentation})
@@ -105,7 +105,8 @@ def lambda_handler(event, context):
     :param event: Contains Runtime_variables, which contain both the calculation_type &
                   distinct_values.
     :param context: N/A
-    :return: Success - True/False & Checkpoint
+    :return: Success - True & Checkpoint OR False & error message
+             Type: JSON
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."

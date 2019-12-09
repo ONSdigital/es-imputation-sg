@@ -28,8 +28,7 @@ def lambda_handler(event, context):
     :param event: JSON payload that contains: calculation_type, json_data, questions_list
                   Type: JSON.
     :param context: N/A
-    :return: final_output: The input data but now with the correct movements for
-                           the respective question columns - Type: JSON.
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Imputation Movement - Method"
     logger = logging.getLogger("Starting " + current_module)
