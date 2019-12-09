@@ -10,7 +10,7 @@ As imputation will not always run, there needs to be some way of checking if it'
 
 As the correct practice is to seperate out the creation of columns from the method, this wrangler is responsible for creating each questions responding movement column.
 
-Like every wrangler, it is responsible for saving data to S3 and updating the SNS for the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 for the next process, it is also responsible for sending data to the BPM.
 
 ### Calculate Means Wrangler
 
@@ -18,15 +18,15 @@ This is the second step in the imputation process. The wrangler ingests data fro
 
 Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method to be added to.
 
-Like every wrangler, it is responsible for saving data to S3 and updating the SNS for the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 for the next process, it is also responsible for sending data to the BPM.
 
 ### Calculate Imputation Factors Wangler
 
 This step is a combination of both calculate gb and non gb factors.
 
-Data is retrieved from the previous step from SQS, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
+Data is retrieved from the previous step from S3, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
 
-Once this has been calculated then the data is sent back to the SQS queue to be used by the next method.
+Once this has been calculated then the data is sent back to the S3 for use by the next method.
 
 
 ### Calculate IQRS Wrangler
@@ -80,6 +80,17 @@ This uses the same method as calculate means.
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created means values, saved in the respective means_*question_name* columns when successful or an error_message when not.
 
 
+### Calculate Imputation Factors Method
+
+**Name of Lambda:** imputation_calculate_imputation_factors_method.
+
+**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region,Land or Marine,Count of refs within cell. 
+
+**Inputs:** JSON string from wrangler with the needed columns.
+
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string containing imputation factors for each question in each aggregated group when successful or an error_message when not.
+
+
 ### Calculate IQRS method
 
 **Name of Lambda:** iqrs_method
@@ -114,15 +125,6 @@ An atyp_*question* column should be created for each question in the data wrangl
 **Outputs:** A JSON string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
 
 
-### Calculate Imputation Factors Method
-
-**Name of Lambda:** imputation_calculate_imputation_factors_method.
-
-**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region,Land or Marine,Count of refs within cell. 
-
-**Inputs:** JSON string from wrangler with the needed columns.
-
-**Outputs:** JSON string containing imputation factors for each question in each aggregated group. 
 
 
 ### Apply Factors Method
