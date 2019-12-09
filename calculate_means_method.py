@@ -13,7 +13,7 @@ def lambda_handler(event, context):
     :param event: JSON payload that contains: calculation_type, json_data, questions_list
                   Type: JSON.
     :param context: Context object
-    :return: JSON string
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Means - Method"
     error_message = ""

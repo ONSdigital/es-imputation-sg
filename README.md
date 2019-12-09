@@ -10,17 +10,15 @@ As imputation will not always run, there needs to be some way of checking if it'
 
 As the correct practice is to seperate out the creation of columns from the method, this wrangler is responsible for creating each questions responding movement column.
 
-Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 and updating the SNS for the next process, it is also responsible for sending data to the BPM.
 
 ### Calculate Means Wrangler
 
-This is the second step in the imputation process. The wrangler ingests data from the movements step, checks for anomalies,
-and formats the data to be passed through to the method.
+This is the second step in the imputation process. The wrangler ingests data from the movements step, checks for anomalies, and formats the data to be passed through to the method.
 
-Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method
-to be added to.
+Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method to be added to.
 
-Like every wrangler, it is responsible for dealing with sending data to the SQS Queue so that it can move to the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 and updating the SNS for the next process, it is also responsible for sending data to the BPM.
 
 ### Calculate Imputation Factors Wangler
 
@@ -79,7 +77,7 @@ This uses the same method as calculate means.
 
 **Inputs:** This method will require all of the Questions columns and movement columns to be on the data which is being sent to the method, **e.g. Q601,Q602...**. A means_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A JSON string which contains all the created means values, saved in the respective means_*question_name* columns.
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created means values, saved in the respective means_*question_name* columns when successful or an error_message when not.
 
 
 ### Calculate IQRS method
