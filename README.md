@@ -35,9 +35,9 @@ This is the third step of the imputation process. The wrangler reads the means d
 
 Next, the wrangler calls the method (see below) which populates the IQRS columns and passes the data back to the wrangler. The wrangler saves the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
-### Calculate Atypical Values
+### Calculate Atypical Values Wrangler
 
-This is the fourth step of the imputation process. The wrangler returns iqrs data from the sqs queue (the output from the calculate iqrs step). It converts this data from JSON format into a dataframe and then adds 7 new ATypical columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
+This is the fourth step of the imputation process. The wrangler returns IQRS data from the sqs queue (the output from the calculate IQRS step). It converts this data from JSON format into a DataFrame and then adds new Atypical columns (one for each question) onto the DataFrame. These columns are initially populated with 0 values within the wrangler.
 
 Next, the wrangler calls the method (see below) which populates the Atypical columns and passes the data back to the wrangler. The wrangler passes the data, in JSON format, back to the SQS queue so it can be used by the next process. It also sends data to the BPM via the SNS queue
 
@@ -64,7 +64,7 @@ This uses the same method as calculate means.
 
 **Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
 
-**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, **e.g. Q601,Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, **e.g. Q601, Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created movements, saved in the respective movement_*question_name* columns when successful or an error_message when not.
 
@@ -75,7 +75,7 @@ This uses the same method as calculate means.
 
 **Intro:** The calculate means method takes the movement values of each question, grouped by region and strata, and calculates the mean of each movement value. The result is then stored in a new means column.
 
-**Inputs:** This method will require all of the Questions columns and movement columns to be on the data which is being sent to the method, **e.g. Q601,Q602...**. A means_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+**Inputs:** This method will require all of the Questions columns and movement columns to be on the data which is being sent to the method, **e.g. Q601, Q602...**. A means_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created means values, saved in the respective means_*question_name* columns when successful or an error_message when not.
 
@@ -84,7 +84,7 @@ This uses the same method as calculate means.
 
 **Name of Lambda:** imputation_calculate_imputation_factors_method.
 
-**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region,Land or Marine,Count of refs within cell. 
+**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region, Land or Marine, Count of refs within the cell. 
 
 **Inputs:** JSON string from wrangler with the needed columns.
 
@@ -100,31 +100,30 @@ This uses the same method as calculate means.
  We also want to calculate the 75% percentile of each movement column of the same groups - **e.g. the 7
  5th percentile of the Movement_Q601_Asphalting_Sand for the group which has a region of 9 and a strata of E.** 
  
- The iqrs value for each question is calculated as 75th percentile - 25th percentile.
+ The IQRS value for each question is calculated as 75th percentile - 25th percentile.
 
 **Inputs:** This method will require all of the Movement columns to be on the data which is being sent to the method, **e.g. Movement_Q601_Asphalting_Sand, Movement_Q602_Building_Soft_Sand,....**. There is also a requirement that the Mean columns should be on the data. It's not used for the IQRS calculation, but it should be passed through for use by later steps.
 An iqrs_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A JSON string which contains all the created iqrs values, saved in the respective iqrs_*question_name* columns.
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created IQRS values, saved in the respective iqrs_*question_name* columns when successful or an error_message when not.
 
-### Calculate ATypicals Method
+
+### Calculate Atypicals Method
 
 **Name of Lambda:** atypicals_method
 
-**Intro:** The calculate atypical method calculates the atypical value for each row on the dataframe, and for each of the 7 questions, using the following formula (using question 601 as an example)
+**Intro:** The Calculate Atypical Method calculates the atypical value for each row on the DataFrame, and for each question, using the following formula (using question 601 as an example):
 
 **abs(Movement_Q601_Asphalting_Sand - Mean601) - 2 * iqrs601**
 
-Following this, if the Atypical value is > 0, we recalculate the movement value to be Null. Otherwise, we set the movement column to itself. eg, using Q601 as an example
+Following this, if the atypical value is > 0, we recalculate the movement value to be `null`. Otherwise, we set the movement column to itself. eg, using Q601 as an example:
 
 **If Atyp601 > 0, then Movement_Q601_Asphalting_Sand = null else Movement_Q601_Asphalting_Sand = Movement_Q601_Asphalting_Sand**
 
 **Inputs:** This method will require all of the Movement columns, the Mean columns and the IQRS columns to be on the data which is being sent to the method.
 An atyp_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
 
-**Outputs:** A JSON string which contains all the created atypical values, saved in the respective atyp_*question_name* columns.
-
-
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created atypical values, saved in the respective atyp_*question_name* columns when successful or an error_message when not.
 
 
 ### Apply Factors Method

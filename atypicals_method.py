@@ -8,10 +8,10 @@ import imputation_functions as imp_func
 
 def lambda_handler(event, context):
     """
-    Returns JSON data with new atypicals columns and respective values.
+    Returns JSON data with new Atypicals columns and respective values.
     :param event: JSON payload that contains: json_data and questions_list - Type: JSON.
     :param context: Context object.
-    :return: JSON string.
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Imputation Atypicals - Method."
     error_message = ""
