@@ -36,7 +36,7 @@ def lambda_handler(event, context):
     The method requires a column per question to store the factors.
     :param event:  Contains all the variables which are required for the specific run.
     :param context: N/A
-    :return: Success - True/False & Checkpoint
+    :return: Success & Checkpoint/Error - Type: JSON
     """
     current_module = "Imputation Apply Factors - Wrangler."
     error_message = ""

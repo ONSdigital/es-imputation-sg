@@ -33,7 +33,7 @@ def lambda_handler(event, context):
 
     :param event:
     :param context:
-    :return: Outcome Message - Type: Json String.
+    :return: Success & Checkpoint/Error - Type: JSON
     """
     current_module = "Imputation Recalculate Means - Wrangler."
     error_message = ""

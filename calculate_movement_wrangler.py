@@ -105,8 +105,7 @@ def lambda_handler(event, context):
     :param event: Contains Runtime_variables, which contain both the calculation_type &
                   distinct_values.
     :param context: N/A
-    :return: Success - True & Checkpoint OR False & error message
-             Type: JSON
+    :return: Success & Checkpoint & Impute/Error - Type: JSON
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
