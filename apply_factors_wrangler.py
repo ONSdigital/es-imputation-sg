@@ -130,7 +130,7 @@ def lambda_handler(event, context):
             "questions_list": questions_list
         }
 
-        # Non responder data should now contain all previous values 
+        # Non responder data should now contain all previous values
         #   and the imputaion columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,

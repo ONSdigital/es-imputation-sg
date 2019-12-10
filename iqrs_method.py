@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     :param event: JSON payload that contains: json_data, questions_list, distinct_values.
                   Type: JSON.
     :param context: N/A.
-    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}    
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "IQRS - Method"
     error_message = ""
