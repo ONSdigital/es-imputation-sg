@@ -8,7 +8,7 @@ def lambda_handler(event, context):
     Applies imputation factors on a question-by-question basis.
     :param event:  JSON payload that contains: json_data and questions_list - Type: JSON.
     :param context: N/A
-    :return: Working_dataframe - Type: JSON
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Apply Factors - Method"
     error_message = ""

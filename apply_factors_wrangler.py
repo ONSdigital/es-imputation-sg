@@ -130,7 +130,8 @@ def lambda_handler(event, context):
             "questions_list": questions_list
         }
 
-        # Non responder data should now contain all previous values and 7 imp columns
+        # Non responder data should now contain all previous values 
+        #   and the imputaion columns
         imputed_data = lambda_client.invoke(
             FunctionName=method_name,
             Payload=json.dumps(payload),
@@ -160,7 +161,6 @@ def lambda_handler(event, context):
         #       A List Of Factor Columns Plus (
         #           A List Of Movement Sum Columns Plus (
         #               A List Of Movement Count Columns))))
-        # See Mike For Why This Way And Not Variables Appended Together.
         cols_to_drop = produce_columns(
             "movement_",
             questions_list,
