@@ -32,7 +32,7 @@ def lambda_handler(event, context):
     The wrangler is responsible for preparing the data so the IQRS method can be applied.
     :param event: Contains all the variables which are required for the specific run.
     :param context: N/A
-    :return: Returns the Input data with the IQRS added onto the Data set.
+    :return: Success & Checkpoint/Error - Type: JSON
     """
     current_module = "Imputation IQRS - Wrangler."
     error_message = ""

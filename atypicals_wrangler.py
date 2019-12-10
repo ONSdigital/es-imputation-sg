@@ -29,9 +29,9 @@ class InputSchema(Schema):
 
 def lambda_handler(event, context):
     """
-    The wrangler converts the data from JSON format into a dataframe and then adds 7 new
-    ATypical columns (for the 7 questions) onto the dataframe.
-    These 7 columns are initially populated with 0 values.
+    The wrangler converts the data from JSON format into a dataframe and then adds new
+    Atypical columns (one for each question) onto the dataframe.
+    These columns are initially populated with 0 values.
     :param event: Contains all the variables which are required for the specific run.
     :param context: N/A
     :return:  Success & Checkpoint/Error - Type: JSON

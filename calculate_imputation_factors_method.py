@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     Calculates imputation factor for each question, in each aggregated group.
     :param event: JSON payload that contains: json_data, questions_list - Type: JSON.
     :param context: lambda context
-    :return: final_output - Type: JSON
+    :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Calculate Factors - Method"
     error_message = ""
