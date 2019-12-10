@@ -6,11 +6,11 @@
 
 This is the first step in the imputation section of the process. The Wrangler is responsible for checking if the data contains strata, if it does it checks for strata miss matches, if an anomaly is detected a notification will be created and handed to the BPM.
 
-As imputation will not always run, there needs to be some way of checking if it's an imputation run or not, this is known as check for non responsers. This task has been dealt with inside of the wranger and will bypass the imputation processing and pass the data on if there are no non-responders.
+As imputation will not always run, there needs to be some way of checking if it's an imputation run or not, a step known as check for non-responders. This wrangler performs that check if there are no non-responders, it will then bypass the imputation processing and pass the data to the next module.
 
-As the correct practice is to seperate out the creation of columns from the method, this wrangler is responsible for creating each questions responding movement column.
+As the correct practice is to separate out the creation of columns from the method, this wrangler is responsible for creating each question responding movement column.
 
-Like every wrangler, it is responsible for saving data to S3 for the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 for the next process. Completion status is published to SNS.
 
 ### Calculate Means Wrangler
 
@@ -18,22 +18,22 @@ This is the second step in the imputation process. The wrangler ingests data fro
 
 Formatting of the data involves adding blank means columns for each question, for the results of the calculations in the method to be added to.
 
-Like every wrangler, it is responsible for saving data to S3 for the next process, it is also responsible for sending data to the BPM.
+Like every wrangler, it is responsible for saving data to S3 for the next process. Completion status is published to SNS.
 
 ### Calculate Imputation Factors Wangler
 
-This step is a combination of both calculate gb and non gb factors.
+This step is a combination of both calculate gb and non-gb factors.
 
 Data is retrieved from the previous step from S3, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
 
-Once this has been calculated then the data is sent back to the S3 for use by the next method.
+Once this has been calculated then the data is sent back to the S3 for use by the next method. Completion status is published to SNS.
 
 
 ### Calculate IQRS Wrangler
 
-This is the third step of the imputation process. The wrangler returns means data from the sqs queue (the output from the calculate means step). It converts this data from JSON format into a dataframe and then adds 7 new IQRS columns (for the 7 questions) onto the dataframe. These 7 columns are initially populated with 0 values within the wrangler.
+This is the third step of the imputation process. The wrangler reads the means data from the S3 (the output from the calculate means step). It adds new IQRS columns (one for each question) onto the DataFrame. These columns are initially populated with 0 values within the wrangler.
 
-Next, the wrangler calls the method (see below) which populates the IQRS columns and passes the data back to the wrangler. The wrangler passes the data, in JSON format, back to the SQS queue so it can be used by the next process. It also sends data to the BPM via the SNS queue
+Next, the wrangler calls the method (see below) which populates the IQRS columns and passes the data back to the wrangler. The wrangler saves the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
 ### Calculate Atypical Values
 
