@@ -188,6 +188,12 @@ def lambda_handler(event, context):
             # Ensure that only responder_ids with a response
             # type of 2 (returned) get picked up
             data = data[data[response_type] == 2]
+            previous_period_data = \
+                previous_period_data[previous_period_data[response_type] == 2]
+
+            # Ensure that only rows that exist in both current and previous get picked up.
+            data = data[data[reference].isin(previous_period_data[reference])].dropna()
+            previous_period_data = previous_period_data[previous_period_data[reference].isin(data[reference])].dropna()  # noqa e501
 
             # Merged together so it can be sent via the payload to the method
             merged_data = pd.concat([data, previous_period_data])
