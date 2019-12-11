@@ -74,8 +74,8 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully retrieved data")
 
-        means_columns = impfunc.produce_columns("mean_", questions_list)
-        for question in means_columns.split(","):
+        means_columns = impfunc.produce_columns("mean_", questions_list.split(","))
+        for question in means_columns:
             data[question] = 0.0
 
         logger.info("Means columns succesfully added")
