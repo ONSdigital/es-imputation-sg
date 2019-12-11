@@ -47,7 +47,7 @@ functions:
       in_file_name: calculate_factors_out.json
       incoming_message_group: imputation-calculate-factors-out
       method_name: es-apply-factors-method
-      non_responder_file: non_responders_output.json
+      non_responder_file: non_responders_out.json
       out_file_name: apply_factors_out.json
       period: 201809
       previous_data_file: previous_period_enriched_stratared.json
@@ -190,7 +190,7 @@ functions:
       in_file_name: calculate_movement_out.json
       incoming_message_group: imputation-calculate-movement-out
       method_name: es-calculate-means-method
-      out_file_name: calculate_means_output.json
+      out_file_name: calculate_means_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-means-out
@@ -235,9 +235,8 @@ functions:
       in_file_name: strata_out.json
       incoming_message_group: strata-out
       method_name: es-calculate-movement-method
-      non_response_file: non_responders_output.json
+      non_response_file: non_responders_out.json
       out_file_name: calculate_movement_out.json
-      output_file: non_responders_output.json
       previous_period_file: previous_period_enriched_stratared.json
       previous_segmentation: previous_strata
       previous_time: previous_period
