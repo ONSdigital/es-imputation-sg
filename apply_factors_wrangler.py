@@ -183,7 +183,7 @@ def lambda_handler(event, context):
             )
         )
 
-        filtered_data = final_imputed.drop(cols_to_drop, axis=1)
+        filtered_data = final_imputed.drop(cols_to_drop, axis=1, errors='ignore')
 
         message = filtered_data.to_json(orient="records")
 
