@@ -48,7 +48,7 @@ functions:
       incoming_message_group: imputation-calculate-factors-out
       method_name: es-apply-factors-method
       non_responder_file: non_responders_out.json
-      out_file_name: apply_factors_out.json
+      out_file_name: imputation_apply_out.json
       period: 201809
       previous_data_file: previous_period_enriched_stratared.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
