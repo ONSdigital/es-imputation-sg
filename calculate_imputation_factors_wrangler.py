@@ -6,6 +6,9 @@ import boto3
 from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
+import pandas as pd
+
+from imputation_functions import produce_columns
 
 
 class EnvironSchema(Schema):
@@ -61,6 +64,9 @@ def lambda_handler(event, context):
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
 
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        period_column = event['RuntimeVariables']["period_column"]
+
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group)
@@ -91,8 +97,15 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise exception_classes.MethodFailure(json_response['error'])
 
+        output_df = pd.read_json(json_response['data'])
+        distinct_values.append(period_column)
+        final_df = output_df[produce_columns(
+                                             "imputation_factor_",
+                                             questions_list.split(','),
+                                             distinct_values
+                                            )].drop_duplicates().to_json(orient='records')
         aws_functions.save_data(bucket_name, out_file_name,
-                                json_response["data"], sqs_queue_url,
+                                final_df, sqs_queue_url,
                                 sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
