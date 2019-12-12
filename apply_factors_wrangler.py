@@ -111,13 +111,7 @@ def lambda_handler(event, context):
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(
             non_responder_dataframe,
-            factors_dataframe[
-                    produce_columns(
-                        "imputation_factor_",
-                        questions_list,
-                        distinct_values
-                    )
-            ],
+            factors_dataframe,
             on=distinct_values,
             how="inner",
         )
