@@ -47,7 +47,6 @@ functions:
       in_file_name: calculate_factors_out.json
       incoming_message_group: imputation-calculate-factors-out
       method_name: es-apply-factors-method
-      non_responder_file: non_responders_out.json
       out_file_name: imputation_apply_out.json
       period: 201809
       previous_data_file: previous_period_enriched_stratared.json
@@ -230,24 +229,17 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      current_segmentation: current_strata
-      current_time: current_period
       in_file_name: strata_out.json
       incoming_message_group: strata-out
       method_name: es-calculate-movement-method
-      non_response_file: non_responders_out.json
       out_file_name: calculate_movement_out.json
       previous_period_file: previous_period_enriched_stratared.json
-      previous_segmentation: previous_strata
-      previous_time: previous_period
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       reference: responder_id
       response_type: response_type
-      segmentation: strata
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-movement-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
-      stored_segmentation: goodstrata
       time: period
 
   deploy-calculate-movement-method:
