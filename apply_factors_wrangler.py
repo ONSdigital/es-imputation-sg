@@ -25,9 +25,9 @@ class EnvironSchema(Schema):
     out_file_name = fields.Str(required=True)
     period = fields.Str(required=True)
     previous_data_file = fields.Str(required=True)
+    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -54,6 +54,7 @@ def lambda_handler(event, context):
 
         # Event vars
         distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        sum_columns = event['RuntimeVariables']["sum_columns"]
 
         # Set up clients
         checkpoint = config["checkpoint"]
@@ -65,9 +66,9 @@ def lambda_handler(event, context):
         non_responder_data_file = config["non_responder_file"]
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
+        questions_list = config["questions_list"].split(",")
         sns_topic_arn = config["sns_topic_arn"]
         sqs_queue_url = config["sqs_queue_url"]
-        questions_list = config["questions_list"]
 
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
@@ -89,7 +90,6 @@ def lambda_handler(event, context):
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
 
-        questions_list = questions_list.split(",")
         prev_questions_list = produce_columns(
             "prev_",
             questions_list,
@@ -127,7 +127,8 @@ def lambda_handler(event, context):
         payload = {
             "json_data": json.loads(
                 non_responders_with_factors.to_json(orient="records")),
-            "questions_list": questions_list
+            "questions_list": questions_list,
+            "sum_columns": sum_columns
         }
 
         # Non responder data should now contain all previous values

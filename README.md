@@ -41,6 +41,11 @@ This is the fourth step of the imputation process. The wrangler returns IQRS dat
 
 Next, the wrangler calls the method (see below) which populates the Atypical columns and passes the data back to the wrangler. The wrangler saves the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
+### Recalculate Means Wrangler
+
+This wrangler recalculates the means of movement after the atypical values have been removed.
+
+This uses the same method as calculate means.
 
 ### Apply Factors Wrangler
 
@@ -49,12 +54,6 @@ This is the final step in the imputation process. This wrangler retrieves factor
 The factors data is merged on to the non-responder data next, adding imputation_factor_ [question]'s to each row. The merged data is sent to the Apply Factors Method.
 
 The result of the method is imputed values for each non-responder, this is joined back onto the responder data (used to calculate factors) and saved the data to S3 so it can be used by the next process. Completion status is published to SNS.
-
-### Recalculate Means Wrangler
-
-This wrangler recalculates the means of movement after the atypical values have been removed.
-
-This uses the same method as calculate means.
 
 ## Methods
 
@@ -132,8 +131,7 @@ An atyp_*question* column should be created for each question in the data wrangl
 
 **Intro:** The apply factors method takes in a DataFrame containing current period data, previous period data, and imputation factors, all on one row. It then performs as a row-by-row apply method the calculation: - current_value = prev_value * imputation_factor for each of the value columns. Finally drops the previous period data and imputation factor from the processed DataFrame
 
-**Inputs:** This method requires all question value columns for the current period, question_value columns for the previous period, and imputation factors for each question value column. Note: Method receives rows that have not responded in the current period but did in the previous.
-
+**Inputs:** This method requires the questions_list, the json_data and the sum_columns for the survey.
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which represents the input - (prev_question_columns & imputation_factor columns) when successful or an error_message when not. Current question value columns are now imputed.
 
 ## Imputation Functions

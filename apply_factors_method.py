@@ -37,7 +37,7 @@ def lambda_handler(event, context):
             logger.info("Completed imputation of " + str(question))
 
         working_dataframe = working_dataframe.apply(
-            lambda x: sum_data_columns(x, sum_columns))
+            lambda x: sum_data_columns(x, sum_columns), axis=1)
 
         final_output = {"data": working_dataframe.to_json(orient="records")}
 

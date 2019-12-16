@@ -21,7 +21,10 @@ mock_wrangles_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": "region",
+    "sum_columns": [{"column_name": "Q608_total", "data": {
+                    "Q603_concreting_sand": "+",
+                    "Q602_building_soft_sand": "+"}}]
   }
 }
 
@@ -273,6 +276,9 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.loads(methodinput.to_json(orient="records")),
+                "sum_columns": [{"column_name": "Q608_total", "data": {
+                    "Q603_concreting_sand": "+",
+                    "Q602_building_soft_sand": "+"}}],
                 "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
                                    "Q603_concreting_sand", "Q604_bituminous_gravel",
                                    "Q605_concreting_gravel", "Q606_other_gravel",
@@ -284,8 +290,8 @@ class TestApplyFactors(unittest.TestCase):
 
             outputdf = pd.read_json(response["data"])
 
-            valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
-            assert valuetotest == 4659
+            valuetotest = outputdf["Q608_total"].to_list()[0]
+            assert valuetotest == 57611
 
     @mock_sqs
     def test_attribute_error_method(self):
@@ -296,7 +302,7 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.dumps(methodinput),
-                "distinct_values": ["strata", "region"]
+                "sum_columns": [{"column_name": "test", "data": {"Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
