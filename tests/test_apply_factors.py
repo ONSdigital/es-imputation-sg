@@ -300,7 +300,7 @@ class TestApplyFactors(unittest.TestCase):
             outputdf = pd.read_json(response["data"])
 
             valuetotest = outputdf["Q608_total"].to_list()[0]
-            assert valuetotest == 57611
+            assert valuetotest == 48293
 
     @mock_sqs
     def test_attribute_error_method(self):
