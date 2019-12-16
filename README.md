@@ -132,6 +132,12 @@ An atyp_*question* column should be created for each question in the data wrangl
 **Intro:** The apply factors method takes in a DataFrame containing current period data, previous period data, and imputation factors, all on one row. It then performs as a row-by-row apply method the calculation: - current_value = prev_value * imputation_factor for each of the value columns. Finally drops the previous period data and imputation factor from the processed DataFrame
 
 **Inputs:** This method requires the questions_list, the json_data and the sum_columns for the survey.
+
+```
+"sum_columns": [{"column_name": "Q608_total", "data": {
+                    "Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
+```
+
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which represents the input - (prev_question_columns & imputation_factor columns) when successful or an error_message when not. Current question value columns are now imputed.
 
 ## Imputation Functions
