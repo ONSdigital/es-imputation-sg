@@ -19,6 +19,7 @@ def lambda_handler(event, context):
         logger.info("Apply Factors Method Begun")
 
         json_data = event["json_data"]
+        sum_columns = event["sum_columns"]
         working_dataframe = pd.DataFrame(json_data)
 
         questions_list = event["questions_list"]
@@ -34,6 +35,9 @@ def lambda_handler(event, context):
                 ["prev_" + question, "imputation_factor_" + question], axis=1
             )
             logger.info("Completed imputation of " + str(question))
+
+        working_dataframe = working_dataframe.apply(
+            lambda x: sum_data_columns(x, sum_columns))
 
         final_output = {"data": working_dataframe.to_json(orient="records")}
 
@@ -87,3 +91,17 @@ def lambda_handler(event, context):
     logger.info("Successfully completed module: " + current_module)
     final_output['success'] = True
     return final_output
+
+
+def sum_data_columns(input_row, sum_columns):
+    # Calculate all sum columns.
+    for sum_column in sum_columns:
+        new_sum = 0
+        for data_column in sum_column['data']:
+            if sum_column['data'][data_column] == "+":
+                new_sum += input_row[data_column]
+            elif sum_column['data'][data_column] == "-":
+                new_sum -= input_row[data_column]
+        input_row[sum_column['column_name']] = new_sum
+
+    return input_row
