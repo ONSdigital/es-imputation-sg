@@ -61,9 +61,11 @@ The result of the method is imputed values for each non-responder, this is joine
 
 **Name of Lambda:** imputation_calculate_movement_method.
 
-**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
+**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value. <br>
+**e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
 
-**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, **e.g. Q601, Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method. <br>
+**e.g. Q601, Q602... A movement_question column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.**
 
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created movements, saved in the respective movement_*question_name* columns when successful or an error_message when not.
 
