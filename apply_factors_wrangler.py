@@ -55,7 +55,7 @@ def lambda_handler(event, context):
         distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
         sum_columns = event['RuntimeVariables']["sum_columns"]
         raw_input_file \
-            = event['RuntimeVariables']['raw_input_file']  # strata_out for sandy
+            = event['RuntimeVariables']['raw_input_file']
 
         # Set up clients
         checkpoint = config["checkpoint"]
