@@ -3,10 +3,10 @@ import logging
 import os
 
 import boto3
+import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
-import pandas as pd
 
 from imputation_functions import produce_columns
 
@@ -88,7 +88,7 @@ def lambda_handler(event, context):
         calculate_factors = lambda_client.invoke(
             FunctionName=method_name, Payload=json.dumps(payload)
         )
-        logger.info("Successfully invoked methond.")
+        logger.info("Successfully invoked method.")
 
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))

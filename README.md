@@ -4,7 +4,7 @@
 
 ### Calculate Movements Wrangler
 
-This is the first step in the imputation section of the process. The Wrangler is responsible for checking if the data contains strata, if it does it checks for strata miss matches, if an anomaly is detected a notification will be created and handed to the BPM.
+This is the first step in the imputation section of the process. 
 
 As imputation will not always run, there needs to be some way of checking if it's an imputation run or not, a step known as check for non-responders. This wrangler performs that check if there are no non-responders, it will then bypass the imputation processing and pass the data to the next module.
 
