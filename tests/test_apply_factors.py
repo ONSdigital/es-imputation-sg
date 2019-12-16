@@ -302,7 +302,8 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.dumps(methodinput),
-                "sum_columns": [{"column_name": "test", "data": {"Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
+                "sum_columns": [{"column_name": "test", "data": {
+                    "Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
