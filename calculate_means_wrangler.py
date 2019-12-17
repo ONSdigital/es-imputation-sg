@@ -7,6 +7,8 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
+import imputation_functions as imp_func
+
 
 class InputSchema(Schema):
     """
@@ -72,7 +74,8 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully retrieved data")
 
-        for question in questions_list.split(","):
+        means_columns = imp_func.produce_columns("mean_", questions_list.split(","))
+        for question in means_columns:
             data[question] = 0.0
 
         logger.info("Means columns succesfully added")

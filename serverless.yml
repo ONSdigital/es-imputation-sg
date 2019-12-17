@@ -36,9 +36,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -47,10 +47,9 @@ functions:
       in_file_name: calculate_factors_out.json
       incoming_message_group: imputation-calculate-factors-out
       method_name: es-apply-factors-method
-      non_responder_file: non_responders_output.json
-      out_file_name: apply_factors_out.json
+      out_file_name: imputation_apply_out.json
       period: 201809
-      previous_data_file: previous_period_enriched_stratared.json
+      previous_data_file: prev_datafile.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
@@ -66,12 +65,10 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
-    environment:
-      sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-atypicals-wrangler:
     name: es-atypicals-wrangler
@@ -84,9 +81,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -112,8 +109,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
 
@@ -128,9 +125,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -156,8 +153,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
     environment:
@@ -179,9 +176,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -190,7 +187,7 @@ functions:
       in_file_name: calculate_movement_out.json
       incoming_message_group: imputation-calculate-movement-out
       method_name: es-calculate-means-method
-      out_file_name: calculate_means_output.json
+      out_file_name: calculate_means_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-means-out
@@ -207,8 +204,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
 
@@ -222,33 +219,25 @@ functions:
       exclude:
         - ./**
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      current_segmentation: current_strata
-      current_time: current_period
       in_file_name: strata_out.json
       incoming_message_group: strata-out
       method_name: es-calculate-movement-method
-      non_response_file: non_responders_output.json
       out_file_name: calculate_movement_out.json
-      output_file: non_responders_output.json
       previous_period_file: previous_period_enriched_stratared.json
-      previous_segmentation: previous_strata
-      previous_time: previous_period
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       reference: responder_id
       response_type: response_type
-      segmentation: strata
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-movement-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
-      stored_segmentation: goodstrata
       time: period
 
   deploy-calculate-movement-method:
@@ -262,13 +251,10 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
-    environment:
-      current_period: 201809
-      previous_period: 201806
 
   deploy-iqrs-wrangler:
     name: es-iqrs-wrangler
@@ -281,9 +267,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -309,8 +295,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
 
@@ -325,9 +311,9 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:10
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:2
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:1
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
@@ -341,3 +327,5 @@ functions:
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-recalculate-means-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
+plugins:
+  - serverless-latest-layer-version

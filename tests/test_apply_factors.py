@@ -18,10 +18,16 @@ class MockContext:
 mock_wrangles_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
+    "period_column": "period",
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": "region",
+    "raw_input_file": "non_responders_output.json",
+    "sum_columns": [{"column_name": "Q608_total", "data": {
+                    "Q603_concreting_sand": "+",
+                    "Q602_building_soft_sand": "+"}}
+                    ]
   }
 }
 
@@ -38,7 +44,6 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "mike",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": "test-queue",
                 "previous_data_file": "previous_period_enriched_stratared.json",
@@ -97,7 +102,6 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "mike",
                 "checkpoint": "3",
                 "method_name": "lambda_method_function",
-                "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
@@ -111,7 +115,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q607_constructional_fill"
             },
         ):
-            with mock.patch("apply_factors_wrangler.aws_functions.get_dataframe")\
+            with mock.patch("apply_factors_wrangler"
+                            ".aws_functions.read_dataframe_from_s3")\
                     as mocked:
                 mocked.side_effect = Exception("SQS Failure")
                 response = apply_factors_wrangler.lambda_handler(
@@ -136,7 +141,10 @@ class TestApplyFactors(unittest.TestCase):
                     "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
                                        "Q603_concreting_sand", "Q604_bituminous_gravel",
                                        "Q605_concreting_gravel", "Q606_other_gravel",
-                                       "Q607_constructional_fill"]
+                                       "Q607_constructional_fill"],
+                    "sum_columns": [{"column_name": "Q608_total", "data": {
+                        "Q603_concreting_sand": "+",
+                        "Q602_building_soft_sand": "+"}}]
                 }
                 response = lambda_method_function.lambda_handler(
                     mock_event, context_object
@@ -225,7 +233,6 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "MIKE",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
@@ -250,7 +257,7 @@ class TestApplyFactors(unittest.TestCase):
                             json.loads(message)), 666
                         mock_funk.read_dataframe_from_s3.return_value =\
                             pd.DataFrame(json.loads(norespfile.read()))
-                        with open("tests/fixtures/non_responders_return.json", "r")\
+                        with open("tests/fixtures/apply_factors_return.json", "r")\
                                 as file:
 
                             mock_client_object.invoke.return_value\
@@ -273,6 +280,15 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.loads(methodinput.to_json(orient="records")),
+                # Note, sum columns here actually overwrites 608 total
+                # but this way it checks both paths in sum_data_columns
+                "sum_columns": [{"column_name": "Q608_total", "data": {
+                                    "Q603_concreting_sand": "+",
+                                    "Q602_building_soft_sand": "+"}},
+                                {"column_name": "Q608_total", "data": {
+                                    "Q603_concreting_sand": "+",
+                                    "Q602_building_soft_sand": "-"}}
+                                ],
                 "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
                                    "Q603_concreting_sand", "Q604_bituminous_gravel",
                                    "Q605_concreting_gravel", "Q606_other_gravel",
@@ -284,8 +300,8 @@ class TestApplyFactors(unittest.TestCase):
 
             outputdf = pd.read_json(response["data"])
 
-            valuetotest = outputdf["Q602_building_soft_sand"].to_list()[0]
-            assert valuetotest == 4659
+            valuetotest = outputdf["Q608_total"].to_list()[0]
+            assert valuetotest == 48293
 
     @mock_sqs
     def test_attribute_error_method(self):
@@ -296,7 +312,8 @@ class TestApplyFactors(unittest.TestCase):
         ):
             mock_event = {
                 "json_data": json.dumps(methodinput),
-                "distinct_values": ["strata", "region"]
+                "sum_columns": [{"column_name": "test", "data": {
+                    "Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
@@ -359,7 +376,7 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "MIKE",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
+                "raw_input_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": "Sausages",
                 "previous_data_file": "previous_period_enriched_stratared.json",
@@ -402,7 +419,7 @@ class TestApplyFactors(unittest.TestCase):
                     "bucket_name": "MIKE",
                     "checkpoint": "3",
                     "method_name": "apply_factors_method",
-                    "non_responder_file": "non_responders_output.json",
+                    "raw_input_file": "non_responders_output.json",
                     "period": "201809",
                     "sqs_queue_url": sqs_queue_url,
                     "previous_data_file": "previous_period_enriched_stratared.json",
@@ -458,7 +475,7 @@ class TestApplyFactors(unittest.TestCase):
                     "bucket_name": "MIKE",
                     "checkpoint": "3",
                     "method_name": "apply_factors_method",
-                    "non_responder_file": "non_responders_output.json",
+                    "raw_input_file": "non_responders_output.json",
                     "period": "201809",
                     "sqs_queue_url": sqs_queue_url,
                     "previous_data_file": "previous_period_enriched_stratared.json",
@@ -499,7 +516,7 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "MIKE",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
+                "raw_input_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
@@ -569,7 +586,7 @@ class TestApplyFactors(unittest.TestCase):
                 "bucket_name": "MIKE",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
-                "non_responder_file": "non_responders_output.json",
+                "raw_input_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",

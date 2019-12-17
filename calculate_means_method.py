@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-import imputation_functions as impfunc
+import imputation_functions as imp_func
 
 
 def lambda_handler(event, context):
@@ -28,7 +28,7 @@ def lambda_handler(event, context):
         distinct_values = event["distinct_values"]
         questions_list = event["questions_list"].split(",")
 
-        movement_columns = impfunc.produce_columns("movement_", questions_list)
+        movement_columns = imp_func.produce_columns("movement_", questions_list)
 
         logger.info("Validated params.")
 

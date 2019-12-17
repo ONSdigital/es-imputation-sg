@@ -3,9 +3,12 @@ import logging
 import os
 
 import boto3
+import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
+
+import imputation_functions as imp_func
 
 
 class EnvironSchema(Schema):
@@ -61,15 +64,21 @@ def lambda_handler(event, context):
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
 
+        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        period_column = event['RuntimeVariables']["period_column"]
+
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group)
 
         logger.info("Successfully retrieved data")
 
+        factor_columns = imp_func.\
+            produce_columns("imputation_factor_", questions_list.split(','))
+
         # create df columns needed for method
-        for question in questions_list.split(","):
-            data["imputation_factor_" + question] = 0
+        for factor in factor_columns:
+            data[factor] = 0
 
         logger.info("Successfully wrangled data from sqs")
 
@@ -82,7 +91,7 @@ def lambda_handler(event, context):
         calculate_factors = lambda_client.invoke(
             FunctionName=method_name, Payload=json.dumps(payload)
         )
-        logger.info("Successfully invoked methond.")
+        logger.info("Successfully invoked method.")
 
         json_response = json.loads(
             calculate_factors.get("Payload").read().decode("UTF-8"))
@@ -91,8 +100,17 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise exception_classes.MethodFailure(json_response['error'])
 
+        output_df = pd.read_json(json_response['data'])
+        distinct_values.append(period_column)
+        columns_to_keep = imp_func.produce_columns(
+                                             "imputation_factor_",
+                                             questions_list.split(','),
+                                             distinct_values
+                                            )
+
+        final_df = output_df[columns_to_keep].drop_duplicates().to_json(orient='records')
         aws_functions.save_data(bucket_name, out_file_name,
-                                json_response["data"], sqs_queue_url,
+                                final_df, sqs_queue_url,
                                 sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")

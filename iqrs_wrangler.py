@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
-from imputation_functions import produce_columns
+import imputation_functions as imp_func
 
 
 class InputSchema(Schema):
@@ -65,14 +65,14 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
 
-        logger.info("Vaildated params")
+        logger.info("Validated params")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group)
         logger.info("Succesfully retrieved data.")
-
-        for col in produce_columns("iqrs_", questions_list.split(',')):
+        iqrs_columns = imp_func.produce_columns("iqrs_", questions_list.split(','))
+        for col in iqrs_columns:
             data[col] = 0
 
         logger.info("IQRS columns succesfully added")

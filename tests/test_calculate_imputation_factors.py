@@ -23,7 +23,8 @@ mock_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": "region",
+    "period_column": "period"
   }
 }
 
@@ -55,7 +56,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
-                "period": "mock_period",
+                "period_column": "mock_period",
                 "questions_list": "Q601_asphalting_sand,"
                 + "Q602_building_soft_sand,"
                 + "Q603_concreting_sand,"

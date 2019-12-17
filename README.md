@@ -4,7 +4,7 @@
 
 ### Calculate Movements Wrangler
 
-This is the first step in the imputation section of the process. The Wrangler is responsible for checking if the data contains strata, if it does it checks for strata miss matches, if an anomaly is detected a notification will be created and handed to the BPM.
+This is the first step in the imputation section of the process. 
 
 As imputation will not always run, there needs to be some way of checking if it's an imputation run or not, a step known as check for non-responders. This wrangler performs that check if there are no non-responders, it will then bypass the imputation processing and pass the data to the next module.
 
@@ -41,6 +41,11 @@ This is the fourth step of the imputation process. The wrangler returns IQRS dat
 
 Next, the wrangler calls the method (see below) which populates the Atypical columns and passes the data back to the wrangler. The wrangler saves the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
+### Recalculate Means Wrangler
+
+This wrangler recalculates the means of movement after the atypical values have been removed.
+
+This uses the same method as calculate means.
 
 ### Apply Factors Wrangler
 
@@ -50,21 +55,17 @@ The factors data is merged on to the non-responder data next, adding imputation_
 
 The result of the method is imputed values for each non-responder, this is joined back onto the responder data (used to calculate factors) and saved the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
-### Recalculate Means Wrangler
-
-This wrangler recalculates the means of movement after the atypical values have been removed.
-
-This uses the same method as calculate means.
-
 ## Methods
 
 ### Calculate Movements Method
 
 **Name of Lambda:** imputation_calculate_movement_method.
 
-**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value **e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
+**Intro:** The calculate movement method takes the current year's question value, for each question and subtracts the corresponding previous years question value and then divides the result by the current year's question value. <br>
+**e.g. Question_Movement = (Q106_Current_Year - Q106_Previous_Year) / Q106_Current_Year**
 
-**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method, **e.g. Q601, Q602...**. A movement_*question* column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.  
+**Inputs:** This method will require all of the Questions columns to be on the data which is being sent to the method. <br>
+**e.g. Q601, Q602... A movement_question column should be created for each question in the data wrangler for correct usage of the method. The way the method is written will create the columns if they haven't been created before but for best practice create them in the data wrangler.**
 
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains all the created movements, saved in the respective movement_*question_name* columns when successful or an error_message when not.
 
@@ -132,7 +133,12 @@ An atyp_*question* column should be created for each question in the data wrangl
 
 **Intro:** The apply factors method takes in a DataFrame containing current period data, previous period data, and imputation factors, all on one row. It then performs as a row-by-row apply method the calculation: - current_value = prev_value * imputation_factor for each of the value columns. Finally drops the previous period data and imputation factor from the processed DataFrame
 
-**Inputs:** This method requires all question value columns for the current period, question_value columns for the previous period, and imputation factors for each question value column. Note: Method receives rows that have not responded in the current period but did in the previous.
+**Inputs:** This method requires the questions_list, the json_data and the sum_columns for the survey.
+
+```
+"sum_columns": [{"column_name": "Q608_total", "data": {
+                    "Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
+```
 
 **Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which represents the input - (prev_question_columns & imputation_factor columns) when successful or an error_message when not. Current question value columns are now imputed.
 
