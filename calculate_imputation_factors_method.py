@@ -50,44 +50,11 @@ def lambda_handler(event, context):
 
         df = pd.DataFrame(event["data_json"])
 
-        def calculate_imputation_factors(row, question):
-            """
-            Calculates the imputation factors for the DataFrame on row by row basis.
-            - Calculates imputation factor for each question, in each aggregated group,
-              by:
-                Region
-                Land or Marine (If applicable)
-                Count of refs within cell
-
-            :param row: row of DataFrame
-            :param question: question
-            :return: row of DataFrame
-            """
-            if row["region"] == 14:
-                if row["land_or_marine"] == "L":
-                    if row["movement_" + question + "_count"] < int(first_threshold):
-                        row["imputation_factor_" + question] = int(
-                            first_imputation_factor
-                        )
-                    else:
-                        row["imputation_factor_" + question] = row["mean_" + question]
-                else:
-                    if row["movement_" + question + "_count"] < int(second_threshold):
-                        row["imputation_factor_" + question] = int(
-                            second_imputation_factor
-                        )
-                    else:
-                        row["imputation_factor_" + question] = row["mean_" + question]
-            else:
-                if row["movement_" + question + "_count"] < int(third_threshold):
-                    row["imputation_factor_" + question] = int(third_imputation_factor)
-                else:
-                    row["imputation_factor_" + question] = row["mean_" + question]
-
-            return row
-
         for question in questions_list.split(","):
-            df = df.apply(lambda x: calculate_imputation_factors(x, question), axis=1)
+            df = df.apply(lambda x: calculate_imputation_factors(
+                x, question, first_threshold, second_threshold, third_threshold,
+                first_imputation_factor, second_imputation_factor, third_imputation_factor
+            ), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
 
@@ -135,3 +102,49 @@ def lambda_handler(event, context):
     logger.info("Successfully completed module: " + current_module)
     final_output["success"] = True
     return final_output
+
+
+def calculate_imputation_factors(row, question, first_threshold, second_threshold,
+                                 third_threshold, first_imputation_factor,
+                                 second_imputation_factor, third_imputation_factor):
+    """
+    Calculates the imputation factors for the DataFrame on row by row basis.
+    - Calculates imputation factor for each question, in each aggregated group,
+      by:
+        Region
+        Land or Marine (If applicable)
+        Count of refs within cell
+
+    :param row: row of DataFrame
+    :param question: question
+    :param first_threshold: One of three thresholds to compare the question count to.
+    :param second_threshold: One of three thresholds to compare the question count to.
+    :param third_threshold: One of three thresholds to compare the question count to.
+    :param first_imputation_factor: One of three factors to be assigned to the question.
+    :param second_imputation_factor: One of three factors to be assigned to the question.
+    :param third_imputation_factor: One of three factors to be assigned to the question.
+
+    :return: row of DataFrame
+    """
+    if row["region"] == 14:
+        if row["land_or_marine"] == "L":
+            if row["movement_" + question + "_count"] < int(first_threshold):
+                row["imputation_factor_" + question] = int(
+                    first_imputation_factor
+                )
+            else:
+                row["imputation_factor_" + question] = row["mean_" + question]
+        else:
+            if row["movement_" + question + "_count"] < int(second_threshold):
+                row["imputation_factor_" + question] = int(
+                    second_imputation_factor
+                )
+            else:
+                row["imputation_factor_" + question] = row["mean_" + question]
+    else:
+        if row["movement_" + question + "_count"] < int(third_threshold):
+            row["imputation_factor_" + question] = int(third_imputation_factor)
+        else:
+            row["imputation_factor_" + question] = row["mean_" + question]
+
+    return row
