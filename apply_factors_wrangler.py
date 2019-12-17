@@ -164,32 +164,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully joined imputed data with responder data")
 
-        # Create A List Of Movement Columns Plus (
-        #   A List Of Means Columns Plus (
-        #       A List Of Factor Columns Plus (
-        #           A List Of Movement Sum Columns Plus (
-        #               A List Of Movement Count Columns))))
-        cols_to_drop = produce_columns(
-            "movement_",
-            questions_list,
-            produce_columns(
-                "mean_",
-                questions_list,
-                produce_columns(
-                    "imputation_factor_",
-                    questions_list,
-                    produce_columns(
-                        "movement_",
-                        questions_list,
-                        produce_columns(
-                            "movement_",
-                            questions_list,
-                            suffix="_count"
-                        ), suffix="_sum"
-                    )
-                )
-            )
-        )
+        cols_to_drop = produce_columns("imputation_factor_", questions_list)
 
         filtered_data = final_imputed.drop(cols_to_drop, axis=1, errors='ignore')
 
