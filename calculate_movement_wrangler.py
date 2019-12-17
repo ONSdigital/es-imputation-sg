@@ -123,7 +123,8 @@ def lambda_handler(event, context):
             json_payload = {
                 "json_data": json_ordered_data,
                 "calculation_type": calculation_type,
-                "questions_list": questions_list
+                "questions_list": questions_list,
+                "current_period": period
             }
 
             logger.info("Successfully created movement columns on the data")

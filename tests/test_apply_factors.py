@@ -18,6 +18,7 @@ class MockContext:
 mock_wrangles_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
+    "period_column": "period",
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",

@@ -49,7 +49,7 @@ functions:
       method_name: es-apply-factors-method
       out_file_name: imputation_apply_out.json
       period: 201809
-      previous_data_file: previous_period_enriched_stratared.json
+      previous_data_file: prev_datafile.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
@@ -69,8 +69,6 @@ functions:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
-    environment:
-      sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-atypicals-wrangler:
     name: es-atypicals-wrangler
@@ -257,9 +255,6 @@ functions:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_marshmallow:latest
     tags:
       app: results
-    environment:
-      current_period: 201809
-      previous_period: 201806
 
   deploy-iqrs-wrangler:
     name: es-iqrs-wrangler

@@ -1,24 +1,13 @@
 import json
 import logging
-import os
 
 import boto3
 import pandas as pd
-from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
 
 lambda_client = boto3.client('lambda', region_name='eu-west-2')
 s3 = boto3.resource('s3')
-
-
-class EnvironSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
-    current_period = fields.Str(required=True)
-    previous_period = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -41,18 +30,13 @@ def lambda_handler(event, context):
         calculation_type = event["calculation_type"]
         json_data = event["json_data"]
         questions_list = event["questions_list"]
-
+        current_period = event['current_period']
         # Get relative calculation function
         calculation = getattr(imp_func, calculation_type)
 
-        schema = EnvironSchema()
-        config, errors = schema.load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
-
         # Declared inside of lambda_handler so that tests work correctly on local.
-        current_period = config['current_period']
-        previous_period = config['previous_period']
+
+        previous_period = calculate_adjacent_periods(current_period, "03")
 
         df = pd.DataFrame(json.loads(json_data))
 
@@ -87,13 +71,6 @@ def lambda_handler(event, context):
 
         final_output = {"data": filled_dataframe.to_json(orient='records')}
 
-    except ValueError as e:
-        error_message = "Parameter validation error in " \
-                        + current_module + " |- " \
-                        + str(e.args) + " | Request ID: " \
-                        + str(context.aws_request_id)
-
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
         error_message = "Key Error in " \
                         + current_module + " |- " \
@@ -118,3 +95,47 @@ def lambda_handler(event, context):
     logger.info("Successfully completed module: " + current_module)
     final_output["success"] = True
     return final_output
+
+
+def calculate_adjacent_periods(current_period, periodicity):
+    """
+    Description: This method uses periodicity to calculate
+    what should be the adjacent periods for a row,
+    Then uses a filter to confirm whether these periods exist for a record.
+    :param current_period: int/str(either) - The current period to find the previous for
+    :param periodicity: String - The periodicity of the survey we are imputing for:
+    01 = monthly, 02 = annually, 03 = quarterly
+    :return: previous_period: String - The previous period.
+    """
+    monthly = "01"
+    annually = "02"
+    current_month = str(current_period)[4:]
+    current_year = str(current_period)[:4]
+    if periodicity == monthly:
+
+        last_month = int(float(current_month)) - int(periodicity)
+        last_year = int(current_year)
+        if last_month < 1:
+            last_year -= 1
+            last_month += 12
+        if last_month < 10:
+            last_month = "0" + str(last_month)
+
+        last_period = str(last_year) + str(last_month)
+
+    elif periodicity == annually:
+
+        last_period = str(int(current_period) - 1)
+
+    else:  # quarterly(03)
+
+        last_month = int(current_month) - 3
+        last_year = int(current_year)
+        if last_month < 1:
+            last_year -= 1
+            last_month += 4
+        if len(str(last_month)) < 2:
+            last_month = "0" + str(last_month)
+        last_period = str(last_year) + str(last_month)
+
+    return last_period

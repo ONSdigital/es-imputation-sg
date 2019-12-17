@@ -54,6 +54,7 @@ def lambda_handler(event, context):
         # Event vars
         distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
         sum_columns = event['RuntimeVariables']["sum_columns"]
+        period_column = event['RuntimeVariables']['period_column']
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
 
@@ -113,7 +114,7 @@ def lambda_handler(event, context):
 
         # filter factors df to only get current period
         factors_dataframe = factors_dataframe[
-            factors_dataframe['period'] == int(current_period)]
+            factors_dataframe[period_column] == int(current_period)]
 
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(

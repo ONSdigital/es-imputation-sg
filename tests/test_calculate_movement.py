@@ -25,7 +25,8 @@ mock_event = {
                               'Q604_bituminous_gravel,'
                               'Q605_concreting_gravel,'
                               'Q606_other_gravel,'
-                              'Q607_constructional_fill'
+                              'Q607_constructional_fill',
+            "current_period": 201809
         }
 
 mock_event_b = {
@@ -38,7 +39,8 @@ mock_event_b = {
                               'Q604_bituminous_gravel,'
                               'Q605_concreting_gravel,'
                               'Q606_other_gravel,'
-                              'Q607_constructional_fill'
+                              'Q607_constructional_fill',
+            "current_period": 201809
         }
 
 mock_wrangles_event = {
@@ -57,35 +59,25 @@ context_object = MockContext
 class TestStringMethods(unittest.TestCase):
 
     def test_lambda_handler_movement_method(self):
-        with mock.patch.dict(calculate_movement_method.os.environ, {
-           'current_period': '201809',
-           'previous_period': '201806'
-        }):
+        with open("tests/fixtures/method_output_compare_result.json") as file:
+            result = json.load(file)
 
-            with open("tests/fixtures/method_output_compare_result.json") as file:
-                result = json.load(file)
+        string_result = json.dumps(result)
+        striped_string = string_result.replace(" ", "")
 
-            string_result = json.dumps(result)
-            striped_string = string_result.replace(" ", "")
-
-            response = calculate_movement_method.lambda_handler(mock_event,
-                                                                context_object)
+        response = calculate_movement_method.lambda_handler(mock_event,
+                                                            context_object)
         assert json.loads(response["data"]) == json.loads(striped_string)
 
     def test_lambda_handler_movement_method_b(self):
-        with mock.patch.dict(calculate_movement_method.os.environ, {
-           'current_period': '201809',
-           'previous_period': '201806'
-        }):
+        with open("tests/fixtures/method_2_output_compare_result.json") as file:
+            result = json.load(file)
 
-            with open("tests/fixtures/method_2_output_compare_result.json") as file:
-                result = json.load(file)
+        string_result = json.dumps(result)
+        striped_string = string_result.replace(" ", "")
 
-            string_result = json.dumps(result)
-            striped_string = string_result.replace(" ", "")
-
-            response = calculate_movement_method.lambda_handler(mock_event_b,
-                                                                context_object)
+        response = calculate_movement_method.lambda_handler(mock_event_b,
+                                                            context_object)
 
         assert json.loads(response["data"]) == json.loads(striped_string)
 
@@ -143,39 +135,14 @@ class TestStringMethods(unittest.TestCase):
     @mock_sqs
     @mock_lambda
     def test_method_catch_exception(self):
-        with mock.patch.dict(calculate_movement_method.os.environ, {
-            'current_period': '201809',
-            'previous_period': '201806'
-        }):
+        with mock.patch('calculate_movement_method.pd.DataFrame') as mocked:
+            mocked.side_effect = Exception('SQS Failure')
 
-            with mock.patch('calculate_movement_method.pd.DataFrame') as mocked:
-                mocked.side_effect = Exception('SQS Failure')
+            response = calculate_movement_method.lambda_handler(
+                mock_event, context_object)
 
-                response = calculate_movement_method.lambda_handler(
-                    mock_event, context_object)
-
-                assert 'success' in response
-                assert response['success'] is False
-
-    @mock_sqs
-    @mock_s3
-    def test_marshmallow_raises_method_exception(self):
-        """
-        Testing the marshmallow raises an exception in method.
-        :return: None.
-        """
-        with mock.patch.dict(calculate_movement_method.os.environ, {
-            'current_period': '201809',
-            'previous_period': '201806'
-            }
-        ):
-            # Removing the previous_period to allow for test of missing parameter
-            calculate_movement_method.os.environ.pop("previous_period")
-
-            response = calculate_movement_method.lambda_handler(mock_event,
-                                                                context_object)
-
-            assert (response['error'].__contains__("""Parameter validation error"""))
+            assert 'success' in response
+            assert response['success'] is False
 
     @mock_sqs
     @mock_s3
@@ -265,15 +232,9 @@ class TestStringMethods(unittest.TestCase):
             assert response["error"].__contains__("""AWS Error""")
 
     def test_method_key_error_exception(self):
-        with mock.patch.dict(calculate_movement_method.os.environ, {
-            'current_period': '201809',
-            'previous_period': '201806'
-            }
-        ):
+        output_file = calculate_movement_method.lambda_handler(
+            {"mike": "mike"}, context_object
+        )
 
-            output_file = calculate_movement_method.lambda_handler(
-                {"mike": "mike"}, context_object
-            )
-
-            assert not output_file["success"]
-            assert "Key Error" in output_file["error"]
+        assert not output_file["success"]
+        assert "Key Error" in output_file["error"]
