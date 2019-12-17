@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError, IncompleteReadError
 from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
-from imputation_functions import produce_columns
+import imputation_functions as imp_func
 
 
 class EnvironSchema(Schema):
@@ -73,9 +73,12 @@ def lambda_handler(event, context):
 
         logger.info("Successfully retrieved data")
 
+        factor_columns = imp_func.\
+            produce_columns("imputation_factor_", questions_list.split(','))
+
         # create df columns needed for method
-        for question in questions_list.split(","):
-            data["imputation_factor_" + question] = 0
+        for factor in factor_columns:
+            data[factor] = 0
 
         logger.info("Successfully wrangled data from sqs")
 
@@ -99,11 +102,13 @@ def lambda_handler(event, context):
 
         output_df = pd.read_json(json_response['data'])
         distinct_values.append(period_column)
-        final_df = output_df[produce_columns(
+        columns_to_keep = imp_func.produce_columns(
                                              "imputation_factor_",
                                              questions_list.split(','),
                                              distinct_values
-                                            )].drop_duplicates().to_json(orient='records')
+                                            )
+
+        final_df = output_df[columns_to_keep].drop_duplicates().to_json(orient='records')
         aws_functions.save_data(bucket_name, out_file_name,
                                 final_df, sqs_queue_url,
                                 sqs_message_group_id)
