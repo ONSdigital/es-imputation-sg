@@ -256,7 +256,7 @@ class TestApplyFactors(unittest.TestCase):
                             json.loads(message)), 666
                         mock_funk.read_dataframe_from_s3.return_value =\
                             pd.DataFrame(json.loads(norespfile.read()))
-                        with open("tests/fixtures/non_responders_return.json", "r")\
+                        with open("tests/fixtures/apply_factors_return.json", "r")\
                                 as file:
 
                             mock_client_object.invoke.return_value\

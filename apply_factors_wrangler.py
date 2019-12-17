@@ -164,6 +164,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully joined imputed data with responder data")
 
+        # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list)
 
         filtered_data = final_imputed.drop(cols_to_drop, axis=1, errors='ignore')
