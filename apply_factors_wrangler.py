@@ -27,6 +27,8 @@ class EnvironSchema(Schema):
     questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_queue_url = fields.Str(required=True)
+    response_type = fields.Str(required=True)
+    reference = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -70,14 +72,15 @@ def lambda_handler(event, context):
         questions_list = config["questions_list"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_queue_url = config["sqs_queue_url"]
-
+        response_type = config['response_type']
+        reference = config['reference']
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded imputation
         input_data = aws_functions.read_dataframe_from_s3(bucket_name, raw_input_file)
         # Split out non responder data from input
-        non_responder_dataframe = input_data[input_data['response_type'] == 1]
+        non_responder_dataframe = input_data[input_data[response_type] == 1]
         logger.info("Successfully retrieved raw-input data from s3")
 
         # Get factors data from calculate_factors
@@ -90,13 +93,13 @@ def lambda_handler(event, context):
                                                                 previous_data_file)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
-        prev_period_data = prev_period_data[prev_period_data["response_type"] == 2]
+        prev_period_data = prev_period_data[prev_period_data[response_type] == 2]
 
         questions_list = questions_list.split(",")
         prev_questions_list = produce_columns(
             "prev_",
             questions_list,
-            ['responder_id']
+            [reference]
         )
 
         for question in questions_list:
@@ -108,7 +111,7 @@ def lambda_handler(event, context):
         non_responder_dataframe = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_questions_list],
-            on="responder_id",
+            on=reference,
         )
         logger.info("Successfully merged previous period data with non-responder df")
 
@@ -157,7 +160,7 @@ def lambda_handler(event, context):
 
         # retrieve current responders from input data..
         current_responders = input_data[
-            input_data["response_type"] == 2
+            input_data[response_type] == 2
             ]
 
         # Joining Datasets Together.

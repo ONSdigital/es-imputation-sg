@@ -94,6 +94,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "second_threshold": str(7),
                 "third_imputation_factor": str(1),
                 "third_threshold": str(9),
+                "region_column": "region"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()

@@ -54,7 +54,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
 
@@ -112,7 +114,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
             with mock.patch("apply_factors_wrangler"
@@ -243,7 +247,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
 
@@ -387,7 +393,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
@@ -430,7 +438,9 @@ class TestApplyFactors(unittest.TestCase):
                     "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                       "Q603_concreting_sand,Q604_bituminous_gravel," +
                                       "Q605_concreting_gravel,Q606_other_gravel," +
-                                      "Q607_constructional_fill"
+                                      "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
                 },
         ):
             with mock.patch(
@@ -486,7 +496,9 @@ class TestApplyFactors(unittest.TestCase):
                     "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                       "Q603_concreting_sand,Q604_bituminous_gravel," +
                                       "Q605_concreting_gravel,Q606_other_gravel," +
-                                      "Q607_constructional_fill"
+                                      "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
                 },
         ):
             with mock.patch("apply_factors_wrangler.aws_functions") as mock_funk:
@@ -527,7 +539,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
 
@@ -597,7 +611,9 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill"
+                                  "Q607_constructional_fill",
+                "response_type": "response_type",
+                "reference": "responder_id"
             },
         ):
 
