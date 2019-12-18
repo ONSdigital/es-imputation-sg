@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    non_response_file = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     previous_period_file = fields.Str(required=True)
     questions_list = fields.Str(required=True)
@@ -71,6 +70,7 @@ def lambda_handler(event, context):
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
         period = event['RuntimeVariables']['period']
+        period_column = event['RuntimeVariables']['period_column']
         questions_list = config['questions_list']
         previous_period_file = config['previous_period_file']
         response_type = config['response_type']  # Set as "response_type"
@@ -124,7 +124,8 @@ def lambda_handler(event, context):
                 "json_data": json_ordered_data,
                 "calculation_type": calculation_type,
                 "questions_list": questions_list,
-                "current_period": period
+                "current_period": period,
+                "period_column": period_column
             }
 
             logger.info("Successfully created movement columns on the data")
