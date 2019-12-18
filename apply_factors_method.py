@@ -31,9 +31,7 @@ def lambda_handler(event, context):
                 lambda x: x["prev_" + question] * x["imputation_factor_" + question],
                 axis=1,
             )
-            working_dataframe = working_dataframe.drop(
-                ["prev_" + question, "imputation_factor_" + question], axis=1
-            )
+
             logger.info("Completed imputation of " + str(question))
 
         working_dataframe = working_dataframe.apply(
@@ -102,6 +100,6 @@ def sum_data_columns(input_row, sum_columns):
                 new_sum += input_row[data_column]
             elif sum_column['data'][data_column] == "-":
                 new_sum -= input_row[data_column]
-        input_row[sum_column['column_name']] = new_sum
+        input_row[sum_column['column_name']] = int(new_sum)
 
     return input_row
