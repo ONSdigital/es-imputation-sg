@@ -16,6 +16,7 @@ class EnvironSchema(Schema):
     first_imputation_factor = fields.Str(required=True)
     second_imputation_factor = fields.Str(required=True)
     third_imputation_factor = fields.Str(required=True)
+    region_column = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -47,13 +48,14 @@ def lambda_handler(event, context):
         first_imputation_factor = config["first_imputation_factor"]
         second_imputation_factor = config["second_imputation_factor"]
         third_imputation_factor = config["third_imputation_factor"]
-
+        region_column = config["region_column"]
         df = pd.DataFrame(event["data_json"])
 
         for question in questions_list.split(","):
             df = df.apply(lambda x: calculate_imputation_factors(
                 x, question, first_threshold, second_threshold, third_threshold,
-                first_imputation_factor, second_imputation_factor, third_imputation_factor
+                first_imputation_factor, second_imputation_factor, third_imputation_factor,
+                region_column
             ), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
@@ -106,7 +108,7 @@ def lambda_handler(event, context):
 
 def calculate_imputation_factors(row, question, first_threshold, second_threshold,
                                  third_threshold, first_imputation_factor,
-                                 second_imputation_factor, third_imputation_factor):
+                                 second_imputation_factor, third_imputation_factor, region_column):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -123,10 +125,11 @@ def calculate_imputation_factors(row, question, first_threshold, second_threshol
     :param first_imputation_factor: One of three factors to be assigned to the question.
     :param second_imputation_factor: One of three factors to be assigned to the question.
     :param third_imputation_factor: One of three factors to be assigned to the question.
+    :param region_column: The name of the column that holds region.
 
     :return: row of DataFrame
     """
-    if row["region"] == 14:
+    if row[region_column] == 14:
         if row["land_or_marine"] == "L":
             if row["movement_" + question + "_count"] < int(first_threshold):
                 row["imputation_factor_" + question] = int(

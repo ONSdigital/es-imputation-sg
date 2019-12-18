@@ -23,6 +23,7 @@ def lambda_handler(event, context):
 
         # Environment variables
         questions_list = event['questions_list']
+        distinct_values = event["distinct_values"].strip().split(',')
         input_data = pd.DataFrame(event["data"])
 
         logger.info("Successfully retrieved data from event.")
@@ -31,9 +32,8 @@ def lambda_handler(event, context):
             input_data,
             produce_columns("movement_", questions_list.split(',')),
             produce_columns("iqrs_", questions_list.split(',')),
-            event["distinct_values"].strip().split(',')
+            distinct_values
         )
-        iqrs_df['region'] = iqrs_df['region'].astype('int64')
 
         logger.info("Succesfully finished calculations of IQRS.")
 

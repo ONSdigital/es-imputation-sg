@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    non_response_file = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     previous_period_file = fields.Str(required=True)
     questions_list = fields.Str(required=True)
