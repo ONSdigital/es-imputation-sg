@@ -54,8 +54,8 @@ def lambda_handler(event, context):
         for question in questions_list.split(","):
             df = df.apply(lambda x: calculate_imputation_factors(
                 x, question, first_threshold, second_threshold, third_threshold,
-                first_imputation_factor, second_imputation_factor, third_imputation_factor,
-                region_column
+                first_imputation_factor, second_imputation_factor,
+                third_imputation_factor, region_column
             ), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
@@ -108,7 +108,8 @@ def lambda_handler(event, context):
 
 def calculate_imputation_factors(row, question, first_threshold, second_threshold,
                                  third_threshold, first_imputation_factor,
-                                 second_imputation_factor, third_imputation_factor, region_column):
+                                 second_imputation_factor, third_imputation_factor,
+                                 region_column):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,

@@ -151,7 +151,7 @@ class TestWranglerAndMethod():
                                   + "Q605_concreting_gravel,"
                                   + "Q606_other_gravel,"
                                   + "Q607_constructional_fill",
-                "distinct_values": ['region', 'strata']
+                "distinct_values": "region, strata"
             }
             with mock.patch("iqrs_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")

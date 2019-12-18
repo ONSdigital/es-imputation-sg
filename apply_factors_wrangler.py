@@ -30,6 +30,7 @@ class EnvironSchema(Schema):
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
 
+
 def lambda_handler(event, context):
     """
     This wrangler is used to prepare data for the apply factors statistical method.
