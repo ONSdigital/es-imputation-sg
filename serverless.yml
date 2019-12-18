@@ -231,7 +231,7 @@ functions:
       incoming_message_group: strata-out
       method_name: es-calculate-movement-method
       out_file_name: calculate_movement_out.json
-      previous_period_file: previous_period_enriched_stratared.json
+      previous_period_file: prev_datafile.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       reference: responder_id
       response_type: response_type

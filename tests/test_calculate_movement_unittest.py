@@ -31,6 +31,7 @@ mock_wrangles_event = {
   "RuntimeVariables": {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
+    "period_column": "period",
     "id": "example",
     "distinct_values": "strata"
   }

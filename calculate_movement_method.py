@@ -31,6 +31,7 @@ def lambda_handler(event, context):
         json_data = event["json_data"]
         questions_list = event["questions_list"]
         current_period = event['current_period']
+        period_column = event['period_column']
         # Get relative calculation function
         calculation = getattr(imp_func, calculation_type)
 
@@ -40,8 +41,8 @@ def lambda_handler(event, context):
 
         df = pd.DataFrame(json.loads(json_data))
 
-        sorted_current = df[df.period == int(current_period)]
-        sorted_previous = df[df.period == int(previous_period)]
+        sorted_current = df[df[period_column] == int(current_period)]
+        sorted_previous = df[df[period_column] == int(previous_period)]
 
         for question in questions_list.split(','):
 

@@ -26,7 +26,8 @@ mock_event = {
                               'Q605_concreting_gravel,'
                               'Q606_other_gravel,'
                               'Q607_constructional_fill',
-            "current_period": 201809
+            "current_period": 201809,
+            "period_column": "period"
         }
 
 mock_event_b = {
@@ -40,7 +41,8 @@ mock_event_b = {
                               'Q605_concreting_gravel,'
                               'Q606_other_gravel,'
                               'Q607_constructional_fill',
-            "current_period": 201809
+            "current_period": 201809,
+            "period_column": "period"
         }
 
 mock_wrangles_event = {
@@ -48,6 +50,7 @@ mock_wrangles_event = {
   "RuntimeVariables": {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
+    "period_column": "period",
     "id": "example",
     "distinct_values": "region"
   }
