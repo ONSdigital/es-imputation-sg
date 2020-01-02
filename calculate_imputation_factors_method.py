@@ -152,8 +152,8 @@ def calculate_imputation_factors(row, question, first_threshold, second_threshol
         else:
             row["imputation_factor_" + question] = row["mean_" + question]
 
-    # check if the imputation factor needs to be adjusted
-    if percentage_movement:
-        row["imputation_factor_" + question] = row["imputation_factor_" + question] + 1
+        # check if the imputation factor needs to be adjusted
+        if percentage_movement:
+            row["imputation_factor_" + question] = row["imputation_factor_" + question] + 1
 
     return row
