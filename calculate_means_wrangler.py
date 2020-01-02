@@ -53,7 +53,7 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
-        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        distinct_values = event['RuntimeVariables']["distinct_values"]
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']

@@ -33,7 +33,7 @@ mock_wrangles_event = {
     "period": 201809,
     "period_column": "period",
     "id": "example",
-    "distinct_values": "strata"
+    "distinct_values": ["strata"]
   }
 }
 
