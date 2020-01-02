@@ -35,7 +35,7 @@ mock_wrangles_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region"
+    "distinct_values": ["region"]
   }
 }
 

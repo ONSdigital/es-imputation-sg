@@ -54,7 +54,7 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # Event vars
-        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        distinct_values = event['RuntimeVariables']["distinct_values"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
         period_column = event['RuntimeVariables']['period_column']
         raw_input_file \
