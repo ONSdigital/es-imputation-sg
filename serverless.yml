@@ -26,7 +26,7 @@ custom:
 
 functions:
   deploy-apply-factors-wrangler:
-    name: es-apply-factors-wrangler
+    name: es-imputation-apply-factors-wrangler
     handler: apply_factors_wrangler.lambda_handler
     package:
       include:
@@ -45,7 +45,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: calculate_factors_out.json
       incoming_message_group: imputation-calculate-factors-out
-      method_name: es-apply-factors-method
+      method_name: es-imputation-apply-factors-method
       out_file_name: imputation_apply_out.json
       period: 201809
       previous_data_file: prev_datafile.json
@@ -57,7 +57,7 @@ functions:
 
 
   deploy-apply-factors-method:
-    name: es-apply-factors-method
+    name: es-imputation-apply-factors-method
     handler: apply_factors_method.lambda_handler
     package:
       include:
@@ -72,7 +72,7 @@ functions:
       app: results
 
   deploy-atypicals-wrangler:
-    name: es-atypicals-wrangler
+    name: es-imputation-atypicals-wrangler
     handler: atypicals_wrangler.lambda_handler
     package:
       include:
@@ -92,14 +92,14 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: iqrs_out.json
       incoming_message_group: imputation-iqrs-out
-      method_name: es-atypicals-method
+      method_name: es-imputation-atypicals-method
       out_file_name: atypicals_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-atypicals-out
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-atypicals-method:
-    name: es-atypicals-method
+    name: es-imputation-atypicals-method
     handler: atypicals_method.lambda_handler
     package:
       include:
@@ -114,7 +114,7 @@ functions:
       app: results
 
   deploy-calculate-factors-wrangler:
-    name: es-calculate-factors-wrangler
+    name: es-imputation-calculate-factors-wrangler
     handler: calculate_imputation_factors_wrangler.lambda_handler
     package:
       include:
@@ -133,7 +133,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: recalculate_means_out.json
       incoming_message_group: imputation-recalculate-means-out
-      method_name: es-calculate-factors-method
+      method_name: es-imputation-calculate-factors-method
       out_file_name: calculate_factors_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -141,7 +141,7 @@ functions:
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-calculate-factors-method:
-    name: es-calculate-factors-method
+    name: es-imputation-calculate-factors-method
     handler: calculate_imputation_factors_method.lambda_handler
     package:
       include:
@@ -164,7 +164,7 @@ functions:
       region_column: region
 
   deploy-calculate-means-wrangler:
-    name: es-calculate-means-wrangler
+    name: es-imputation-calculate-means-wrangler
     handler: calculate_means_wrangler.lambda_handler
     package:
       include:
@@ -183,7 +183,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: calculate_movement_out.json
       incoming_message_group: imputation-calculate-movement-out
-      method_name: es-calculate-means-method
+      method_name: es-imputation-calculate-means-method
       out_file_name: calculate_means_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -191,7 +191,7 @@ functions:
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-calculate-means-method:
-    name: es-calculate-means-method
+    name: es-imputation-calculate-means-method
     handler: calculate_means_method.lambda_handler
     package:
       include:
@@ -206,7 +206,7 @@ functions:
       app: results
 
   deploy-calculate-movement-wrangler:
-    name: es-calculate-movement-wrangler
+    name: es-imputation-calculate-movement-wrangler
     handler: calculate_movement_wrangler.lambda_handler
     package:
       include:
@@ -224,7 +224,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: strata_out.json
       incoming_message_group: strata-out
-      method_name: es-calculate-movement-method
+      method_name: es-imputation-calculate-movement-method
       out_file_name: calculate_movement_out.json
       previous_period_file: prev_datafile.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
@@ -236,7 +236,7 @@ functions:
       time: period
 
   deploy-calculate-movement-method:
-    name: es-calculate-movement-method
+    name: es-imputation-calculate-movement-method
     handler: calculate_movement_method.lambda_handler
     package:
       include:
@@ -247,11 +247,12 @@ functions:
       individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
   deploy-iqrs-wrangler:
-    name: es-iqrs-wrangler
+    name: es-imputation-iqrs-wrangler
     handler: iqrs_wrangler.lambda_handler
     package:
       include:
@@ -270,7 +271,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: calculate_means_out.json
       incoming_message_group: imputation-calculate-means-out
-      method_name: es-iqrs-method
+      method_name: es-imputation-iqrs-method
       out_file_name: iqrs_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -278,7 +279,7 @@ functions:
       sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
 
   deploy-iqrs-method:
-    name: es-iqrs-method
+    name: es-imputation-iqrs-method
     handler: iqrs_method.lambda_handler
     package:
       include:
@@ -293,7 +294,7 @@ functions:
       app: results
 
   deploy-recalculate-means-wrangler:
-    name: es-recalculate-means-wrangler
+    name: es-imputation-recalculate-means-wrangler
     handler: recalculate_means_wrangler.lambda_handler
     package:
       include:
@@ -312,7 +313,7 @@ functions:
       bucket_name: results-s3-bucket
       in_file_name: atypicals_out.json
       incoming_message_group: imputation-atypicals-out
-      method_name: es-calculate-means-method
+      method_name: es-imputation-calculate-means-method
       out_file_name: recalculate_means_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
