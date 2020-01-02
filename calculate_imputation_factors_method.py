@@ -42,6 +42,7 @@ def lambda_handler(event, context):
 
         # set up variables
         questions_list = event["questions_list"]
+        percentage_movement = event["percentage_movement"]
         first_threshold = config["first_threshold"]
         second_threshold = config["second_threshold"]
         third_threshold = config["third_threshold"]
@@ -55,7 +56,7 @@ def lambda_handler(event, context):
             df = df.apply(lambda x: calculate_imputation_factors(
                 x, question, first_threshold, second_threshold, third_threshold,
                 first_imputation_factor, second_imputation_factor,
-                third_imputation_factor, region_column
+                third_imputation_factor, region_column, percentage_movement
             ), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
@@ -109,7 +110,7 @@ def lambda_handler(event, context):
 def calculate_imputation_factors(row, question, first_threshold, second_threshold,
                                  third_threshold, first_imputation_factor,
                                  second_imputation_factor, third_imputation_factor,
-                                 region_column):
+                                 region_column, percentage_movement):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -150,5 +151,9 @@ def calculate_imputation_factors(row, question, first_threshold, second_threshol
             row["imputation_factor_" + question] = int(third_imputation_factor)
         else:
             row["imputation_factor_" + question] = row["mean_" + question]
+
+    # check if the imputation factor needs to be adjusted
+    if percentage_movement:
+        row["imputation_factor_" + question] = row["imputation_factor_" + question] + 1
 
     return row
