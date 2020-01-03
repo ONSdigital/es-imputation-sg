@@ -22,7 +22,7 @@ mock_wrangles_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region",
+    "distinct_values": ["region"],
     "raw_input_file": "non_responders_output.json",
     "sum_columns": [{"column_name": "Q608_total", "data": {
                     "Q603_concreting_sand": "+",

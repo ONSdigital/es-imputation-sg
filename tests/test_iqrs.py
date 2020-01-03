@@ -107,7 +107,7 @@ class TestWranglerAndMethod():
                                   + "Q605_concreting_gravel,"
                                   + "Q606_other_gravel,"
                                   + "Q607_constructional_fill",
-                "distinct_values": "region,strata"
+                "distinct_values": ["region", "strata"]
             }
 
             output = iqrs_method.lambda_handler(event, context_object)

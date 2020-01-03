@@ -50,13 +50,14 @@ def lambda_handler(event, context):
         second_imputation_factor = config["second_imputation_factor"]
         third_imputation_factor = config["third_imputation_factor"]
         region_column = config["region_column"]
+        survey_column = event["survey_column"]
         df = pd.DataFrame(event["data_json"])
 
         for question in questions_list.split(","):
             df = df.apply(lambda x: calculate_imputation_factors(
                 x, question, first_threshold, second_threshold, third_threshold,
                 first_imputation_factor, second_imputation_factor,
-                third_imputation_factor, region_column, percentage_movement
+                third_imputation_factor, region_column, survey_column, percentage_movement
             ), axis=1)
             logger.info("Calculated Factors for " + str(question))
         factors_dataframe = df
@@ -110,7 +111,7 @@ def lambda_handler(event, context):
 def calculate_imputation_factors(row, question, first_threshold, second_threshold,
                                  third_threshold, first_imputation_factor,
                                  second_imputation_factor, third_imputation_factor,
-                                 region_column, percentage_movement):
+                                 region_column, survey_column, percentage_movement):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -128,11 +129,12 @@ def calculate_imputation_factors(row, question, first_threshold, second_threshol
     :param second_imputation_factor: One of three factors to be assigned to the question.
     :param third_imputation_factor: One of three factors to be assigned to the question.
     :param region_column: The name of the column that holds region.
+    :param survey_column: Column name of the dataframe containing the survey code.
 
     :return: row of DataFrame
     """
     if row[region_column] == 14:
-        if row["land_or_marine"] == "L":
+        if row[survey_column] == "066":
             if row["movement_" + question + "_count"] < int(first_threshold):
                 row["imputation_factor_" + question] = int(
                     first_imputation_factor

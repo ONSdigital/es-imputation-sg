@@ -65,7 +65,7 @@ def lambda_handler(event, context):
         sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
 
-        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        distinct_values = event['RuntimeVariables']["distinct_values"]
 
         data, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url,

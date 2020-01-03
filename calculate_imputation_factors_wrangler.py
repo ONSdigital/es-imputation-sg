@@ -64,8 +64,9 @@ def lambda_handler(event, context):
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
 
-        distinct_values = event['RuntimeVariables']["distinct_values"].split(",")
+        distinct_values = event['RuntimeVariables']["distinct_values"]
         period_column = event['RuntimeVariables']["period_column"]
+        survey_column = event['RuntimeVariables']["survey_column"]
         percentage_movement = event['RuntimeVariables']["percentage_movement"]
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
@@ -86,6 +87,7 @@ def lambda_handler(event, context):
         payload = {
             "data_json": json.loads(data.to_json(orient="records")),
             "questions_list": questions_list,
+            "survey_column": survey_column,
             "percentage_movement": percentage_movement
         }
 

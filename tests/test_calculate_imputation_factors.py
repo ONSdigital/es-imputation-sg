@@ -23,8 +23,9 @@ mock_event = {
     "calculation_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": "region",
-    "period_column": "period"
+    "distinct_values": ["region"],
+    "period_column": "period",
+    "survey_column": "survey"
   }
 }
 
@@ -184,7 +185,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                                                           + "Q604_bituminous_gravel,"
                                                           + "Q605_concreting_gravel,"
                                                           + "Q606_other_gravel,"
-                                                          + "Q607_constructional_fill"
+                                                          + "Q607_constructional_fill",
+             "survey_column": "survey"
              }, context_object
         )
 
@@ -253,7 +255,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                  + "Q604_bituminous_gravel,"
                  + "Q605_concreting_gravel,"
                  + "Q606_other_gravel,"
-                 + "Q607_constructional_fill"
+                 + "Q607_constructional_fill",
+                 "survey_column": "survey"
                  }, context_object
             )
             assert "success" in response
