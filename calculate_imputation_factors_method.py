@@ -128,6 +128,7 @@ def calculate_imputation_factors(row, question, first_threshold, second_threshol
     :param second_imputation_factor: One of three factors to be assigned to the question.
     :param third_imputation_factor: One of three factors to be assigned to the question.
     :param region_column: The name of the column that holds region.
+    :param survey_column: Column name of the dataframe containing the survey code.
 
     :return: row of DataFrame
     """
