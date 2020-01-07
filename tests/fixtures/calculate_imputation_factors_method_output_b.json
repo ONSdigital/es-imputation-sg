@@ -1,0 +1,17 @@
+[
+    {
+        "imputation_factor_Commons_C-stock": 0,
+        "imputation_factor_Commons_Dels": 0.102332542,
+        "imputation_factor_Commons_prod": 0,
+        "mean_Commons_C-stock": 0.0511924837,
+        "mean_Commons_Dels": 0.102332542,
+        "mean_Commons_prod": 0,
+        "movement_Commons_C-stock_count": 8,
+        "movement_Commons_Dels_count": 6,
+        "movement_Commons_prod_count": 8,
+        "name": "Mike",
+        "period": 201809,
+        "region": 14,
+        "survey": "123"
+    }
+]

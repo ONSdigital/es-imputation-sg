@@ -20,12 +20,25 @@ class MockContext:
 mock_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
-    "calculation_type": "movement_calculation_b",
+    "movement_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
     "distinct_values": ["region"],
     "period_column": "period",
-    "survey_column": "survey"
+    "factors_parameters":
+    {
+        "factors_type": "factors_calcualtion_a",
+        "percentage_movement": True,
+        "survey_column": "survey",
+        "region_column": "region",
+        "regionless_code": 14,
+        "first_imputation_factor": 1,
+        "second_imputation_factor": 2,
+        "first_threshold": 7,
+        "second_threshold": 7,
+        "third_threshold": 9,
+        "regional_mean": "third_imputation_factor"
+    }
   }
 }
 
@@ -80,8 +93,6 @@ class TestWranglerAndMethod(unittest.TestCase):
             {
                 "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
-                "first_imputation_factor": str(1),
-                "first_threshold": str(7),
                 "period": "mock_period",
                 "questions_list": "Q601_asphalting_sand,"
                 + "Q602_building_soft_sand,"
@@ -90,12 +101,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 + "Q605_concreting_gravel,"
                 + "Q606_other_gravel,"
                 + "Q607_constructional_fill",
-                "sqs_queue_url": "mock_queue",
-                "second_imputation_factor": str(2),
-                "second_threshold": str(7),
-                "third_imputation_factor": str(1),
-                "third_threshold": str(9),
-                "region_column": "region"
+                "sqs_queue_url": "mock_queue"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -126,7 +132,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         # load json file.
 
         method_input_file = (
-            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+            "tests/fixtures/calculate_imputation_factors_method_input_data_a.json"
         )
 
         with open(method_input_file, "r") as file:
@@ -171,28 +177,45 @@ class TestWranglerAndMethod(unittest.TestCase):
         mocks functionality of the method
         :return: None
         """
+        # ----------- Test the 'A' path -----------
         # read in the json payload from wrangler
         input_file = "tests/fixtures/"
-        input_file += "calculate_imputation_factors_method_input_data.json"
+        input_file += "calculate_imputation_factors_method_input_data_a.json"
 
         with open(input_file, "r") as file:
             json_content = json.loads(file.read())
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            {"data_json": json_content, "questions_list": "Q601_asphalting_sand,"
-                                                          + "Q602_building_soft_sand,"
-                                                          + "Q603_concreting_sand,"
-                                                          + "Q604_bituminous_gravel,"
-                                                          + "Q605_concreting_gravel,"
-                                                          + "Q606_other_gravel,"
-                                                          + "Q607_constructional_fill",
-             "survey_column": "survey"
-             }, context_object
+            {
+                "data_json": json_content,
+                "questions_list": "Q601_asphalting_sand,"
+                                  + "Q602_building_soft_sand,"
+                                  + "Q603_concreting_sand,"
+                                  + "Q604_bituminous_gravel,"
+                                  + "Q605_concreting_gravel,"
+                                  + "Q606_other_gravel,"
+                                  + "Q607_constructional_fill",
+                "factors_parameters": {
+                    "RuntimeVariables": {
+                        "factors_type": "factors_calcualtion_a",
+                        "percentage_movement": True,
+                        "survey_column": "survey",
+                        "region_column": "region",
+                        "regionless_code": 14,
+                        "first_imputation_factor": 1,
+                        "second_imputation_factor": 2,
+                        "first_threshold": 7,
+                        "second_threshold": 7,
+                        "third_threshold": 9,
+                        "regional_mean": "third_imputation_factor"
+                    }
+                }
+            }, context_object
         )
 
         # final output match
         expected_output_file = (
-            "tests/fixtures/calculate_imputation_factors_method_output.json"
+            "tests/fixtures/calculate_imputation_factors_method_output_a.json"
         )
 
         with open(expected_output_file, "r") as file:
@@ -200,6 +223,43 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         actual_outcome_dataframe = pd.DataFrame(json.loads(output_file["data"]))
         expected_output_dataframe = pd.DataFrame(expected_dataframe)
+
+        assert_frame_equal(
+            actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str)
+        )
+
+        # ----------- Test the 'B' path -----------
+        # read in the json payload from wrangler
+        input_file = "tests/fixtures/"
+        input_file += "calculate_imputation_factors_method_input_data_b.json"
+
+        with open(input_file, "r") as file:
+            json_content = json.loads(file.read())
+
+        output_file = calculate_imputation_factors_method.lambda_handler(
+            {"data_json": json_content, "questions_list": "Commons_prod,"
+                                                          + "Commons_Dels,"
+                                                          + "Commons_C-stock",
+                                        "factors_parameters": {
+                                            "RuntimeVariables": {
+                                                "factors_type": "factors_calcualtion_b",
+                                                "survey_column": "survey",
+                                                "threshold": 7,
+                                            }}
+             }, context_object
+        )
+
+        # final output match
+        expected_output_file = (
+            "tests/fixtures/calculate_imputation_factors_method_output_b.json"
+        )
+
+        with open(expected_output_file, "r") as file:
+            expected_dataframe = json.loads(file.read())
+
+        actual_outcome_dataframe = pd.DataFrame(json.loads(output_file["data"]))
+        expected_output_dataframe = pd.DataFrame(expected_dataframe)
+
         assert_frame_equal(
             actual_outcome_dataframe.astype(str), expected_output_dataframe.astype(str)
         )
@@ -256,7 +316,21 @@ class TestWranglerAndMethod(unittest.TestCase):
                  + "Q605_concreting_gravel,"
                  + "Q606_other_gravel,"
                  + "Q607_constructional_fill",
-                 "survey_column": "survey"
+                 "factors_parameters": {
+                        "RuntimeVariables": {
+                            "factors_type": "factors_calcualtion_a",
+                            "percentage_movement": True,
+                            "survey_column": "survey",
+                            "region_column": "region",
+                            "regionless_code": 14,
+                            "first_imputation_factor": 1,
+                            "second_imputation_factor": 2,
+                            "first_threshold": 7,
+                            "second_threshold": 9,
+                            "third_threshold": 9,
+                            "regional_mean": "third_imputation_factor"
+                        }
+                    }
                  }, context_object
             )
             assert "success" in response
@@ -280,44 +354,13 @@ class TestWranglerAndMethod(unittest.TestCase):
             self.assertRaises(ValueError)
             assert """Parameter validation error""" in out["error"]
 
-    @mock_sqs
-    def test_marshmallow_raises_method_exception(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        # Method
-        json_data_content = (
-            '[{"movement_Q601_asphalting_sand":0.0},'
-            '{"movement_Q601_asphalting_sand":0.857614899}]'
-        )
-        with mock.patch.dict(
-            calculate_imputation_factors_method.os.environ,
-                {"sqs_queue_url": sqs_queue_url}
-        ):
-            calculate_imputation_factors_method.os.environ.pop("first_threshold")
-            out = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666},
-                 "data_json": json_data_content,
-                 "questions_list": "Q601_asphalting_sand,"
-                                   + "Q602_building_soft_sand,"
-                                   + "Q603_concreting_sand,"
-                                   + "Q604_bituminous_gravel,"
-                                   + "Q605_concreting_gravel,"
-                                   + "Q606_other_gravel,"
-                                   + "Q607_constructional_fill"
-                 }, context_object
-            )
-            self.assertRaises(ValueError)
-
-            assert """Parameter validation error""" in out["error"]
-
     def test_method_key_error_exception(self):
         """
         mocks functionality of the method
         :return: None
         """
         # read in the json payload from wrangler
-        input_file = "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+        input_file = "tests/fixtures/calculate_imputation_factors_method_input_data_a.json" # noqa
 
         with open(input_file, "r") as file:
             content = file.read()
@@ -352,7 +395,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         # load json file.
 
         method_input_file = (
-            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+            "tests/fixtures/calculate_imputation_factors_method_input_data_a.json"
         )
 
         with open(method_input_file, "r") as file:
@@ -434,7 +477,7 @@ class TestWranglerAndMethod(unittest.TestCase):
         # load json file.
 
         method_input_file = (
-            "tests/fixtures/calculate_imputation_factors_method_input_data.json"
+            "tests/fixtures/calculate_imputation_factors_method_input_data_a.json"
         )
 
         with open(method_input_file, "r") as file:

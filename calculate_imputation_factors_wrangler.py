@@ -66,8 +66,7 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         period_column = event['RuntimeVariables']["period_column"]
-        survey_column = event['RuntimeVariables']["survey_column"]
-        percentage_movement = event['RuntimeVariables']["percentage_movement"]
+        factors_parameters = event['RuntimeVariables']["factors_parameters"]
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
@@ -87,8 +86,7 @@ def lambda_handler(event, context):
         payload = {
             "data_json": json.loads(data.to_json(orient="records")),
             "questions_list": questions_list,
-            "survey_column": survey_column,
-            "percentage_movement": percentage_movement
+            "factors_parameters": factors_parameters
         }
 
         # invoke the method to calculate the factors
