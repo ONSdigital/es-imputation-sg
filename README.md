@@ -24,7 +24,7 @@ Like every wrangler, it is responsible for saving data to S3 for the next proces
 
 This step is a combination of both calculate gb and non-gb factors.
 
-Data is retrieved from the previous step from S3, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors.
+Data is retrieved from the previous step from S3, then the data set is prepared by the addition of the factors columns. This is then passed to the method lambda which calculates the factors. Runtime variables for the factors calculation funtions are passed from the wrangler to the method at this point.
 
 Once this has been calculated then the data is sent back to the S3 for use by the next method. Completion status is published to SNS.
 
@@ -85,7 +85,7 @@ The result of the method is imputed values for each non-responder, this is joine
 
 **Name of Lambda:** imputation_calculate_imputation_factors_method.
 
-**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated depending on the Region, Land or Marine, Count of refs within the cell. 
+**Intro:** Calculates imputation factor for each question, in each aggregated group. Factors are calculated differently for each survey and this behaviour is described in the **Imputation Functions** section below. The method will extract the mean value for the 'regionless/All-GB' question if specified in the config and pass that along with other RuntimeVariables to the calculate function.
 
 **Inputs:** JSON string from wrangler with the needed columns.
 
@@ -167,4 +167,39 @@ An atyp_*question* column should be created for each question in the data wrangl
 **Inputs:** Prefix String, List of Columns, Suffix String, List of Extra Columns.
 
 **Outputs:** New List of Columns.
+
+### Factors Calculation A
+
+**Intro:** Factors calculation for 'Sand and Gravel' and 'Blocks' surveys. Should be called as a df.apply() function. It will calculate the factors value based on region and thresholds passed in the parameters.
+
+**Inputs:** 
+- A DataFrame **row** object, 
+- A string containing the **question** infix
+- A dictionary of runtime **parameters** which must include:
+ - *first_threshold*: One of three thresholds to compare the question count to.
+ - *second_threshold*: One of three thresholds to compare the question count to.
+ - *third_threshold*: One of three thresholds to compare the question count to.
+ - *first_imputation_factor*: One of three factors to be assigned to the question.
+ - *second_imputation_factor*: One of three factors to be assigned to the question.
+ - *third_imputation_factor*: One of three factors to be assigned to the question.
+ - *region_column*: The name of the column that holds region.
+ - *regionless_code*: The value used as 'all GB' in the 'region_column'
+ - *survey_column*: Column name of the dataframe containing the survey code.
+ - *percentage_movement*: Indicates if percentage movement was used
+
+**Outputs:** The modified **row** object
+
+### Factors Calculation B
+
+**Intro:** Factors calculation for 'Bricks' surveys. Should be called as a df.apply() function. It will calculate the factors value based on threshold passed in the parameters.
+
+**Inputs:** 
+- A DataFrame **row** object, 
+- A string containing the **question** infix
+- A dictionary of runtime **parameters** which must include:
+ - *threshold*: The threshold to compare the question count to.
+
+**Outputs:** The modified **row** object
+
+
 

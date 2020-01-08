@@ -36,7 +36,7 @@ def lambda_handler(event, context):
     The method requires a column per question to store the movements, named as follows:
     'movement_questionNameAndNumber'. The wrangler checks for non response and if everyone
     has responded the calculate movements is skipped.
-    :param event: Contains Runtime_variables, which contains the calculation_type
+    :param event: Contains Runtime_variables, which contains the movement_type
     :param context: N/A
     :return: Success & Checkpoint & Impute/Error - Type: JSON
     """
@@ -61,7 +61,7 @@ def lambda_handler(event, context):
         logger.info("Setting-up environment configs")
 
         # Event vars
-        calculation_type = event['RuntimeVariables']["calculation_type"]
+        movement_type = event['RuntimeVariables']["movement_type"]
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -122,7 +122,7 @@ def lambda_handler(event, context):
 
             json_payload = {
                 "json_data": json_ordered_data,
-                "calculation_type": calculation_type,
+                "movement_type": movement_type,
                 "questions_list": questions_list,
                 "current_period": period,
                 "period_column": period_column

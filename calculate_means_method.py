@@ -10,7 +10,7 @@ def lambda_handler(event, context):
     Generates an aggregated DataFrame containing the mean value for
     each of the period on period percentage movements, grouped by
     region and strata.
-    :param event: JSON payload that contains: calculation_type, json_data, questions_list
+    :param event: JSON payload that contains: json_data, questions_list
                   Type: JSON.
     :param context: Context object
     :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}

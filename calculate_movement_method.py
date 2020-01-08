@@ -15,7 +15,7 @@ def lambda_handler(event, context):
     """
     This method is responsible for creating the movements for each question and then
     recording them in the respective columns.
-    :param event: JSON payload that contains: calculation_type, json_data, questions_list
+    :param event: JSON payload that contains: movement_type, json_data, questions_list
                   Type: JSON.
     :param context: N/A
     :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
@@ -28,13 +28,14 @@ def lambda_handler(event, context):
 
     try:
         # Declare event vars
-        calculation_type = event["calculation_type"]
+        movement_type = event["movement_type"]
         json_data = event["json_data"]
         questions_list = event["questions_list"]
         current_period = event['current_period']
         period_column = event['period_column']
+
         # Get relative calculation function
-        calculation = getattr(imp_func, calculation_type)
+        calculation = getattr(imp_func, movement_type)
 
         # Declared inside of lambda_handler so that tests work correctly on local.
 

@@ -17,7 +17,7 @@ with open("tests/fixtures/method_input_test_data.json", "r") as file:
 
 mock_event = {
             "json_data": in_file,
-            "calculation_type": "movement_calculation_a",
+            "movement_type": "movement_calculation_a",
             "distinct_values": ["region"],
             "questions_list": 'Q601_asphalting_sand,'
                               'Q602_building_soft_sand,'
@@ -32,7 +32,7 @@ mock_event = {
 
 mock_event_b = {
             "json_data": in_file,
-            "calculation_type": "movement_calculation_b",
+            "movement_type": "movement_calculation_b",
             "distinct_values": ["region"],
             "questions_list": 'Q601_asphalting_sand,'
                               'Q602_building_soft_sand,'
@@ -48,7 +48,7 @@ mock_event_b = {
 mock_wrangles_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
-    "calculation_type": "movement_calculation_b",
+    "movement_type": "movement_calculation_b",
     "period": 201809,
     "period_column": "period",
     "id": "example",
