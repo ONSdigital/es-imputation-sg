@@ -17,6 +17,7 @@ with open("tests/fixtures/wrangler_input_test_data.json", "r") as file:
 mock_event = {
     "json_data": json.loads(in_file),
     "distinct_values": ["strata", "region"],
+    "perodicity": "03",
     "questions_list": 'Q601_asphalting_sand,'
                       'Q602_building_soft_sand,'
                       'Q603_concreting_sand,'
@@ -32,6 +33,7 @@ mock_wrangles_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "period_column": "period",
+    "perodicity": "03",
     "id": "example",
     "distinct_values": ["strata"]
   }
