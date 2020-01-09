@@ -1,3 +1,7 @@
+
+import pandas as pd
+
+
 def movement_calculation_a(current_value, previous_value):
     """
     Movements calculation for Sand and Gravel.
@@ -72,7 +76,8 @@ def factors_calcualtion_a(row, question, parameters):
             row["imputation_factor_" + question] = 0
     else:
         if row["movement_" + question + "_count"] < int(third_threshold):
-            row["imputation_factor_" + question] = float(third_imputation_factor)
+            row["imputation_factor_" + question] =\
+                float(pd.to_numeric(third_imputation_factor))
         else:
             row["imputation_factor_" + question] = float(row["mean_" + question])
 

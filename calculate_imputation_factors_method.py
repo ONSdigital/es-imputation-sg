@@ -38,7 +38,7 @@ def lambda_handler(event, context):
             # For surveys that user regional mean, extract it for this question
             if "regional_mean" in factors_parameters:
                 factors_parameters[factors_parameters["regional_mean"]] =\
-                    float(gb_row["mean_" + question])
+                    gb_row["mean_" + question]
 
             df = df.apply(lambda x: calculation(x, question, factors_parameters), axis=1)
 
