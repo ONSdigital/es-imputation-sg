@@ -127,7 +127,7 @@ def lambda_handler(event, context):
                 "questions_list": questions_list,
                 "current_period": period,
                 "period_column": period_column,
-                "perodicity": perodicity
+                "periodicity": periodicity
             }
 
             logger.info("Successfully created movement columns on the data")
