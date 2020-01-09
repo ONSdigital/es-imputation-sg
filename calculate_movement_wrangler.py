@@ -70,7 +70,7 @@ def lambda_handler(event, context):
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
         period = event['RuntimeVariables']['period']
-        perodicity = event['RuntimeVariables']['perodicity']
+        periodicity = event['RuntimeVariables']['periodicity']
         period_column = event['RuntimeVariables']['period_column']
         questions_list = config['questions_list']
         previous_period_file = config['previous_period_file']
