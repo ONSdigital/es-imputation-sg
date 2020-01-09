@@ -33,6 +33,7 @@ def lambda_handler(event, context):
         questions_list = event["questions_list"]
         current_period = event['current_period']
         period_column = event['period_column']
+        perodicity = event['perodicity']
 
         # Get relative calculation function
         calculation = getattr(imp_func, movement_type)
@@ -40,7 +41,7 @@ def lambda_handler(event, context):
         # Declared inside of lambda_handler so that tests work correctly on local.
 
         previous_period = general_functions.calculate_adjacent_periods(current_period,
-                                                                       "03")
+                                                                       perodicity)
 
         df = pd.DataFrame(json.loads(json_data))
 
