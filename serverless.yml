@@ -182,7 +182,7 @@ functions:
       checkpoint: 3
       bucket_name: results-s3-bucket
       in_file_name: calculate_movement_out.json
-      incoming_message_group: imputation-calculate-movement-out
+      incoming_message_group: add-all-gb-region-out
       method_name: es-imputation-calculate-means-method
       out_file_name: calculate_means_out.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
