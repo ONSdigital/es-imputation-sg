@@ -108,7 +108,7 @@ def lambda_handler(event, context):
             )
         logger.info("Successfully renamed previous period data")
 
-        non_responder_dataframe = pd.merge(
+        non_responder_dataframe_with_prev = pd.merge(
             non_responder_dataframe,
             prev_period_data[prev_questions_list],
             on=reference,
@@ -121,7 +121,7 @@ def lambda_handler(event, context):
 
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(
-            non_responder_dataframe,
+            non_responder_dataframe_with_prev,
             factors_dataframe[
                 produce_columns(
                     "imputation_factor_",
@@ -132,8 +132,27 @@ def lambda_handler(event, context):
             on=distinct_values,
             how="inner",
         )
-
         logger.info("Successfully merged non-responders with factors")
+
+        # Region/strata combinations that exist in responder data
+        # but not non_responders get dropped off on join
+        # With factors. Identify these, merge on the regionless factor.
+        # Then concat onto original dataset.
+        # It looked a lot nicer before flake8....
+        dropped_rows = non_responder_dataframe_with_prev[
+            ~non_responder_dataframe_with_prev['responder_id'].isin(
+                non_responders_with_factors['responder_id'])].dropna()
+        if(len(dropped_rows) > 0):
+            row14factors = \
+                factors_dataframe[
+                    produce_columns("imputation_factor_", questions_list, distinct_values)
+                ][factors_dataframe['region'] == 14]
+            row14factors = row14factors.drop(['region'], inplace=False, axis=1)
+            dropped_rows_with_factors = \
+                pd.merge(dropped_rows, row14factors, on='strata', how="inner")
+            non_responders_with_factors = \
+                pd.concat([non_responders_with_factors, dropped_rows_with_factors])
+            logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
             "json_data": json.loads(
@@ -165,8 +184,16 @@ def lambda_handler(event, context):
 
         # Joining Datasets Together.
         final_imputed = pd.concat([current_responders, imputed_non_responders])
-
         logger.info("Successfully joined imputed data with responder data")
+
+        # rows in current period not suitable for imputation
+        # (eg, no matching row in previous, or non_responder in previous)
+        # Need to be joined back onto the final output
+        dropped_rows = non_responder_dataframe[
+            ~non_responder_dataframe['responder_id'].
+            isin(final_imputed['responder_id'])].dropna()
+        final_imputed = pd.concat([final_imputed, dropped_rows])
+        logger.info("Successfully joined tacked on unimputable data")
 
         # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list,
@@ -189,54 +216,54 @@ def lambda_handler(event, context):
 
     except TypeError as e:
         error_message = (
-            "Bad data type encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "Bad data type encountered in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "Parameter validation error in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
         error_message = (
-            "AWS Error ("
-            + str(e.response["Error"]["Code"])
-            + ") "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "AWS Error ("
+                + str(e.response["Error"]["Code"])
+                + ") "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
         error_message = (
-            "Key Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "Key Error in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
         error_message = (
-            "Incomplete Lambda response encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "Incomplete Lambda response encountered in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except exception_classes.MethodFailure as e:
@@ -244,14 +271,14 @@ def lambda_handler(event, context):
         log_message = "Error in " + method_name + "."
     except Exception as e:
         error_message = (
-            "General Error in "
-            + current_module
-            + " ("
-            + str(type(e))
-            + ") |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
+                "General Error in "
+                + current_module
+                + " ("
+                + str(type(e))
+                + ") |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:

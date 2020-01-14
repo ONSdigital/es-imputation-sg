@@ -22,7 +22,7 @@ mock_wrangles_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": ["region"],
+    "distinct_values": ["region", "strata"],
     "raw_input_file": "non_responders_output.json",
     "sum_columns": [{"column_name": "Q608_total", "data": {
                     "Q603_concreting_sand": "+",
@@ -192,7 +192,7 @@ class TestApplyFactors(unittest.TestCase):
         s3object = s3.Object("MIKE", "123")
         content = s3object.get()["Body"].read()
         json_file = pd.DataFrame(json.loads(content))
-        assert json_file.shape[0] == 14
+        assert json_file.shape[0] == 15
 
     @mock_sqs
     @mock_s3
@@ -457,6 +457,7 @@ class TestApplyFactors(unittest.TestCase):
                         mock_client_object.invoke.return_value = {
                             "Payload": StreamingBody(file, 1)
                         }
+
                         response = apply_factors_wrangler.lambda_handler(
                             mock_wrangles_event, context_object
                         )
