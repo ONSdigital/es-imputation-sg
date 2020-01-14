@@ -102,7 +102,7 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise exception_classes.MethodFailure(json_response['error'])
 
-        output_df = pd.read_json(json_response['data'])
+        output_df = pd.read_json(json_response['data'], dtype=False)
         distinct_values.append(period_column)
         columns_to_keep = imp_func.produce_columns(
                                              "imputation_factor_",
