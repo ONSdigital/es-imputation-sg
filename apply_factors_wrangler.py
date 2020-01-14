@@ -156,7 +156,7 @@ def lambda_handler(event, context):
         if not json_response['success']:
             raise exception_classes.MethodFailure(json_response['error'])
 
-        imputed_non_responders = pd.read_json(json_response["data"])
+        imputed_non_responders = pd.read_json(json_response["data"], dtype=False)
 
         # retrieve current responders from input data..
         current_responders = input_data[
