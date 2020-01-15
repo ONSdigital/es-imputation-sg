@@ -1,3 +1,4 @@
+import copy
 import logging
 
 import pandas as pd
@@ -31,7 +32,7 @@ def lambda_handler(event, context):
         calculation = getattr(imp_func, factors_parameters["factors_type"])
 
         # Pass the distinct values to the factors function in its parameters
-        factors_parameters['distinct_values'] = distinct_values
+        factors_parameters['distinct_values'] = copy.deepcopy(distinct_values)
 
         # Some surveys will need to use the regional mean, extract them ahead of time
         if "regional_mean" in factors_parameters:
@@ -44,7 +45,7 @@ def lambda_handler(event, context):
                 group_values = distinct_values
                 group_values.append("mean_" + question)
                 factors_parameters[factors_parameters["regional_mean"]] =\
-                    gb_rows.groupby(group_values)
+                    gb_rows[group_values]
 
             df = df.apply(lambda x: calculation(x, question, factors_parameters), axis=1)
 

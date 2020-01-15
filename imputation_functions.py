@@ -24,7 +24,7 @@ def movement_calculation_b(current_value, previous_value):
     return number
 
 
-def factors_calcualtion_a(row, question, distinct_values, parameters):
+def factors_calcualtion_a(row, question, parameters):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -62,6 +62,7 @@ def factors_calcualtion_a(row, question, distinct_values, parameters):
     regionless_code = parameters["regionless_code"]
     survey_column = parameters["survey_column"]
     percentage_movement = parameters["percentage_movement"]
+    distinct_values = parameters["distinct_values"]
 
     if row[region_column] == regionless_code:
         if row[survey_column] == "066":
@@ -80,14 +81,21 @@ def factors_calcualtion_a(row, question, distinct_values, parameters):
             row["imputation_factor_" + question] = 0
     else:
         if row["movement_" + question + "_count"] < int(third_threshold):
-            # find the correct mean (region or region+strata handling)
+            factor_filter = ""
+
+            # Ignore region in matching columns (we need to find the all-gb data)
+            if region_column in distinct_values:
+                distinct_values.remove(region_column)
+
+            # Find the correct mean (region or region+strata handling)
             for value in distinct_values:
                 if value != distinct_values[0]:
                     factor_filter += " & "
-                factor_filter += "(%s == '%s')"  % (value, row[value])
-            
+                factor_filter += "(%s == '%s')" % (value, row[value])
+
             row["imputation_factor_" + question] =\
-                float(pd.to_numeric(third_imputation_factors.query(str(factor_filter))["mean" + question].take(1)))
+                float(pd.to_numeric(third_imputation_factors.query(
+                                    str(factor_filter))["mean_" + question].take([0])))
         else:
             row["imputation_factor_" + question] =\
                 float(pd.to_numeric(row["mean_" + question]))

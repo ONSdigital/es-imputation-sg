@@ -23,7 +23,7 @@ mock_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "id": "example",
-    "distinct_values": ["region"],
+    "distinct_values": ["strata", "region"],
     "period_column": "period",
     "factors_parameters":
     {
@@ -37,7 +37,7 @@ mock_event = {
         "first_threshold": 7,
         "second_threshold": 7,
         "third_threshold": 9,
-        "regional_mean": "third_imputation_factor"
+        "regional_mean": "third_imputation_factors"
     }
   }
 }
@@ -195,6 +195,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                                   + "Q605_concreting_gravel,"
                                   + "Q606_other_gravel,"
                                   + "Q607_constructional_fill",
+                "distinct_values": ["strata", "region", "period"],
                 "factors_parameters": {
                     "RuntimeVariables": {
                         "factors_type": "factors_calcualtion_a",
@@ -207,7 +208,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                         "first_threshold": 7,
                         "second_threshold": 7,
                         "third_threshold": 9,
-                        "regional_mean": "third_imputation_factor"
+                        "regional_mean": "third_imputation_factors"
                     }
                 }
             }, context_object
@@ -240,6 +241,7 @@ class TestWranglerAndMethod(unittest.TestCase):
             {"data_json": json_content, "questions_list": "Commons_prod,"
                                                           + "Commons_Dels,"
                                                           + "Commons_C-stock",
+                                        "distinct_values": ["strata", "region"],
                                         "factors_parameters": {
                                             "RuntimeVariables": {
                                                 "factors_type": "factors_calcualtion_b",
@@ -309,6 +311,7 @@ class TestWranglerAndMethod(unittest.TestCase):
             response = calculate_imputation_factors_method.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 666},
                  "data_json": json_data_content,
+                 "distinct_values": ["strata", "region"],
                  "questions_list": "Q601_asphalting_sand,"
                  + "Q602_building_soft_sand,"
                  + "Q603_concreting_sand,"
@@ -328,7 +331,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                             "first_threshold": 7,
                             "second_threshold": 9,
                             "third_threshold": 9,
-                            "regional_mean": "third_imputation_factor"
+                            "regional_mean": "third_imputation_factors"
                         }
                     }
                  }, context_object
