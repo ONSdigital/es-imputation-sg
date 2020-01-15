@@ -24,21 +24,27 @@ def lambda_handler(event, context):
         # set up variables
         factors_parameters = event["factors_parameters"]["RuntimeVariables"]
         questions_list = event["questions_list"]
+        distinct_values = event["distinct_values"]
         df = pd.DataFrame(event["data_json"])
 
         # Get relative calculation function
         calculation = getattr(imp_func, factors_parameters["factors_type"])
 
-        # Some surveys will need to use the regional mean, extract it ahead of time
+        # Pass the distinct values to the factors function in its parameters
+        factors_parameters['distinct_values'] = distinct_values
+
+        # Some surveys will need to use the regional mean, extract them ahead of time
         if "regional_mean" in factors_parameters:
-            gb_row = df.loc[df[factors_parameters["region_column"]] ==
-                            factors_parameters["regionless_code"]].head(1)
+            gb_rows = df.loc[df[factors_parameters["region_column"]] ==
+                             factors_parameters["regionless_code"]]
 
         for question in questions_list.split(","):
-            # For surveys that user regional mean, extract it for this question
+            # For surveys that user regional mean, extract them for this question
             if "regional_mean" in factors_parameters:
+                group_values = distinct_values
+                group_values.append("mean_" + question)
                 factors_parameters[factors_parameters["regional_mean"]] =\
-                    gb_row["mean_" + question]
+                    gb_rows.groupby(group_values)
 
             df = df.apply(lambda x: calculation(x, question, factors_parameters), axis=1)
 

@@ -63,6 +63,7 @@ def lambda_handler(event, context):
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
+        distinct_values = event['RuntimeVariables']["distinct_values"]
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         period_column = event['RuntimeVariables']["period_column"]
@@ -86,6 +87,7 @@ def lambda_handler(event, context):
         payload = {
             "data_json": json.loads(data.to_json(orient="records")),
             "questions_list": questions_list,
+            "distinct_values": distinct_values,
             "factors_parameters": factors_parameters
         }
 
