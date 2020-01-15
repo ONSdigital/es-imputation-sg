@@ -28,26 +28,26 @@ mock_wrangles_event = {
             "sum_columns": [{"column_name": "Q608_total", "data": {
                             "Q603_concreting_sand": "+",
                             "Q602_building_soft_sand": "+"}}
-                            ]
-
+                            ],
+            "factors_parameters":
+                {
+                    "RuntimeVariables":
+                        {
+                            "factors_type": "factors_calcualtion_a",
+                            "percentage_movement": True,
+                            "survey_column": "survey",
+                            "region_column": "region",
+                            "regionless_code": 14,
+                            "first_imputation_factor": 1,
+                            "second_imputation_factor": 2,
+                            "first_threshold": 7,
+                            "second_threshold": 7,
+                            "third_threshold": 9,
+                            "regional_mean": "third_imputation_factor"
+                        }
+                    }
         },
-    "factors_parameters":
-    {
-        "RuntimeVariables":
-            {
-                "factors_type": "factors_calcualtion_a",
-                "percentage_movement": True,
-                "survey_column": "survey",
-                "region_column": "region",
-                "regionless_code": 14,
-                "first_imputation_factor": 1,
-                "second_imputation_factor": 2,
-                "first_threshold": 7,
-                "second_threshold": 7,
-                "third_threshold": 9,
-                "regional_mean": "third_imputation_factor"
-            }
-        }
+
 }
 
 context_object = MockContext()

@@ -58,9 +58,9 @@ def lambda_handler(event, context):
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
         period_column = event['RuntimeVariables']['period_column']
-        factors_parameters = event["factors_parameters"]["RuntimeVariables"]
-        regionless_code = factors_parameters['regionless_code']
-        region_column = factors_parameters['region_column']
+        factors_parameters = event["RuntimeVariables"]["factors_parameters"]
+        regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
+        region_column = factors_parameters["RuntimeVariables"]['region_column']
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
 
