@@ -63,8 +63,7 @@ def lambda_handler(event, context):
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
         sqs_queue_url = config["sqs_queue_url"]
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-
+        
         distinct_values = event['RuntimeVariables']["distinct_values"]
         period_column = event['RuntimeVariables']["period_column"]
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
