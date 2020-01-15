@@ -148,7 +148,7 @@ def lambda_handler(event, context):
             ~non_responder_dataframe_with_prev[reference].isin(
                 non_responders_with_factors[reference])].dropna()
         if(len(dropped_rows) > 0):
-            if(strata_column in dropped_rows):
+            if(strata_column in dropped_rows.columns.values):
                 regionless_factors = \
                     factors_dataframe[
                         produce_columns("imputation_factor_",
