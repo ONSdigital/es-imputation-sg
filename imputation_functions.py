@@ -34,7 +34,7 @@ def factors_calcualtion_a(row, question, parameters):
         Count of refs within cell
 
     :param row: row of DataFrame
-    :param question: question
+    :param question: question name in columns
     :param parameters: A dictionary of the following parameters:
         - first_threshold: One of three thresholds to compare the question count to.
         - second_threshold: One of three thresholds to compare the question count to.
@@ -46,6 +46,8 @@ def factors_calcualtion_a(row, question, parameters):
         - regionless_code: The value used as 'all GB' in the 'region_column'
         - survey_column: Column name of the dataframe containing the survey code.
         - percentage_movement: Indicates if percentage movement was used
+        - distinct_values: Array of column names to derive distinct values from
+                           and store in table. - Type: List
 
     :return: row of DataFrame
     """
@@ -55,11 +57,12 @@ def factors_calcualtion_a(row, question, parameters):
     third_threshold = parameters["third_threshold"]
     first_imputation_factor = parameters["first_imputation_factor"]
     second_imputation_factor = parameters["second_imputation_factor"]
-    third_imputation_factor = parameters["third_imputation_factor"]
+    third_imputation_factors = parameters["third_imputation_factors"]
     region_column = parameters["region_column"]
     regionless_code = parameters["regionless_code"]
     survey_column = parameters["survey_column"]
     percentage_movement = parameters["percentage_movement"]
+    distinct_values = parameters["distinct_values"]
 
     if row[region_column] == regionless_code:
         if row[survey_column] == "066":
@@ -78,8 +81,21 @@ def factors_calcualtion_a(row, question, parameters):
             row["imputation_factor_" + question] = 0
     else:
         if row["movement_" + question + "_count"] < int(third_threshold):
+            factor_filter = ""
+
+            # Ignore region in matching columns (we need to find the all-gb data)
+            if region_column in distinct_values:
+                distinct_values.remove(region_column)
+
+            # Find the correct mean (region or region+strata handling)
+            for value in distinct_values:
+                if value != distinct_values[0]:
+                    factor_filter += " & "
+                factor_filter += "(%s == '%s')" % (value, row[value])
+
             row["imputation_factor_" + question] =\
-                float(pd.to_numeric(third_imputation_factor))
+                float(pd.to_numeric(third_imputation_factors.query(
+                                    str(factor_filter))["mean_" + question].take([0])))
         else:
             row["imputation_factor_" + question] =\
                 float(pd.to_numeric(row["mean_" + question]))
