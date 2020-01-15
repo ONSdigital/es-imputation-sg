@@ -29,6 +29,7 @@ class EnvironSchema(Schema):
     sqs_queue_url = fields.Str(required=True)
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
+    strata_column = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -57,10 +58,13 @@ def lambda_handler(event, context):
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
         period_column = event['RuntimeVariables']['period_column']
+        factors_parameters = event["factors_parameters"]["RuntimeVariables"]
+        regionless_code = factors_parameters['regionless_code']
+        region_column = factors_parameters['region_column']
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
 
-        # Set up clients
+        # Environment vars
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
         current_period = config["period"]
@@ -74,6 +78,7 @@ def lambda_handler(event, context):
         sqs_queue_url = config["sqs_queue_url"]
         response_type = config['response_type']
         reference = config['reference']
+        strata_column = config['strata_column']
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
@@ -140,19 +145,22 @@ def lambda_handler(event, context):
         # Then concat onto original dataset.
         # It looked a lot nicer before flake8....
         dropped_rows = non_responder_dataframe_with_prev[
-            ~non_responder_dataframe_with_prev['responder_id'].isin(
-                non_responders_with_factors['responder_id'])].dropna()
+            ~non_responder_dataframe_with_prev[reference].isin(
+                non_responders_with_factors[reference])].dropna()
         if(len(dropped_rows) > 0):
-            row14factors = \
-                factors_dataframe[
-                    produce_columns("imputation_factor_", questions_list, distinct_values)
-                ][factors_dataframe['region'] == 14]
-            row14factors = row14factors.drop(['region'], inplace=False, axis=1)
-            dropped_rows_with_factors = \
-                pd.merge(dropped_rows, row14factors, on='strata', how="inner")
-            non_responders_with_factors = \
-                pd.concat([non_responders_with_factors, dropped_rows_with_factors])
-            logger.info("Successfully merged missing rows with non_responders")
+            if(strata_column in dropped_rows):
+                row14factors = \
+                    factors_dataframe[
+                        produce_columns("imputation_factor_",
+                                        questions_list,
+                                        distinct_values)
+                    ][factors_dataframe[region_column] == regionless_code]
+                row14factors = row14factors.drop([region_column], inplace=False, axis=1)
+                dropped_rows_with_factors = \
+                    pd.merge(dropped_rows, row14factors, on='strata', how="inner")
+                non_responders_with_factors = \
+                    pd.concat([non_responders_with_factors, dropped_rows_with_factors])
+                logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
             "json_data": json.loads(
@@ -190,8 +198,8 @@ def lambda_handler(event, context):
         # (eg, no matching row in previous, or non_responder in previous)
         # Need to be joined back onto the final output
         dropped_rows = non_responder_dataframe[
-            ~non_responder_dataframe['responder_id'].
-            isin(final_imputed['responder_id'])].dropna()
+            ~non_responder_dataframe[reference].
+            isin(final_imputed[reference])].dropna()
         final_imputed = pd.concat([final_imputed, dropped_rows])
         logger.info("Successfully joined tacked on unimputable data")
 

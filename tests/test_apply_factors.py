@@ -16,19 +16,38 @@ class MockContext:
 
 
 mock_wrangles_event = {
-  "MessageStructure": "json",
-  "RuntimeVariables": {
-    "period_column": "period",
-    "movement_type": "movement_calculation_b",
-    "period": 201809,
-    "id": "example",
-    "distinct_values": ["region", "strata"],
-    "raw_input_file": "non_responders_output.json",
-    "sum_columns": [{"column_name": "Q608_total", "data": {
-                    "Q603_concreting_sand": "+",
-                    "Q602_building_soft_sand": "+"}}
-                    ]
-  }
+    "MessageStructure": "json",
+    "RuntimeVariables":
+        {
+            "period_column": "period",
+            "movement_type": "movement_calculation_b",
+            "period": 201809,
+            "id": "example",
+            "distinct_values": ["region", "strata"],
+            "raw_input_file": "non_responders_output.json",
+            "sum_columns": [{"column_name": "Q608_total", "data": {
+                            "Q603_concreting_sand": "+",
+                            "Q602_building_soft_sand": "+"}}
+                            ]
+
+        },
+    "factors_parameters":
+    {
+        "RuntimeVariables":
+            {
+                "factors_type": "factors_calcualtion_a",
+                "percentage_movement": True,
+                "survey_column": "survey",
+                "region_column": "region",
+                "regionless_code": 14,
+                "first_imputation_factor": 1,
+                "second_imputation_factor": 2,
+                "first_threshold": 7,
+                "second_threshold": 7,
+                "third_threshold": 9,
+                "regional_mean": "third_imputation_factor"
+            }
+        }
 }
 
 context_object = MockContext()
@@ -56,7 +75,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
 
@@ -116,7 +136,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
             with mock.patch("apply_factors_wrangler"
@@ -249,7 +270,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
 
@@ -395,7 +417,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
             response = apply_factors_wrangler.lambda_handler(
@@ -440,7 +463,8 @@ class TestApplyFactors(unittest.TestCase):
                                       "Q605_concreting_gravel,Q606_other_gravel," +
                                       "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
                 },
         ):
             with mock.patch(
@@ -499,7 +523,8 @@ class TestApplyFactors(unittest.TestCase):
                                       "Q605_concreting_gravel,Q606_other_gravel," +
                                       "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
                 },
         ):
             with mock.patch("apply_factors_wrangler.aws_functions") as mock_funk:
@@ -542,7 +567,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
 
@@ -614,7 +640,8 @@ class TestApplyFactors(unittest.TestCase):
                                   "Q605_concreting_gravel,Q606_other_gravel," +
                                   "Q607_constructional_fill",
                 "response_type": "response_type",
-                "reference": "responder_id"
+                "reference": "responder_id",
+                "strata_column": "strata"
             },
         ):
 
