@@ -149,15 +149,16 @@ def lambda_handler(event, context):
                 non_responders_with_factors[reference])].dropna()
         if(len(dropped_rows) > 0):
             if(strata_column in dropped_rows):
-                row14factors = \
+                regionless_factors = \
                     factors_dataframe[
                         produce_columns("imputation_factor_",
                                         questions_list,
                                         distinct_values)
                     ][factors_dataframe[region_column] == regionless_code]
-                row14factors = row14factors.drop([region_column], inplace=False, axis=1)
+                regionless_factors = regionless_factors.drop(
+                    [region_column], inplace=False, axis=1)
                 dropped_rows_with_factors = \
-                    pd.merge(dropped_rows, row14factors, on='strata', how="inner")
+                    pd.merge(dropped_rows, regionless_factors, on='strata', how="inner")
                 non_responders_with_factors = \
                     pd.concat([non_responders_with_factors, dropped_rows_with_factors])
                 logger.info("Successfully merged missing rows with non_responders")
