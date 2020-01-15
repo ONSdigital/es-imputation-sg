@@ -48,6 +48,7 @@ functions:
       method_name: es-imputation-apply-factors-method
       out_file_name: imputation_apply_out.json
       period: 201809
+      strata_column: strata
       previous_data_file: prev_datafile.json
       questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
