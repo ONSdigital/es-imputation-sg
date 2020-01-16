@@ -28,7 +28,8 @@ def lambda_handler(event, context):
             # Loop through each question value, impute based on factor and previous value
             # then drop the previous value and the imp factor
             working_dataframe[question] = working_dataframe.apply(
-                lambda x: x["prev_" + question] * x["imputation_factor_" + question],
+                lambda x: round(x["prev_" + question] *
+                                x["imputation_factor_" + question]),
                 axis=1,
             )
 
