@@ -42,8 +42,14 @@ def lambda_handler(event, context):
         for question in questions_list.split(","):
             # For surveys that user regional mean, extract them for this question
             if "regional_mean" in factors_parameters:
+                # Placeholder to send to function
+                factors_parameters[factors_parameters["regional_mean"]] = ""
+                # Call calculation with gb rows to calculate their factors
+                gb_rows = gb_rows.apply(
+                    lambda x: calculation(x, question, factors_parameters), axis=1)
+
                 group_values = distinct_values
-                group_values.append("mean_" + question)
+                group_values.append("imputation_factor_" + question)
                 factors_parameters[factors_parameters["regional_mean"]] =\
                     gb_rows[group_values]
 

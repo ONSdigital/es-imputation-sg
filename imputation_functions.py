@@ -79,6 +79,10 @@ def factors_calcualtion_a(row, question, parameters):
                     float(pd.to_numeric(row["mean_" + question]))
         else:
             row["imputation_factor_" + question] = 0
+        # check if the imputation factor needs to be adjusted
+        if percentage_movement:
+            row["imputation_factor_" + question] = \
+                row["imputation_factor_" + question] + 1
     else:
         if row["movement_" + question + "_count"] < int(third_threshold):
             factor_filter = ""
@@ -94,16 +98,17 @@ def factors_calcualtion_a(row, question, parameters):
                 factor_filter += "(%s == '%s')" % (value, row[value])
 
             row["imputation_factor_" + question] =\
-                float(pd.to_numeric(third_imputation_factors.query(
-                                    str(factor_filter))["mean_" + question].take([0])))
+                float(pd.to_numeric(
+                    third_imputation_factors.query(
+                        str(factor_filter))["imputation_factor_" + question].take([0])))
         else:
             row["imputation_factor_" + question] =\
                 float(pd.to_numeric(row["mean_" + question]))
 
-        # check if the imputation factor needs to be adjusted
-        if percentage_movement:
-            row["imputation_factor_" + question] =\
-                row["imputation_factor_" + question] + 1
+            # check if the imputation factor needs to be adjusted
+            if percentage_movement:
+                row["imputation_factor_" + question] =\
+                    row["imputation_factor_" + question] + 1
 
     return row
 
