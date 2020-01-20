@@ -25,6 +25,47 @@ custom:
   accountId: ${self:custom.accounts.account-id}
 
 functions:
+  deploy-add-regionless-wrangler:
+    name: es-add-regionless-wrangler
+    handler: add_regionless_wrangler.lambda_handler
+    package:
+      include:
+        - add_regionless_wrangler.py
+      exclude:
+        - ./**
+      individually: true
+    layers:
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+    tags:
+      app: results
+    environment:
+      checkpoint: 3
+      bucket_name: results-s3-bucket
+      in_file_name: calculate_movement_out.json
+      incoming_message_group: imputation-calculate-movement-out
+      method_name: es-add-regionless-method
+      out_file_name: add_allGB_out.json
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sqs_message_group_id: add-all-gb-region-out
+      sqs_queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
+
+
+  deploy-add-regionless-method:
+    name: es-add-regionless-method
+    handler: add_regionless_method.lambda_handler
+    package:
+      include:
+        - add_regionless_method.py
+      exclude:
+        - ./**
+      individually: true
+    layers:
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+    tags:
+      app: results
+
+
   deploy-apply-factors-wrangler:
     name: es-imputation-apply-factors-wrangler
     handler: apply_factors_wrangler.lambda_handler

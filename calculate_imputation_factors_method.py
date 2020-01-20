@@ -47,11 +47,16 @@ def lambda_handler(event, context):
                 # Call calculation with gb rows to calculate their factors
                 gb_rows = gb_rows.apply(
                     lambda x: calculation(x, question, factors_parameters), axis=1)
-
+                gb_factors = gb_rows.copy()
+                gb_factors = gb_factors[
+                    imp_func.produce_columns("imputation_factor_",
+                                             questions_list.split(","),
+                                             distinct_values)
+                ].drop_duplicates()
                 group_values = distinct_values
                 group_values.append("imputation_factor_" + question)
                 factors_parameters[factors_parameters["regional_mean"]] =\
-                    gb_rows[group_values]
+                    gb_factors[group_values]
 
             df = df.apply(lambda x: calculation(x, question, factors_parameters), axis=1)
 

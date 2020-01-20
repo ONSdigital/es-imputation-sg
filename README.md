@@ -2,6 +2,13 @@
 
 ## Wranglers
 
+### Add Regionless Wrangler
+**Name of Lambda:** add_regionless_wrangler <br/>
+
+**Intro:** It will extract the data from S3 (where the previous step has saved its data) and pass it to the method for processing. <br/>
+
+Once the method successfully completed it will save this data back to S3 and send a notification to SNS.<br/>
+
 ### Calculate Movements Wrangler
 
 This is the first step in the imputation section of the process. 
@@ -56,6 +63,18 @@ The factors data is merged on to the non-responder data next, adding imputation_
 The result of the method is imputed values for each non-responder, this is joined back onto the responder data (used to calculate factors) and saved the data to S3 so it can be used by the next process. Completion status is published to SNS.
 
 ## Methods
+
+### Add Regionless Method
+**Name of Lambda:** add_regionless_method<br/>
+
+**Intro:** It will take a DataFrame and duplicate it. In the duplicate, it will replace data in the *region_colum* with the value provided in *regionless_code*. Then it will append the duplicate Dataframe to the end of the original and pass the new combined DataFrame back.
+
+**Inputs:** A JSON object containing:
+- The source DataFrame
+- The *region_column* - name of the column in the data
+- The *regionless_code* - the value that will be saved into the duplicate's *region_column*
+
+**Outputs:** A dictionary containing a Success flag (True/False) and a JSON string which contains the combined region and regionless data
 
 ### Calculate Movements Method
 
