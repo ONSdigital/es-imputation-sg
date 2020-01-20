@@ -73,13 +73,14 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("add_regionless_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("tests/fixtures/sg_input.json", "r") as file:
+                with open("tests/fixtures/add_regionless_input.json", "r") as file:
                     mock_client_object.invoke.return_value\
                             .get.return_value.read\
                             .return_value.decode.return_value = json.dumps({
                                 "data": json.loads(file.read()), "success": True
                             })
-                    with open("tests/fixtures/sg_output.json", "rb") as queue_file:
+                    with open("tests/fixtures/add_regionless_output.json", "rb")\
+                            as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                         response = add_regionless_wrangler.lambda_handler(
@@ -90,7 +91,7 @@ class TestApplyFactors(unittest.TestCase):
                         assert response["success"] is True
 
     def test_method_happy_path(self):
-        input_file = "tests/fixtures/sg_input.json"
+        input_file = "tests/fixtures/add_regionless_input.json"
         with open(input_file, "r") as file:
             json_dataframe = pd.read_json(file.read())
             json_content = json.loads(json_dataframe.to_json(orient="records"))
@@ -106,7 +107,7 @@ class TestApplyFactors(unittest.TestCase):
             )
 
             response_df = (pd.read_json(output["data"]))
-            expected_df = (pd.read_json('tests/fixtures/sg_output.json'))
+            expected_df = (pd.read_json('tests/fixtures/add_regionless_output.json'))
 
             response_df = response_df.round(5)
             expected_df = expected_df.round(5)
@@ -130,7 +131,7 @@ class TestApplyFactors(unittest.TestCase):
             assert """General Error""" in response["error"]
 
     def test_method_general_exception(self):
-        input_file = "tests/fixtures/sg_input.json"
+        input_file = "tests/fixtures/add_regionless_input.json"
         with open(input_file, "r") as file:
             json_content = file.read()
             with mock.patch("add_regionless_method.pd.DataFrame") as mocked:
@@ -168,7 +169,7 @@ class TestApplyFactors(unittest.TestCase):
             assert """Key Error""" in response["error"]
 
     def test_method_key_error(self):
-        with open("tests/fixtures/sg_input.json", "r") as file:
+        with open("tests/fixtures/add_regionless_input.json", "r") as file:
             content = file.read()
             event = {
                     "jason_data": content,
@@ -216,7 +217,7 @@ class TestApplyFactors(unittest.TestCase):
                 mock_client_object.invoke.return_value = {
                     "Payload": StreamingBody("{'boo':'moo':}", 2)
                 }
-                with open("tests/fixtures/sg_input.json", "rb") as queue_file:
+                with open("tests/fixtures/add_regionless_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = add_regionless_wrangler.lambda_handler(
@@ -236,11 +237,12 @@ class TestApplyFactors(unittest.TestCase):
             with mock.patch("add_regionless_wrangler.boto3.client") as mock_client:
                 mock_client_object = mock.Mock()
                 mock_client.return_value = mock_client_object
-                with open("tests/fixtures/sg_input.json", "rb") as file:
+                with open("tests/fixtures/add_regionless_input.json", "rb") as file:
                     mock_client_object.invoke.return_value = {
                         "Payload": StreamingBody(file, 123456)
                     }
-                    with open("tests/fixtures/sg_input.json", "rb") as queue_file:
+                    with open("tests/fixtures/add_regionless_input.json", "rb")\
+                            as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
 
@@ -268,7 +270,7 @@ class TestApplyFactors(unittest.TestCase):
                     .read.return_value.decode.return_value = \
                     json.dumps({"success": False,
                                 "error": "This is an error message"})
-                with open("tests/fixtures/sg_input.json", "rb") as queue_file:
+                with open("tests/fixtures/add_regionless_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
                     response = add_regionless_wrangler.lambda_handler(

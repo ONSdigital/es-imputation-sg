@@ -2,7 +2,7 @@
 
 ## Wranglers
 
-### All GB Region Wrangler
+### Add Regionless Wrangler
 **Name of Lambda:** add_regionless_wrangler <br/>
 
 **Intro:** It will extract the data from S3 (where the previous step has saved its data) and pass it to the method for processing. <br/>
@@ -64,7 +64,7 @@ The result of the method is imputed values for each non-responder, this is joine
 
 ## Methods
 
-### All GB Region Method
+### Add Regionless Method
 **Name of Lambda:** add_regionless_method<br/>
 
 **Intro:** It will take a DataFrame and duplicate it. In the duplicate, it will replace data in the *region_colum* with the value provided in *regionless_code*. Then it will append the duplicate Dataframe to the end of the original and pass the new combined DataFrame back.
