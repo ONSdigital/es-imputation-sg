@@ -1,4 +1,3 @@
-import copy
 import logging
 
 import pandas as pd
@@ -24,43 +23,56 @@ def lambda_handler(event, context):
 
         # set up variables
         factors_parameters = event["factors_parameters"]["RuntimeVariables"]
-        questions_list = event["questions_list"]
+        questions_list = event["questions_list"].split(',')
         distinct_values = event["distinct_values"]
         df = pd.DataFrame(event["data_json"])
-
+        survey_column = factors_parameters['survey_column']
         # Get relative calculation function
         calculation = getattr(imp_func, factors_parameters["factors_type"])
 
         # Pass the distinct values to the factors function in its parameters
-        factors_parameters['distinct_values'] = copy.deepcopy(distinct_values)
+        factors_parameters['distinct_values'] = distinct_values
 
         # Some surveys will need to use the regional mean, extract them ahead of time
         if "regional_mean" in factors_parameters:
+            # split to get only regionless data
             gb_rows = df.loc[df[factors_parameters["region_column"]] ==
                              factors_parameters["regionless_code"]]
+            # produce column names
+            means_columns = imp_func.produce_columns("mean_", questions_list)
+            counts_columns = imp_func.\
+                produce_columns("movement_", questions_list, suffix='_count')
+            gb_columns = \
+                means_columns +\
+                counts_columns +\
+                distinct_values +\
+                [survey_column]
 
-        for question in questions_list.split(","):
-            # For surveys that user regional mean, extract them for this question
-            if "regional_mean" in factors_parameters:
-                # Placeholder to send to function
-                factors_parameters[factors_parameters["regional_mean"]] = ""
-                # Call calculation with gb rows to calculate their factors
-                gb_rows = gb_rows.apply(
-                    lambda x: calculation(x, question, factors_parameters), axis=1)
-                gb_factors = gb_rows.copy()
-                gb_factors = gb_factors[
-                    imp_func.produce_columns("imputation_factor_",
-                                             questions_list.split(","),
-                                             distinct_values)
-                ].drop_duplicates()
-                group_values = distinct_values
-                group_values.append("imputation_factor_" + question)
-                factors_parameters[factors_parameters["regional_mean"]] =\
-                    gb_factors[group_values]
+            factor_columns = imp_func.\
+                produce_columns("imputation_factor_",
+                                questions_list,
+                                distinct_values+[survey_column])
 
-            df = df.apply(lambda x: calculation(x, question, factors_parameters), axis=1)
+            # select only gb columns and then drop duplicates, leaving one row per strata
+            gb_rows = gb_rows[gb_columns].drop_duplicates()
+            factors_parameters[factors_parameters["regional_mean"]] = ""
 
-            logger.info("Calculated Factors for " + str(question))
+            # calculate gb factors ahead of time
+            gb_rows = gb_rows.apply(
+                lambda x: calculation(x, questions_list, factors_parameters), axis=1)
+
+            # reduce gb_rows to distinct_values, survey, and the factors
+            gb_factors = \
+                gb_rows[factor_columns]
+
+            # add gb_factors to factors parameters to send to calculation
+            factors_parameters[factors_parameters["regional_mean"]] = \
+                gb_factors
+
+        df = df.apply(lambda x: calculation(x, questions_list, factors_parameters),
+                      axis=1)
+        logger.info("Calculated Factors for " + str(questions_list))
+
         factors_dataframe = df
 
         logger.info("Succesfully finished calculations of factors")
