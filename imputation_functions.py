@@ -24,7 +24,7 @@ def movement_calculation_b(current_value, previous_value):
     return number
 
 
-def factors_calcualtion_a(row, question, parameters):
+def factors_calculation_a(row, questions, parameters):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -34,7 +34,7 @@ def factors_calcualtion_a(row, question, parameters):
         Count of refs within cell
 
     :param row: row of DataFrame
-    :param question: question name in columns
+    :param questions: question names in columns
     :param parameters: A dictionary of the following parameters:
         - first_threshold: One of three thresholds to compare the question count to.
         - second_threshold: One of three thresholds to compare the question count to.
@@ -63,57 +63,58 @@ def factors_calcualtion_a(row, question, parameters):
     survey_column = parameters["survey_column"]
     percentage_movement = parameters["percentage_movement"]
     distinct_values = parameters["distinct_values"]
-
-    if row[region_column] == regionless_code:
-        if row[survey_column] == "066":
-            if row["movement_" + question + "_count"] < int(first_threshold):
-                row["imputation_factor_" + question] = float(first_imputation_factor)
+    for question in questions:
+        if row[region_column] == regionless_code:
+            if row[survey_column] == "066":
+                if row["movement_" + question + "_count"] < int(first_threshold):
+                    row["imputation_factor_" + question] = float(first_imputation_factor)
+                else:
+                    row["imputation_factor_" + question] =\
+                        float(pd.to_numeric(row["mean_" + question]))
+            elif row[survey_column] == "076":
+                if row["movement_" + question + "_count"] < int(second_threshold):
+                    row["imputation_factor_" + question] = float(second_imputation_factor)
+                else:
+                    row["imputation_factor_" + question] =\
+                        float(pd.to_numeric(row["mean_" + question]))
             else:
-                row["imputation_factor_" + question] =\
-                    float(pd.to_numeric(row["mean_" + question]))
-        elif row[survey_column] == "076":
-            if row["movement_" + question + "_count"] < int(second_threshold):
-                row["imputation_factor_" + question] = float(second_imputation_factor)
-            else:
-                row["imputation_factor_" + question] =\
-                    float(pd.to_numeric(row["mean_" + question]))
-        else:
-            row["imputation_factor_" + question] = 0
-        # check if the imputation factor needs to be adjusted
-        if percentage_movement:
-            row["imputation_factor_" + question] = \
-                row["imputation_factor_" + question] + 1
-    else:
-        if row["movement_" + question + "_count"] < int(third_threshold):
-            factor_filter = ""
-
-            # Ignore region in matching columns (we need to find the all-gb data)
-            if region_column in distinct_values:
-                distinct_values.remove(region_column)
-
-            # Find the correct mean (region or region+strata handling)
-            for value in distinct_values:
-                if value != distinct_values[0]:
-                    factor_filter += " & "
-                factor_filter += "(%s == '%s')" % (value, row[value])
-
-            row["imputation_factor_" + question] =\
-                float(pd.to_numeric(
-                    third_imputation_factors.query(
-                        str(factor_filter))["imputation_factor_" + question].take([0])))
-        else:
-            row["imputation_factor_" + question] =\
-                float(pd.to_numeric(row["mean_" + question]))
-
+                row["imputation_factor_" + question] = 0
             # check if the imputation factor needs to be adjusted
             if percentage_movement:
-                row["imputation_factor_" + question] =\
+                row["imputation_factor_" + question] = \
                     row["imputation_factor_" + question] + 1
+        else:
+            if row["movement_" + question + "_count"] < int(third_threshold):
+                factor_filter = ""
+
+                # Ignore region in matching columns (we need to find the all-gb data)
+                if region_column in distinct_values:
+                    distinct_values.remove(region_column)
+
+                # Find the correct mean (region or region+strata handling)
+                for value in distinct_values:
+                    if value != distinct_values[0]:
+                        factor_filter += " & "
+                    factor_filter += "(%s == '%s')" % (value, row[value])
+
+                row["imputation_factor_" + question] =\
+                    float(pd.to_numeric(
+                        third_imputation_factors.query(
+                            str(factor_filter))["imputation_factor_" + question].
+                        take([0])))
+            else:
+                row["imputation_factor_" + question] =\
+                    float(pd.to_numeric(row["mean_" + question]))
+
+                # check if the imputation factor needs to be adjusted
+                if percentage_movement:
+                    row["imputation_factor_" + question] =\
+                        row["imputation_factor_" + question] + 1
 
     return row
 
 
-def factors_calcualtion_b(row, question, parameters):
+def factors_calculation_b(row, questions, parameters):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -121,7 +122,7 @@ def factors_calcualtion_b(row, question, parameters):
         Count of refs within cell
 
     :param row: row of DataFrame
-    :param question: question
+    :param questions: question names
     :param parameters: A dictionary of the following parameters:
         - threshold: The threshold to compare the question count to.
 
@@ -129,11 +130,11 @@ def factors_calcualtion_b(row, question, parameters):
     """
     # extract the parameters:
     threshold = parameters["threshold"]
-
-    if row["movement_" + question + "_count"] < int(threshold):
-        row["imputation_factor_" + question] = row["mean_" + question]
-    else:
-        row["imputation_factor_" + question] = 0
+    for question in questions:
+        if row["movement_" + question + "_count"] < int(threshold):
+            row["imputation_factor_" + question] = row["mean_" + question]
+        else:
+            row["imputation_factor_" + question] = 0
 
     return row
 
