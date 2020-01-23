@@ -34,7 +34,7 @@ mock_event = {
             "regional_mean": "third_imputation_factor"
         }
     },
-    "id": "bob"
+    "run_id": "bob"
   }
 }
 

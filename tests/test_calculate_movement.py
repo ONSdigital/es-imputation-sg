@@ -55,7 +55,7 @@ mock_wrangles_event = {
     "period": 201809,
     "period_column": "period",
     "periodicity": "03",
-    "id": "example",
+    "run_id": "example",
     "distinct_values": ["region"]
   }
 }

@@ -23,7 +23,7 @@ mock_wrangles_event = {
             "period_column": "period",
             "movement_type": "movement_calculation_b",
             "period": 201809,
-            "id": "example",
+            "run_id": "example",
             "distinct_values": ["region", "strata"],
             "raw_input_file": "non_responders_output.json",
             "sum_columns": [{"column_name": "Q608_total", "data": {
@@ -394,7 +394,8 @@ class TestApplyFactors(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 apply_factors_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "id": "bob"}}, context_object
+                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    context_object
                 )
             assert "Error validating environment params" \
                    in exc_info.exception.error_message

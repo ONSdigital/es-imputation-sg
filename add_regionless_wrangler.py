@@ -43,7 +43,7 @@ def lambda_handler(event, context):
 
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['id']
+        run_id = event['RuntimeVariables']['run_id']
 
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)

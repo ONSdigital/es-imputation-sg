@@ -23,7 +23,7 @@ mock_event = {
   "RuntimeVariables": {
     "movement_type": "movement_calculation_b",
     "period": 201809,
-    "id": "example",
+    "run_id": "example",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
     "factors_parameters":
@@ -298,7 +298,8 @@ class TestWranglerAndMethod(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 calculate_imputation_factors_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "id": "bob"}}, context_object
+                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    context_object
                 )
             assert "AARRRRGHH" in exc_info.exception.error_message
 
@@ -355,7 +356,8 @@ class TestWranglerAndMethod(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 calculate_imputation_factors_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "id": "bob"}}, context_object
+                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    context_object
                 )
             assert "Parameter validation error" in exc_info.exception.error_message
 

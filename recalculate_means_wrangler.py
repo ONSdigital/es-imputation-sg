@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['id']
+        run_id = event['RuntimeVariables']['run_id']
         # Set up clients
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client('lambda', 'eu-west-2')
