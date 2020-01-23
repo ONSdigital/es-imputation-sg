@@ -6,6 +6,7 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_sns, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
@@ -22,7 +23,7 @@ mock_event = {
   "RuntimeVariables": {
     "movement_type": "movement_calculation_b",
     "period": 201809,
-    "id": "example",
+    "run_id": "example",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
     "factors_parameters":
@@ -294,12 +295,13 @@ class TestWranglerAndMethod(unittest.TestCase):
     def test_raise_general_exception_wrangles(self):
         with mock.patch("calculate_imputation_factors_wrangler.boto3.client") as mocked:
             mocked.side_effect = Exception("AARRRRGHH!!")
-            response = calculate_imputation_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """AARRRRGHH!!""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_imputation_factors_wrangler.lambda_handler(
+                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    context_object
+                )
+            assert "AARRRRGHH" in exc_info.exception.error_message
 
     def test_raise_general_exception_method(self):
         with mock.patch("pandas.DataFrame") as mocked:
@@ -351,11 +353,13 @@ class TestWranglerAndMethod(unittest.TestCase):
                 {"sqs_queue_url": sqs_queue_url}
         ):
             calculate_imputation_factors_wrangler.os.environ.pop("method_name")
-            out = calculate_imputation_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
-            )
-            self.assertRaises(ValueError)
-            assert """Parameter validation error""" in out["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_imputation_factors_wrangler.lambda_handler(
+                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    context_object
+                )
+            assert "Parameter validation error" in exc_info.exception.error_message
 
     def test_method_key_error_exception(self):
         """
@@ -427,13 +431,13 @@ class TestWranglerAndMethod(unittest.TestCase):
                         mocked_client.invoke.return_value = {
                             "Payload": StreamingBody(invoke_return, 666)
                         }
-
-                        out = calculate_imputation_factors_wrangler.lambda_handler(
-                            mock_event, context_object
-                        )
-                        assert "success" in out
-                        assert not out["success"]
-                        assert "Incomplete Lambda response" in out["error"]
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            calculate_imputation_factors_wrangler.lambda_handler(
+                                mock_event, context_object
+                            )
+                        assert "Incomplete Lambda response" in \
+                               exc_info.exception.error_message
 
     @mock_sns
     @mock_sqs
@@ -442,12 +446,12 @@ class TestWranglerAndMethod(unittest.TestCase):
             "calculate_imputation_factors_wrangler.aws_functions.get_dataframe"
         ) as mocked:
             mocked.side_effect = KeyError()
-            out = calculate_imputation_factors_wrangler.lambda_handler(
-                mock_event, context_object
-            )
-            assert "success" in out
-            assert not out["success"]
-            assert "Key Error" in out["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_imputation_factors_wrangler.lambda_handler(
+                    mock_event, context_object
+                )
+            assert "Key Error" in exc_info.exception.error_message
 
     def test_wrangler_client_error(self):
         with mock.patch.dict(
@@ -459,12 +463,12 @@ class TestWranglerAndMethod(unittest.TestCase):
                 mocked.side_effect = ClientError(
                     {"Error": {"Code": "Mike"}}, "create_stream"
                 )
-                out = calculate_imputation_factors_wrangler.lambda_handler(
-                    mock_event, context_object
-                )
-                assert "success" in out
-                assert not out["success"]
-                assert "AWS Error" in out["error"]
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    calculate_imputation_factors_wrangler.lambda_handler(
+                        mock_event, context_object
+                    )
+                assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sns
     @mock_sqs
@@ -508,10 +512,9 @@ class TestWranglerAndMethod(unittest.TestCase):
                         .read.return_value.decode.return_value = \
                         json.dumps({"success": False,
                                     "error": "This is an error message"})
-
-                    out = calculate_imputation_factors_wrangler.lambda_handler(
-                        mock_event, context_object
-                    )
-                    assert "success" in out
-                    assert not out["success"]
-                    assert "error message" in out["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        calculate_imputation_factors_wrangler.lambda_handler(
+                            mock_event, context_object
+                        )
+                    assert "error message" in exc_info.exception.error_message

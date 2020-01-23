@@ -4,6 +4,7 @@ import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 
 import calculate_movement_wrangler
 
@@ -34,7 +35,7 @@ mock_wrangles_event = {
     "period": 201809,
     "period_column": "period",
     "periodicity": "03",
-    "id": "example",
+    "run_id": "example",
     "distinct_values": ["strata"]
   }
 }
@@ -173,14 +174,12 @@ class TestClass(unittest.TestCase):
         with open('tests/fixtures/method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {"Payload":
                                                             StreamingBody(file, 2)}
-
-            response = calculate_movement_wrangler.lambda_handler(
-                mock_wrangles_event, context_object
-            )
-
-        assert "success" in response
-        assert response["success"] is False
-        assert response["error"].__contains__("""Incomplete Lambda response""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_movement_wrangler.lambda_handler(
+                    mock_wrangles_event, context_object
+                )
+            assert "Incomplete Lambda response" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
@@ -206,14 +205,12 @@ class TestClass(unittest.TestCase):
             mock_lambda.return_value.invoke.return_value = {
                 "Payload": StreamingBody("{'boo':'moo'}", 2)
             }
-
-            response = calculate_movement_wrangler.lambda_handler(
-                mock_wrangles_event, context_object
-            )
-
-        assert "success" in response
-        assert response["success"] is False
-        assert response["error"].__contains__("""Bad data encountered""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_movement_wrangler.lambda_handler(
+                    mock_wrangles_event, context_object
+                )
+        assert "Bad data" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
@@ -234,14 +231,12 @@ class TestClass(unittest.TestCase):
         mock_s3_return.return_value = previous_data
         mock_sqs_return.side_effect = KeyError("sdfg")
         mock_sqs_return.return_value = json.dumps(input_data), 666
-
-        response = calculate_movement_wrangler.lambda_handler(
-            mock_wrangles_event, context_object
-        )
-
-        assert "success" in response
-        assert not response["success"]
-        assert "Key Error" in response["error"]
+        with unittest.TestCase.assertRaises(
+                self, exception_classes.LambdaFailure) as exc_info:
+            calculate_movement_wrangler.lambda_handler(
+                mock_wrangles_event, context_object
+            )
+        assert "Key Error" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.' +
                 'aws_functions.send_sns_message')
@@ -268,9 +263,9 @@ class TestClass(unittest.TestCase):
             .read.return_value.decode.return_value = \
             json.dumps({"success": False,
                         "error": "This is an error message"})
-        response = calculate_movement_wrangler.lambda_handler(
-            mock_wrangles_event, context_object
-        )
-
-        assert not response["success"]
-        assert "error message" in response["error"]
+        with unittest.TestCase.assertRaises(
+                self, exception_classes.LambdaFailure) as exc_info:
+            calculate_movement_wrangler.lambda_handler(
+                mock_wrangles_event, context_object
+            )
+        assert "error message" in exc_info.exception.error_message
