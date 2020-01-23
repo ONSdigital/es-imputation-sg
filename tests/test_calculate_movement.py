@@ -2,6 +2,7 @@ import json
 import unittest
 import unittest.mock as mock
 
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sqs
 
 import calculate_movement_method
@@ -131,12 +132,11 @@ class TestStringMethods(unittest.TestCase):
                             '.aws_functions.read_dataframe_from_s3') as mocked:
 
                 mocked.side_effect = Exception('SQS Failure')
-
-                response = calculate_movement_wrangler.lambda_handler(
-                    mock_wrangles_event, context_object)
-
-                assert 'success' in response
-                assert response['success'] is False
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    calculate_movement_wrangler.lambda_handler(
+                        mock_wrangles_event, context_object)
+                assert "General Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -190,11 +190,11 @@ class TestStringMethods(unittest.TestCase):
         ):
             # Removing the previous_period to allow for test of missing parameter
             calculate_movement_wrangler.os.environ.pop("checkpoint")
-
-            response = calculate_movement_wrangler.lambda_handler(mock_wrangles_event,
-                                                                  context_object)
-
-            assert (response['error'].__contains__("""Parameter validation error"""))
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_movement_wrangler.lambda_handler(mock_wrangles_event,
+                                                           context_object)
+            assert "Parameter validation error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -230,12 +230,12 @@ class TestStringMethods(unittest.TestCase):
             'out_file_name': 'Test',
             },
         ):
-            response = calculate_movement_wrangler.lambda_handler(
-                mock_wrangles_event, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert response["error"].__contains__("""AWS Error""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_movement_wrangler.lambda_handler(
+                    mock_wrangles_event, context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     def test_method_key_error_exception(self):
         output_file = calculate_movement_method.lambda_handler(

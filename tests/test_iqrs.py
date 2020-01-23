@@ -1,8 +1,10 @@
 import json
+import unittest
 import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
@@ -130,14 +132,13 @@ class TestWranglerAndMethod():
             mock_client.side_effect = Exception()
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
-            response = iqrs_wrangler.lambda_handler(
-                mock_event,
-                context_object
-            )
-
-            assert "success" in response
-            assert response["success"] is False
-            assert """General Error""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                iqrs_wrangler.lambda_handler(
+                    mock_event,
+                    context_object
+                )
+            assert "General Error" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
@@ -172,14 +173,14 @@ class TestWranglerAndMethod():
             mock_client.side_effect = KeyError()
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
-            response = iqrs_wrangler.lambda_handler(
-                    mock_event,
-                    context_object,
-                )
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                iqrs_wrangler.lambda_handler(
+                        mock_event,
+                        context_object,
+                    )
 
-            assert "success" in response
-            assert response["success"] is False
-            assert """Key Error""" in response["error"]
+            assert "Key Error" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
@@ -207,9 +208,12 @@ class TestWranglerAndMethod():
         """
         # Removing the strata_column to allow for test of missing parameter
         iqrs_wrangler.os.environ.pop("method_name")
-        response = iqrs_wrangler.lambda_handler(mock_event, context_object)
+        with unittest.TestCase.assertRaises(
+                self, exception_classes.LambdaFailure) as exc_info:
+            iqrs_wrangler.lambda_handler(mock_event, context_object)
+
         iqrs_wrangler.os.environ["method_name"] = "mock_method"
-        assert """Error validating environment params:""" in response["error"]
+        assert "Error validating environment params" in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
@@ -219,12 +223,12 @@ class TestWranglerAndMethod():
                 "sqs_queue_url": "An Invalid Queue"
             },
         ):
-            response = iqrs_wrangler.lambda_handler(
-                mock_event, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """AWS Error""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                iqrs_wrangler.lambda_handler(
+                    mock_event, context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -239,14 +243,13 @@ class TestWranglerAndMethod():
                 with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                    response = iqrs_wrangler.lambda_handler(
-                        mock_event,
-                        context_object,
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert """Bad data""" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        iqrs_wrangler.lambda_handler(
+                            mock_event,
+                            context_object,
+                        )
+                    assert "Bad data" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -262,14 +265,14 @@ class TestWranglerAndMethod():
                     with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                        response = iqrs_wrangler.lambda_handler(
-                            mock_event,
-                            context_object,
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert """Incomplete Lambda response""" in response["error"]
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            iqrs_wrangler.lambda_handler(
+                                mock_event,
+                                context_object,
+                            )
+                        assert "Incomplete Lambda response" in \
+                               exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -288,9 +291,10 @@ class TestWranglerAndMethod():
                 with open("tests/fixtures/iqrs_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                    response = iqrs_wrangler.lambda_handler(
-                        mock_event,
-                        context_object,
-                    )
-                    assert not response["success"]
-                    assert "error message" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        iqrs_wrangler.lambda_handler(
+                            mock_event,
+                            context_object,
+                        )
+                    assert "error message" in exc_info.exception.error_message

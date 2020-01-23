@@ -1,8 +1,10 @@
 import json
+import unittest
 import unittest.mock as mock
 
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
@@ -162,14 +164,14 @@ class TestClass():
             mock_client.side_effect = Exception()
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
-            response = atypicals_wrangler.lambda_handler(
-                mock_event,
-                context_object
-            )
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                atypicals_wrangler.lambda_handler(
+                    mock_event,
+                    context_object
+                )
 
-            assert "success" in response
-            assert response["success"] is False
-            assert """General Error""" in response["error"]
+            assert "General Error" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         input_file = "tests/fixtures/atypical_input.json"
@@ -205,14 +207,14 @@ class TestClass():
             mock_client.side_effect = KeyError()
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
-            response = atypicals_wrangler.lambda_handler(
-                    mock_event,
-                    context_object,
-                )
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                atypicals_wrangler.lambda_handler(
+                        mock_event,
+                        context_object,
+                    )
 
-            assert "success" in response
-            assert response["success"] is False
-            assert """Key Error""" in response["error"]
+            assert "Key Error" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         with open("tests/fixtures/atypical_input.json", "r") as file:
@@ -240,9 +242,11 @@ class TestClass():
         """
         # Removing the strata_column to allow for test of missing parameter
         atypicals_wrangler.os.environ.pop("method_name")
-        response = atypicals_wrangler.lambda_handler(mock_event, context_object)
+        with unittest.TestCase.assertRaises(
+                self, exception_classes.LambdaFailure) as exc_info:
+            atypicals_wrangler.lambda_handler(mock_event, context_object)
         atypicals_wrangler.os.environ["method_name"] = "mock_method"
-        assert """Error validating environment params:""" in response["error"]
+        assert "Error validating environment params" in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
@@ -252,12 +256,12 @@ class TestClass():
                 "sqs_queue_url": "An Invalid Queue"
             },
         ):
-            response = atypicals_wrangler.lambda_handler(
-                mock_event, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """AWS Error""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                atypicals_wrangler.lambda_handler(
+                    mock_event, context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -272,14 +276,13 @@ class TestClass():
                 with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                    response = atypicals_wrangler.lambda_handler(
-                        mock_event,
-                        context_object,
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert """Bad data""" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        atypicals_wrangler.lambda_handler(
+                            mock_event,
+                            context_object,
+                        )
+                    assert "Bad data" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -295,15 +298,14 @@ class TestClass():
                     with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-
-                        response = atypicals_wrangler.lambda_handler(
-                            mock_event,
-                            context_object,
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert """Incomplete Lambda response""" in response["error"]
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            atypicals_wrangler.lambda_handler(
+                                mock_event,
+                                context_object,
+                            )
+                        assert "Incomplete Lambda response" \
+                               in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -322,10 +324,10 @@ class TestClass():
                 with open("tests/fixtures/atypical_input.json", "rb") as queue_file:
                     msgbody = queue_file.read()
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-                    response = atypicals_wrangler.lambda_handler(
-                        mock_event,
-                        context_object,
-                    )
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert "error message" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        atypicals_wrangler.lambda_handler(
+                            mock_event,
+                            context_object,
+                        )
+                    assert "error message" in exc_info.exception.error_message

@@ -5,6 +5,7 @@ import unittest.mock as mock
 import boto3
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sns, mock_sqs
 
 import apply_factors_method as lambda_method_function
@@ -144,11 +145,12 @@ class TestApplyFactors(unittest.TestCase):
                             ".aws_functions.read_dataframe_from_s3")\
                     as mocked:
                 mocked.side_effect = Exception("SQS Failure")
-                response = apply_factors_wrangler.lambda_handler(
-                    mock_wrangles_event, context_object
-                )
-                assert "success" in response
-                assert response["success"] is False
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    apply_factors_wrangler.lambda_handler(
+                        mock_wrangles_event, context_object
+                    )
+                assert "General Error in" in exc_info.exception.error_message
 
     @mock_sqs
     def test_catch_method_exception(self):
@@ -389,11 +391,13 @@ class TestApplyFactors(unittest.TestCase):
             apply_factors_wrangler.os.environ,
             {"checkpoint": "1", "sqs_queue_url": sqs_queue_url},
         ):
-            out = apply_factors_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
-            )
-            self.assertRaises(ValueError)
-            assert out["error"].__contains__("""Error validating environment params""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                apply_factors_wrangler.lambda_handler(
+                    {"RuntimeVariables": {"checkpoint": 666, "id": "bob"}}, context_object
+                )
+            assert "Error validating environment params" \
+                   in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangles_fail_to_get_from_sqs(self):
@@ -421,12 +425,12 @@ class TestApplyFactors(unittest.TestCase):
                 "strata_column": "strata"
             },
         ):
-            response = apply_factors_wrangler.lambda_handler(
-                mock_wrangles_event, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert response["error"].__contains__("""AWS Error""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                apply_factors_wrangler.lambda_handler(
+                    mock_wrangles_event, context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -481,16 +485,13 @@ class TestApplyFactors(unittest.TestCase):
                         mock_client_object.invoke.return_value = {
                             "Payload": StreamingBody(file, 1)
                         }
-
-                        response = apply_factors_wrangler.lambda_handler(
-                            mock_wrangles_event, context_object
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert response["error"].__contains__(
-                            """Incomplete Lambda response"""
-                        )
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            apply_factors_wrangler.lambda_handler(
+                                mock_wrangles_event, context_object
+                            )
+                        assert "Incomplete Lambda response" \
+                               in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -531,13 +532,13 @@ class TestApplyFactors(unittest.TestCase):
                 mock_funk.get_dataframe.return_value = pd.DataFrame(
                     json.loads(message)), 666
                 mock_funk.get_dataframe.side_effect = KeyError()
-                response = apply_factors_wrangler.lambda_handler(
-                    mock_wrangles_event, context_object
-                )
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    apply_factors_wrangler.lambda_handler(
+                        mock_wrangles_event, context_object
+                    )
 
-                assert "success" in response
-                assert response["success"] is False
-                assert response["error"].__contains__("""Key Error""")
+                assert "Key Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -574,13 +575,12 @@ class TestApplyFactors(unittest.TestCase):
 
             with mock.patch("apply_factors_wrangler.aws_functions") as mock_funk:
                 mock_funk.get_dataframe.return_value = 66, 666
-
-                response = apply_factors_wrangler.lambda_handler(
-                    mock_wrangles_event, context_object
-                )
-                assert "success" in response
-                assert response["success"] is False
-                assert response["error"].__contains__("""Bad data type""")
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    apply_factors_wrangler.lambda_handler(
+                        mock_wrangles_event, context_object
+                    )
+                assert "Bad data" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -660,9 +660,8 @@ class TestApplyFactors(unittest.TestCase):
                         .read.return_value.decode.return_value =\
                         json.dumps({"success": False,
                                     "error": "This is an error message"})
-
-                    response = apply_factors_wrangler.lambda_handler(
-                        mock_wrangles_event, context_object)
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert "error message" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        apply_factors_wrangler.lambda_handler(
+                            mock_wrangles_event, context_object)
+                    assert "error message" in exc_info.exception.error_message

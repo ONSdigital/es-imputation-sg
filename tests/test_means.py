@@ -5,6 +5,7 @@ import unittest.mock as mock
 import boto3
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
@@ -142,14 +143,14 @@ class TestMeans(unittest.TestCase):
             mock_schema.side_effect = Exception()
             mock_schema_object = mock.Mock()
             mock_schema.return_value = mock_schema_object
-            response = calculate_means_wrangler.lambda_handler(
-                mock_wrangles_event,
-                context_object
-            )
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_means_wrangler.lambda_handler(
+                    mock_wrangles_event,
+                    context_object
+                )
 
-            assert "success" in response
-            assert response["success"] is False
-            assert """General Error""" in response["error"]
+            assert "General Error" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
@@ -170,14 +171,13 @@ class TestMeans(unittest.TestCase):
             mock_client.side_effect = KeyError()
             mock_client_object = mock.Mock()
             mock_client.return_value = mock_client_object
-            response = calculate_means_wrangler.lambda_handler(
-                 mock_event,
-                 context_object,
-            )
-
-            assert "success" in response
-            assert response["success"] is False
-            assert """Key Error""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_means_wrangler.lambda_handler(
+                     mock_event,
+                     context_object,
+                )
+            assert "Key Error" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
@@ -191,9 +191,11 @@ class TestMeans(unittest.TestCase):
         """
         # Removing the strata_column to allow for test of missing parameter
         calculate_means_wrangler.os.environ.pop("method_name")
-        response = calculate_means_wrangler.lambda_handler(mock_event, context_object)
+        with unittest.TestCase.assertRaises(
+                self, exception_classes.LambdaFailure) as exc_info:
+            calculate_means_wrangler.lambda_handler(mock_wrangles_event, context_object)
         calculate_means_wrangler.os.environ["method_name"] = "mock_method"
-        assert """Error validating environment params:""" in response["error"]
+        assert "Error validating environment params" in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangler_fail_to_get_from_sqs(self):
@@ -203,12 +205,12 @@ class TestMeans(unittest.TestCase):
                 "sqs_queue_url": "An Invalid Queue"
             },
         ):
-            response = calculate_means_wrangler.lambda_handler(
-                mock_wrangles_event, context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert """AWS Error""" in response["error"]
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                calculate_means_wrangler.lambda_handler(
+                    mock_wrangles_event, context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -224,15 +226,13 @@ class TestMeans(unittest.TestCase):
                 with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read().decode('UTF-8')
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-
-                    response = calculate_means_wrangler.lambda_handler(
-                        mock_wrangles_event,
-                        context_object,
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert """Bad data""" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        calculate_means_wrangler.lambda_handler(
+                            mock_wrangles_event,
+                            context_object,
+                        )
+                    assert "Bad data" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -249,15 +249,14 @@ class TestMeans(unittest.TestCase):
                     with open("tests/fixtures/means_input.json", "rb") as queue_file:
                         msgbody = queue_file.read()
                         mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-
-                        response = calculate_means_wrangler.lambda_handler(
-                            mock_wrangles_event,
-                            context_object,
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert """Incomplete Lambda response""" in response["error"]
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            calculate_means_wrangler.lambda_handler(
+                                mock_wrangles_event,
+                                context_object,
+                            )
+                        assert "Incomplete Lambda response" \
+                               in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -283,11 +282,10 @@ class TestMeans(unittest.TestCase):
                 with open("tests/fixtures/means_input.json", "rb") as queue_file:
                     msgbody = queue_file.read().decode("UTF-8")
                     mock_squeues.return_value = pd.DataFrame(json.loads(msgbody)), 666
-
-                    response = calculate_means_wrangler.lambda_handler(
-                        mock_wrangles_event,
-                        context_object,
-                    )
-
-                    assert not response["success"]
-                    assert "error message" in response["error"]
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        calculate_means_wrangler.lambda_handler(
+                            mock_wrangles_event,
+                            context_object,
+                        )
+                    assert "error message" in exc_info.exception.error_message
