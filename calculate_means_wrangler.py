@@ -24,7 +24,6 @@ class InputSchema(Schema):
     questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -60,6 +59,7 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment params: {errors}")
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -69,7 +69,6 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
-        sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
 
         logger.info("Validated params")
@@ -113,7 +112,7 @@ def lambda_handler(event, context):
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
-            sqs.delete_message(QueueUrl=config['sqs_queue_url'],
+            sqs.delete_message(QueueUrl=sqs_queue_url,
                                ReceiptHandle=receipt_handler)
 
         logger.info("Successfully deleted from sqs")

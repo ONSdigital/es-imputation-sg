@@ -20,6 +20,7 @@ mock_wrangles_event = {
     "MessageStructure": "json",
     "RuntimeVariables":
         {
+            "queue_url": "Earl",
             "period_column": "period",
             "movement_type": "movement_calculation_b",
             "period": 201809,

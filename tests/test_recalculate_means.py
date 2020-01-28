@@ -36,7 +36,8 @@ mock_wrangles_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
-    "distinct_values": ["region"]
+    "distinct_values": ["region"],
+    "queue_url": "Earl"
   }
 }
 
@@ -59,7 +60,6 @@ class TestRecalculateMeans(unittest.TestCase):
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
-                'sqs_queue_url': 'mock_queue',
                 'questions_list': 'Q601_asphalting_sand,Q602_building_soft_sand,'
                                   + 'Q603_concreting_sand,Q604_bituminous_gravel,'
                                   + 'Q605_concreting_gravel,Q606_other_gravel,'

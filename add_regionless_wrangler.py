@@ -21,7 +21,6 @@ class EnvironSchema(Schema):
     out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -56,6 +55,7 @@ def lambda_handler(event, context):
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
         regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
         region_column = factors_parameters['RuntimeVariables']['region_column']
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         # Set up clients
         checkpoint = config["checkpoint"]
@@ -66,7 +66,6 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
-        sqs_queue_url = config["sqs_queue_url"]
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 

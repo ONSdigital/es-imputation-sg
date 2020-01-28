@@ -26,7 +26,6 @@ class EnvironSchema(Schema):
     previous_data_file = fields.Str(required=True)
     questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
     strata_column = fields.Str(required=True)
@@ -69,7 +68,7 @@ def lambda_handler(event, context):
         region_column = factors_parameters["RuntimeVariables"]['region_column']
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
-
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
         # Environment vars
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
@@ -81,7 +80,6 @@ def lambda_handler(event, context):
         previous_data_file = config["previous_data_file"]
         questions_list = config["questions_list"]
         sns_topic_arn = config["sns_topic_arn"]
-        sqs_queue_url = config["sqs_queue_url"]
         response_type = config['response_type']
         reference = config['reference']
         strata_column = config['strata_column']
