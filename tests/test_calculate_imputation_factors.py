@@ -24,6 +24,7 @@ mock_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
+    "queue_url": "Earl",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
     "factors_parameters":
@@ -101,8 +102,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 + "Q604_bituminous_gravel,"
                 + "Q605_concreting_gravel,"
                 + "Q606_other_gravel,"
-                + "Q607_constructional_fill",
-                "sqs_queue_url": "mock_queue"
+                + "Q607_constructional_fill"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -298,7 +298,9 @@ class TestWranglerAndMethod(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 calculate_imputation_factors_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    {"RuntimeVariables": {"checkpoint": 666,
+                                          "run_id": "bob",
+                                          "queue_url": "Earl"}},
                     context_object
                 )
             assert "AARRRRGHH" in exc_info.exception.error_message
@@ -356,7 +358,9 @@ class TestWranglerAndMethod(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 calculate_imputation_factors_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "run_id": "bob"}},
+                    {"RuntimeVariables": {"checkpoint": 666,
+                                          "run_id": "bob",
+                                          "queue_url": "Earl"}},
                     context_object
                 )
             assert "Parameter validation error" in exc_info.exception.error_message

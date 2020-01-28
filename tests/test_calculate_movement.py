@@ -56,7 +56,8 @@ mock_wrangles_event = {
     "period_column": "period",
     "periodicity": "03",
     "run_id": "example",
-    "distinct_values": ["region"]
+    "distinct_values": ["region"],
+    "queue_url": "Earl"
   }
 }
 
@@ -98,7 +99,6 @@ class TestStringMethods(unittest.TestCase):
             'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
                          '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
-            'sqs_queue_url': 'Test',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'time': 'period',

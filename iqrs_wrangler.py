@@ -24,7 +24,6 @@ class InputSchema(Schema):
     questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -65,11 +64,10 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
-        sqs_queue_url = config['sqs_queue_url']
         sqs_message_group_id = config['sqs_message_group_id']
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
-
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
         logger.info("Validated params")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,

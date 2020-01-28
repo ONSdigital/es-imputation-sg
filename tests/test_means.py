@@ -38,7 +38,8 @@ mock_wrangles_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
-    "distinct_values": ["region"]
+    "distinct_values": ["region"],
+    "queue_url": "Earl"
   }
 }
 

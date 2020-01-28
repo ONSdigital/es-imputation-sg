@@ -23,6 +23,7 @@ mock_event = {
     "period": 201809,
     "run_id": "example",
     "distinct_values": "region",
+    "queue_url": "Earl"
   }
 
 }
@@ -34,7 +35,6 @@ class TestWranglerAndMethod():
     @classmethod
     def setup_class(cls):
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
-            'sqs_queue_url': 'mock_queue',
             'bucket_name': 'mock_bucket',
             'questions_list': "why?",
             'incoming_message_group': 'mock_group',

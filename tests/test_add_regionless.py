@@ -19,6 +19,7 @@ class MockContext:
 mock_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
+    "queue_url": "Earl",
     "factors_parameters": {
         "RuntimeVariables": {
             "factors_type": "factors_calcualtion_a",

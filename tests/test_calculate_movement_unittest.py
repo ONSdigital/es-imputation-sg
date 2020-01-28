@@ -36,7 +36,8 @@ mock_wrangles_event = {
     "period_column": "period",
     "periodicity": "03",
     "run_id": "example",
-    "distinct_values": ["strata"]
+    "distinct_values": ["strata"],
+    "queue_url": "Earl"
   }
 }
 
@@ -54,8 +55,6 @@ class TestClass(unittest.TestCase):
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
             'previous_period_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
-            'sqs_queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
-                             '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',

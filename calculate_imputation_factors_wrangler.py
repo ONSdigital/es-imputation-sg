@@ -25,7 +25,6 @@ class EnvironSchema(Schema):
     questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -70,11 +69,11 @@ def lambda_handler(event, context):
         questions_list = config["questions_list"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
-        sqs_queue_url = config["sqs_queue_url"]
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         period_column = event['RuntimeVariables']["period_column"]
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,

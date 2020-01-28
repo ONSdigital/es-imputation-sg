@@ -24,7 +24,6 @@ class InputSchema(Schema):
     out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -68,7 +67,8 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         sns_topic_arn = config["sns_topic_arn"]
         sqs_message_group_id = config["sqs_message_group_id"]
-        sqs_queue_url = config["sqs_queue_url"]
+
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         logger.info("Vaildated params")
 

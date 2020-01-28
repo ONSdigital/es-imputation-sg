@@ -22,7 +22,8 @@ mock_event = {
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
-    "distinct_values": ["region"]
+    "distinct_values": ["region"],
+    "queue_url": "Earl"
   }
 }
 
@@ -35,7 +36,6 @@ class TestClass():
         cls.mock_os_patcher = mock.patch.dict(
             'os.environ',
             {
-                'sqs_queue_url': '213456',
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
                 'questions_list': 'Q601_asphalting_sand,' +
