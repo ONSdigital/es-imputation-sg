@@ -16,7 +16,6 @@ class InputSchema(Schema):
     :return: None
     """
     checkpoint = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group = fields.Str(required=True)
@@ -58,8 +57,6 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment params: {errors}")
 
         checkpoint = config["checkpoint"]
-        questions_list = config["questions_list"]
-
         bucket_name = config["bucket_name"]
         in_file_name = config["in_file_name"]
         incoming_message_group = config["incoming_message_group"]
@@ -69,6 +66,7 @@ def lambda_handler(event, context):
         sqs_message_group_id = config["sqs_message_group_id"]
 
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        questions_list = event['RuntimeVariables']['questions_list']
 
         logger.info("Vaildated params")
 
@@ -77,7 +75,7 @@ def lambda_handler(event, context):
                                                             incoming_message_group)
 
         logger.info("Succesfully retrieved data.")
-        atypical_columns = imp_func.produce_columns("atyp_", questions_list.split(','))
+        atypical_columns = imp_func.produce_columns("atyp_", questions_list)
 
         for col in atypical_columns:
             data[col] = 0

@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
 
         input_data = pd.DataFrame(event['json_data'])
-        questions_list = event['questions_list'].split(',')
+        questions_list = event['questions_list']
         # Produce columns
         atypical_columns = imp_func.produce_columns("atyp_", questions_list, [])
         movement_columns = imp_func.produce_columns("movement_", questions_list, [])

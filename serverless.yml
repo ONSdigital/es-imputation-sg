@@ -89,7 +89,6 @@ functions:
       period: 201809
       strata_column: strata
       previous_data_file: prev_datafile.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       response_type: response_type
       reference: responder_id
@@ -127,7 +126,6 @@ functions:
       app: results
     environment:
       checkpoint: 3
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       bucket_name: results-s3-bucket
       in_file_name: iqrs_out.json
       incoming_message_group: imputation-iqrs-out
@@ -173,7 +171,6 @@ functions:
       incoming_message_group: imputation-recalculate-means-out
       method_name: es-imputation-calculate-factors-method
       out_file_name: calculate_factors_out.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-factors-out
 
@@ -214,7 +211,6 @@ functions:
       incoming_message_group: add-all-gb-region-out
       method_name: es-imputation-calculate-means-method
       out_file_name: calculate_means_out.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-means-out
 
@@ -255,7 +251,6 @@ functions:
       method_name: es-imputation-calculate-movement-method
       out_file_name: calculate_movement_out.json
       previous_period_file: prev_datafile.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       reference: responder_id
       response_type: response_type
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -300,7 +295,6 @@ functions:
       incoming_message_group: imputation-calculate-means-out
       method_name: es-imputation-iqrs-method
       out_file_name: iqrs_out.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-iqrs-out
 
@@ -341,7 +335,6 @@ functions:
       incoming_message_group: imputation-atypicals-out
       method_name: es-imputation-calculate-means-method
       out_file_name: recalculate_means_out.json
-      questions_list: Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-recalculate-means-out
       

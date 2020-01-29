@@ -22,7 +22,7 @@ mock_event = {
     "queue_url": "Earl",
     "factors_parameters": {
         "RuntimeVariables": {
-            "factors_type": "factors_calcualtion_a",
+            "factors_type": "factors_calculation_a",
             "percentage_movement": True,
             "survey_column": "survey",
             "region_column": "region",

@@ -48,7 +48,7 @@ def lambda_handler(event, context):
         sorted_current = df[df[period_column] == int(current_period)]
         sorted_previous = df[df[period_column] == int(previous_period)]
 
-        for question in questions_list.split(','):
+        for question in questions_list:
 
             # Converted to list due to issues with Numpy dtypes and math operations.
             current_list = sorted_current[question].tolist()

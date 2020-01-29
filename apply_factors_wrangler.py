@@ -24,7 +24,6 @@ class EnvironSchema(Schema):
     out_file_name = fields.Str(required=True)
     period = fields.Str(required=True)
     previous_data_file = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
@@ -66,6 +65,7 @@ def lambda_handler(event, context):
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
         regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
         region_column = factors_parameters["RuntimeVariables"]['region_column']
+        questions_list = event['RuntimeVariables']['questions_list']
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
@@ -78,7 +78,6 @@ def lambda_handler(event, context):
         method_name = config["method_name"]
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
-        questions_list = config["questions_list"]
         sns_topic_arn = config["sns_topic_arn"]
         response_type = config['response_type']
         reference = config['reference']
@@ -104,7 +103,6 @@ def lambda_handler(event, context):
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data[response_type] == 2]
 
-        questions_list = questions_list.split(",")
         prev_questions_list = produce_columns(
             "prev_",
             questions_list,
