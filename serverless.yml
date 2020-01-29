@@ -337,6 +337,6 @@ functions:
       out_file_name: recalculate_means_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-recalculate-means-out
-      
+
 plugins:
   - serverless-latest-layer-version
