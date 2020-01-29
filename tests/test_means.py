@@ -23,13 +23,13 @@ with open("tests/fixtures/means_input.json", "r") as file:
 mock_event = {
     "json_data": json.loads(in_file),
     "distinct_values": ["strata", "region"],
-    "questions_list": 'Q601_asphalting_sand,'
-                      'Q602_building_soft_sand,'
-                      'Q603_concreting_sand,'
-                      'Q604_bituminous_gravel,'
-                      'Q605_concreting_gravel,'
-                      'Q606_other_gravel,'
-                      'Q607_constructional_fill'
+    "questions_list": ['Q601_asphalting_sand',
+                       'Q602_building_soft_sand',
+                       'Q603_concreting_sand',
+                       'Q604_bituminous_gravel',
+                       'Q605_concreting_gravel',
+                       'Q606_other_gravel',
+                       'Q607_constructional_fill']
 }
 
 mock_wrangles_event = {
@@ -39,7 +39,14 @@ mock_wrangles_event = {
     "period": 201809,
     "run_id": "example",
     "distinct_values": ["region"],
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ['Q601_asphalting_sand',
+                       'Q602_building_soft_sand',
+                       'Q603_concreting_sand',
+                       'Q604_bituminous_gravel',
+                       'Q605_concreting_gravel',
+                       'Q606_other_gravel',
+                       'Q607_constructional_fill']
   }
 }
 
@@ -57,7 +64,6 @@ class TestMeans(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "sqs_queue_url": "mock_queue",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand,Q603_concreting_sand,Q604_bituminous_gravel,Q605_concreting_gravel,Q606_other_gravel,Q607_constructional_fill",  # noqa: E501
                 "movement_columns": "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill",  # noqa: E501
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",

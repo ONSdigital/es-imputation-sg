@@ -19,13 +19,13 @@ mock_event = {
     "json_data": json.loads(in_file),
     "distinct_values": ["strata", "region"],
     "periodicity": "03",
-    "questions_list": 'Q601_asphalting_sand,'
-                      'Q602_building_soft_sand,'
-                      'Q603_concreting_sand,'
-                      'Q604_bituminous_gravel,'
-                      'Q605_concreting_gravel,'
-                      'Q606_other_gravel,'
-                      'Q607_constructional_fill'
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"],
 }
 
 mock_wrangles_event = {
@@ -37,7 +37,14 @@ mock_wrangles_event = {
     "periodicity": "03",
     "run_id": "example",
     "distinct_values": ["strata"],
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"],
   }
 }
 
@@ -60,13 +67,6 @@ class TestClass(unittest.TestCase):
             'method_name': 'method_name_here',
             'time': 'period',
             'response_type': 'response_type',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
             'non_response_file': 'output_file.json',
             'reference': 'responder_id',
             'segmentation': 'strata',

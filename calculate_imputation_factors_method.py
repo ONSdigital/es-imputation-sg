@@ -23,7 +23,7 @@ def lambda_handler(event, context):
 
         # set up variables
         factors_parameters = event["factors_parameters"]["RuntimeVariables"]
-        questions_list = event["questions_list"].split(',')
+        questions_list = event["questions_list"]
         distinct_values = event["distinct_values"]
         df = pd.DataFrame(event["data_json"])
         survey_column = factors_parameters['survey_column']

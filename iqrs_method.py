@@ -25,8 +25,8 @@ def lambda_handler(event, context):
         questions_list = event['questions_list']
         distinct_values = event["distinct_values"]
         input_data = pd.DataFrame(event["data"])
-        movement_columns = produce_columns("movement_", questions_list.split(','))
-        iqrs_columns = produce_columns("iqrs_", questions_list.split(','))
+        movement_columns = produce_columns("movement_", questions_list)
+        iqrs_columns = produce_columns("iqrs_", questions_list)
         logger.info("Successfully retrieved data from event.")
 
         iqrs_df = calc_iqrs(

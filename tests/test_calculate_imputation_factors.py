@@ -40,7 +40,14 @@ mock_event = {
         "second_threshold": 7,
         "third_threshold": 9,
         "regional_mean": "third_imputation_factors"
-    }
+    },
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"]
   }
 }
 
@@ -73,14 +80,6 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period_column": "mock_period",
-                "questions_list": "Q601_asphalting_sand,"
-                + "Q602_building_soft_sand,"
-                + "Q603_concreting_sand,"
-                + "Q604_bituminous_gravel,"
-                + "Q605_concreting_gravel,"
-                + "Q606_other_gravel,"
-                + "Q607_constructional_fill",
-                "sqs_queue_url": "mock_queue",
                 "sqs_message_group_id": "mock_message",
                 "incoming_message_group": "I am GROOP",
                 "in_file_name": "Test",
@@ -95,14 +94,7 @@ class TestWranglerAndMethod(unittest.TestCase):
             {
                 "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
-                "period": "mock_period",
-                "questions_list": "Q601_asphalting_sand,"
-                + "Q602_building_soft_sand,"
-                + "Q603_concreting_sand,"
-                + "Q604_bituminous_gravel,"
-                + "Q605_concreting_gravel,"
-                + "Q606_other_gravel,"
-                + "Q607_constructional_fill"
+                "period": "mock_period"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -189,13 +181,13 @@ class TestWranglerAndMethod(unittest.TestCase):
         output_file = calculate_imputation_factors_method.lambda_handler(
             {
                 "data_json": json_content,
-                "questions_list": "Q601_asphalting_sand,"
-                                  + "Q602_building_soft_sand,"
-                                  + "Q603_concreting_sand,"
-                                  + "Q604_bituminous_gravel,"
-                                  + "Q605_concreting_gravel,"
-                                  + "Q606_other_gravel,"
-                                  + "Q607_constructional_fill",
+                "questions_list": ["Q601_asphalting_sand",
+                                   "Q602_building_soft_sand",
+                                   "Q603_concreting_sand",
+                                   "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel",
+                                   "Q606_other_gravel",
+                                   "Q607_constructional_fill"],
                 "distinct_values": ["strata", "region", "period"],
                 "factors_parameters": {
                     "RuntimeVariables": {
@@ -239,9 +231,9 @@ class TestWranglerAndMethod(unittest.TestCase):
             json_content = json.loads(file.read())
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            {"data_json": json_content, "questions_list": "Commons_prod,"
-                                                          + "Commons_Dels,"
-                                                          + "Commons_C-stock",
+            {"data_json": json_content, "questions_list": ["Commons_prod",
+                                                           "Commons_Dels",
+                                                           "Commons_C-stock"],
                                         "distinct_values": ["strata", "region"],
                                         "factors_parameters": {
                                             "RuntimeVariables": {
@@ -281,13 +273,13 @@ class TestWranglerAndMethod(unittest.TestCase):
 
         response = calculate_imputation_factors_method.lambda_handler(
             {"data_json": json_data_content,
-             "questions_list": "Q601_asphalting_sand,"
-             + "Q602_building_soft_sand,"
-             + "Q603_concreting_sand,"
-             + "Q604_bituminous_gravel,"
-             + "Q605_concreting_gravel,"
-             + "Q606_other_gravel,"
-             + "Q607_constructional_fill"
+             "questions_list": ["Q601_asphalting_sand",
+                                "Q602_building_soft_sand",
+                                "Q603_concreting_sand",
+                                "Q604_bituminous_gravel",
+                                "Q605_concreting_gravel",
+                                "Q606_other_gravel",
+                                "Q607_constructional_fill"]
              }, context_object
         )
         assert not response["success"]
@@ -316,13 +308,13 @@ class TestWranglerAndMethod(unittest.TestCase):
                 {"RuntimeVariables": {"checkpoint": 666},
                  "data_json": json_data_content,
                  "distinct_values": ["strata", "region"],
-                 "questions_list": "Q601_asphalting_sand,"
-                 + "Q602_building_soft_sand,"
-                 + "Q603_concreting_sand,"
-                 + "Q604_bituminous_gravel,"
-                 + "Q605_concreting_gravel,"
-                 + "Q606_other_gravel,"
-                 + "Q607_constructional_fill",
+                 "questions_list": ["Q601_asphalting_sand",
+                                    "Q602_building_soft_sand",
+                                    "Q603_concreting_sand",
+                                    "Q604_bituminous_gravel",
+                                    "Q605_concreting_gravel",
+                                    "Q606_other_gravel",
+                                    "Q607_constructional_fill"],
                  "factors_parameters": {
                         "RuntimeVariables": {
                             "factors_type": "factors_calcualtion_a",
@@ -379,13 +371,13 @@ class TestWranglerAndMethod(unittest.TestCase):
             json_content = json.loads(content)
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            {"data_json": json_content, "questions_list": "Q601_asphalting_sand,"
-                                                          + "Q602_building_soft_sand,"
-                                                          + "Q603_concreting_sand,"
-                                                          + "Q604_bituminous_gravel,"
-                                                          + "Q605_concreting_gravel,"
-                                                          + "Q606_other_gravel,"
-                                                          + "Q607_constructional_fill"
+            {"data_json": json_content, "questions_list": ["Q601_asphalting_sand",
+                                                           "Q602_building_soft_sand",
+                                                           "Q603_concreting_sand",
+                                                           "Q604_bituminous_gravel",
+                                                           "Q605_concreting_gravel",
+                                                           "Q606_other_gravel",
+                                                           "Q607_constructional_fill"]
              }, context_object
         )
 

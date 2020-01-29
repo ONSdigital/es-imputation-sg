@@ -21,7 +21,6 @@ class EnvironSchema(Schema):
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     previous_period_file = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
@@ -66,6 +65,7 @@ def lambda_handler(event, context):
         # Event vars
         movement_type = event['RuntimeVariables']["movement_type"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        questions_list = event['RuntimeVariables']['questions_list']
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -76,7 +76,6 @@ def lambda_handler(event, context):
         period = event['RuntimeVariables']['period']
         periodicity = event['RuntimeVariables']['periodicity']
         period_column = event['RuntimeVariables']['period_column']
-        questions_list = config['questions_list']
         previous_period_file = config['previous_period_file']
         response_type = config['response_type']  # Set as "response_type"
         sns_topic_arn = config['sns_topic_arn']
@@ -119,7 +118,7 @@ def lambda_handler(event, context):
 
             logger.info("Successfully filtered and merged the previous period data")
 
-            for question in questions_list.split(','):
+            for question in questions_list:
                 merged_data['movement_' + question] = 0.0
 
             json_ordered_data = merged_data.to_json(orient='records')

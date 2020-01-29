@@ -23,7 +23,14 @@ mock_event = {
     "period": 201809,
     "run_id": "example",
     "distinct_values": "region",
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"]
   }
 
 }
@@ -102,13 +109,13 @@ class TestWranglerAndMethod():
 
             event = {
                 "data": json_content,
-                "questions_list": "Q601_asphalting_sand,"
-                                  + "Q602_building_soft_sand,"
-                                  + "Q603_concreting_sand,"
-                                  + "Q604_bituminous_gravel,"
-                                  + "Q605_concreting_gravel,"
-                                  + "Q606_other_gravel,"
-                                  + "Q607_constructional_fill",
+                "questions_list": ["Q601_asphalting_sand",
+                                   "Q602_building_soft_sand",
+                                   "Q603_concreting_sand",
+                                   "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel",
+                                   "Q606_other_gravel",
+                                   "Q607_constructional_fill"],
                 "distinct_values": ["region", "strata"]
             }
 
@@ -145,13 +152,13 @@ class TestWranglerAndMethod():
         with open(input_file, "r") as file:
             json_content = {
                 "data": json.loads(file.read()),
-                "questions_list": "Q601_asphalting_sand,"
-                                  + "Q602_building_soft_sand,"
-                                  + "Q603_concreting_sand,"
-                                  + "Q604_bituminous_gravel,"
-                                  + "Q605_concreting_gravel,"
-                                  + "Q606_other_gravel,"
-                                  + "Q607_constructional_fill",
+                "questions_list": ["Q601_asphalting_sand",
+                                   "Q602_building_soft_sand",
+                                   "Q603_concreting_sand",
+                                   "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel",
+                                   "Q606_other_gravel",
+                                   "Q607_constructional_fill"],
                 "distinct_values": "region, strata"
             }
             with mock.patch("iqrs_method.pd.DataFrame") as mocked:
@@ -186,13 +193,13 @@ class TestWranglerAndMethod():
         with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
             json_content = {
                 "datadatadatadata": json.loads(file.read()),
-                "questions_list": "Q601_asphalting_sand,"
-                                  + "Q602_building_soft_sand,"
-                                  + "Q603_concreting_sand,"
-                                  + "Q604_bituminous_gravel,"
-                                  + "Q605_concreting_gravel,"
-                                  + "Q606_other_gravel,"
-                                  + "Q607_constructional_fill",
+                "questions_list": ["Q601_asphalting_sand",
+                                   "Q602_building_soft_sand",
+                                   "Q603_concreting_sand",
+                                   "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel",
+                                   "Q606_other_gravel",
+                                   "Q607_constructional_fill"],
                 "distinct_values": "'region', 'strata'"
             }
 

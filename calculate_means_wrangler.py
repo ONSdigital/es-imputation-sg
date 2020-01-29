@@ -21,7 +21,6 @@ class InputSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
 
@@ -60,6 +59,7 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        questions_list = event['RuntimeVariables']['questions_list']
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -67,7 +67,6 @@ def lambda_handler(event, context):
         incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
-        questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
 
@@ -79,7 +78,7 @@ def lambda_handler(event, context):
 
         logger.info("Succesfully retrieved data")
 
-        means_columns = imp_func.produce_columns("mean_", questions_list.split(","))
+        means_columns = imp_func.produce_columns("mean_", questions_list)
         for question in means_columns:
             data[question] = 0.0
 
