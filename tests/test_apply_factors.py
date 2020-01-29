@@ -31,6 +31,13 @@ mock_wrangles_event = {
                             "Q603_concreting_sand": "+",
                             "Q602_building_soft_sand": "+"}}
                             ],
+            "questions_list": ["Q601_asphalting_sand",
+                               "Q602_building_soft_sand",
+                               "Q603_concreting_sand",
+                               "Q604_bituminous_gravel",
+                               "Q605_concreting_gravel",
+                               "Q606_other_gravel",
+                               "Q607_constructional_fill"],
             "factors_parameters":
                 {
                     "RuntimeVariables":
@@ -66,16 +73,11 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "sqs_queue_url": "test-queue",
                 "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_message_group_id": "apply_factors_out",
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                  "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -115,9 +117,6 @@ class TestApplyFactors(unittest.TestCase):
 
     @mock_sqs
     def test_catch_wrangler_exception(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         # Method
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
@@ -127,16 +126,11 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "lambda_method_function",
                 "period": "201809",
-                "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_message_group_id": "apply_factors_out",
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                  "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -166,9 +160,12 @@ class TestApplyFactors(unittest.TestCase):
                 methodinput = pd.read_csv("tests/fixtures/inputtomethod.csv")
                 mock_event = {
                     "json_data": json.loads(methodinput.to_json(orient="records")),
-                    "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
-                                       "Q603_concreting_sand", "Q604_bituminous_gravel",
-                                       "Q605_concreting_gravel", "Q606_other_gravel",
+                    "questions_list": ["Q601_asphalting_sand",
+                                       "Q602_building_soft_sand",
+                                       "Q603_concreting_sand",
+                                       "Q604_bituminous_gravel",
+                                       "Q605_concreting_gravel",
+                                       "Q606_other_gravel",
                                        "Q607_constructional_fill"],
                     "sum_columns": [{"column_name": "Q608_total", "data": {
                         "Q603_concreting_sand": "+",
@@ -262,16 +259,11 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_message_group_id": "apply_factors_out",
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                  "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -412,16 +404,11 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "sqs_queue_url": "Sausages",
                 "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_message_group_id": "apply_factors_out",
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                  "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -438,9 +425,6 @@ class TestApplyFactors(unittest.TestCase):
     @mock_s3
     @mock_lambda
     def test_wrangles_incomplete_data(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test-queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
@@ -458,19 +442,14 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "sqs_queue_url": sqs_queue_url,
                     "previous_data_file": "previous_period_enriched_stratared.json",
                     "sqs_message_group_id": "apply_factors_out",
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
-                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                      "Q605_concreting_gravel,Q606_other_gravel," +
-                                      "Q607_constructional_fill",
-                "response_type": "response_type",
-                "reference": "responder_id",
-                "strata_column": "strata"
+                    "response_type": "response_type",
+                    "reference": "responder_id",
+                    "strata_column": "strata"
                 },
         ):
             with mock.patch(
@@ -499,10 +478,6 @@ class TestApplyFactors(unittest.TestCase):
     @mock_s3
     @mock_lambda
     def test_wrangles_key_error(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test-queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
-
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 
@@ -515,19 +490,14 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "sqs_queue_url": sqs_queue_url,
                     "previous_data_file": "previous_period_enriched_stratared.json",
                     "sqs_message_group_id": "apply_factors_out",
                     "incoming_message_group": "Sheep",
                     "in_file_name": "Test",
                     "out_file_name": "Test",
-                    "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                      "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                      "Q605_concreting_gravel,Q606_other_gravel," +
-                                      "Q607_constructional_fill",
-                "response_type": "response_type",
-                "reference": "responder_id",
-                "strata_column": "strata"
+                    "response_type": "response_type",
+                    "reference": "responder_id",
+                    "strata_column": "strata"
                 },
         ):
             with mock.patch("apply_factors_wrangler.aws_functions") as mock_funk:
@@ -546,9 +516,6 @@ class TestApplyFactors(unittest.TestCase):
     @mock_s3
     @mock_lambda
     def test_wrangles_type_error(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test-queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
@@ -559,16 +526,11 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "sqs_queue_url": sqs_queue_url,
                 "previous_data_file": "previous_period_enriched_stratared.json",
                 "sqs_message_group_id": "apply_factors_out",
                 "incoming_message_group": "Sheep",
                 "in_file_name": "Test",
                 "out_file_name": "Test",
-                "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
-                                  "Q603_concreting_sand,Q604_bituminous_gravel," +
-                                  "Q605_concreting_gravel,Q606_other_gravel," +
-                                  "Q607_constructional_fill",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -596,7 +558,7 @@ class TestApplyFactors(unittest.TestCase):
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test-queue")
         sqs_queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
-
+        mock_wrangles_event['queue_url'] = sqs_queue_url
         with open("tests/fixtures/factorsdata.json", "r") as file:
             message = file.read()
 

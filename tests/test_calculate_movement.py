@@ -20,13 +20,13 @@ mock_event = {
             "json_data": in_file,
             "movement_type": "movement_calculation_a",
             "distinct_values": ["region"],
-            "questions_list": 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
+            "questions_list": ["Q601_asphalting_sand",
+                               "Q602_building_soft_sand",
+                               "Q603_concreting_sand",
+                               "Q604_bituminous_gravel",
+                               "Q605_concreting_gravel",
+                               "Q606_other_gravel",
+                               "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
             "periodicity": "03"
@@ -36,13 +36,13 @@ mock_event_b = {
             "json_data": in_file,
             "movement_type": "movement_calculation_b",
             "distinct_values": ["region"],
-            "questions_list": 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
+            "questions_list": ["Q601_asphalting_sand",
+                               "Q602_building_soft_sand",
+                               "Q603_concreting_sand",
+                               "Q604_bituminous_gravel",
+                               "Q605_concreting_gravel",
+                               "Q606_other_gravel",
+                               "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
             "periodicity": "03"
@@ -57,7 +57,14 @@ mock_wrangles_event = {
     "periodicity": "03",
     "run_id": "example",
     "distinct_values": ["region"],
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"]
   }
 }
 
@@ -96,20 +103,11 @@ class TestStringMethods(unittest.TestCase):
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:8:some-topic',
             's3_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
-            'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
-                         '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'time': 'period',
             'response_type': 'response_type',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
             'output_file': 'output_file.json',
             'reference': 'responder_id',
             'segmentation': 'strata',
@@ -161,20 +159,11 @@ class TestStringMethods(unittest.TestCase):
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
             's3_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
-            'queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
-                         '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'time': 'period',
             'response_type': 'response_type',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
             'output_file': 'output_file.json',
             'reference': 'responder_id',
             'segmentation': 'strata',
@@ -203,20 +192,11 @@ class TestStringMethods(unittest.TestCase):
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
             'previous_period_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
-            'sqs_queue_url': 'https://sqs.eu-west-2.amazonaws.com/'
-                                    '82618934671237/SomethingURL.fifo',
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'time': 'period',
             'response_type': 'response_type',
-            'questions_list': 'Q601_asphalting_sand,'
-                              'Q602_building_soft_sand,'
-                              'Q603_concreting_sand,'
-                              'Q604_bituminous_gravel,'
-                              'Q605_concreting_gravel,'
-                              'Q606_other_gravel,'
-                              'Q607_constructional_fill',
             'non_response_file': 'output_file.json',
             'reference': 'responder_id',
             'segmentation': 'strata',

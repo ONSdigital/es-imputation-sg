@@ -26,7 +26,7 @@ def lambda_handler(event, context):
         # Environment variables
         json_data = event["json_data"]
         distinct_values = event["distinct_values"]
-        questions_list = event["questions_list"].split(",")
+        questions_list = event["questions_list"]
 
         movement_columns = imp_func.produce_columns("movement_", questions_list)
 

@@ -21,7 +21,6 @@ class InputSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    questions_list = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
 
@@ -62,19 +61,20 @@ def lambda_handler(event, context):
         incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
-        questions_list = config['questions_list']
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        questions_list = event['RuntimeVariables']['questions_list']
+
         logger.info("Validated params")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group)
         logger.info("Succesfully retrieved data.")
-        iqrs_columns = imp_func.produce_columns("iqrs_", questions_list.split(','))
+        iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
         for col in iqrs_columns:
             data[col] = 0
 

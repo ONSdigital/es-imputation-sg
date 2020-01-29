@@ -23,7 +23,14 @@ mock_event = {
     "period": 201809,
     "run_id": "example",
     "distinct_values": ["region"],
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"]
   }
 }
 
@@ -38,34 +45,6 @@ class TestClass():
             {
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
-                'questions_list': 'Q601_asphalting_sand,' +
-                                 'Q602_building_soft_sand,' +
-                                 'Q603_concreting_sand,' +
-                                 'Q604_bituminous_gravel,' +
-                                 'Q605_concreting_gravel,' +
-                                 'Q606_other_gravel,' +
-                                 'Q607_constructional_fill',
-                'iqrs_columns': 'iqrs_Q601_asphalting_sand,' +
-                                'iqrs_Q602_building_soft_sand,' +
-                                'iqrs_Q603_concreting_sand,' +
-                                'iqrs_Q604_bituminous_gravel,' +
-                                'iqrs_Q605_concreting_gravel,' +
-                                'iqrs_Q606_other_gravel,' +
-                                'iqrs_Q607_constructional_fill',
-                'movement_columns': 'movement_Q601_asphalting_sand,' +
-                                    'movement_Q602_building_soft_sand,' +
-                                    'movement_Q603_concreting_sand,' +
-                                    'movement_Q604_bituminous_gravel,' +
-                                    'movement_Q605_concreting_gravel,' +
-                                    'movement_Q606_other_gravel,' +
-                                    'movement_Q607_constructional_fill',
-                'mean_columns': 'mean_Q601_asphalting_sand,' +
-                                'mean_Q602_building_soft_sand,' +
-                                'mean_Q603_concreting_sand,' +
-                                'mean_Q604_bituminous_gravel,' +
-                                'mean_Q605_concreting_gravel,' +
-                                'mean_Q606_other_gravel,' +
-                                'mean_Q607_constructional_fill',
                 'method_name': 'mock_method_name',
                 'sqs_message_group_id': 'mock_sqs_message_name',
                 'error_handler_arn': 'mock_error_handler_arn',
@@ -126,13 +105,13 @@ class TestClass():
             json_content = json.loads(json_dataframe.to_json(orient="records"))
             event = {
                 "json_data": json_content,
-                "questions_list": 'Q601_asphalting_sand,' +
-                                  'Q602_building_soft_sand,' +
-                                  'Q603_concreting_sand,' +
-                                  'Q604_bituminous_gravel,' +
-                                  'Q605_concreting_gravel,' +
-                                  'Q606_other_gravel,' +
-                                  'Q607_constructional_fill',
+                "questions_list": ["Q601_asphalting_sand",
+                                   "Q602_building_soft_sand",
+                                   "Q603_concreting_sand",
+                                   "Q604_bituminous_gravel",
+                                   "Q605_concreting_gravel",
+                                   "Q606_other_gravel",
+                                   "Q607_constructional_fill"]
             }
 
             output = atypicals_method.lambda_handler(
@@ -181,13 +160,13 @@ class TestClass():
                 mocked.side_effect = Exception("General exception")
                 event = {
                     "json_data": json_content,
-                    "questions_list": 'Q601_asphalting_sand,' +
-                                      'Q602_building_soft_sand,' +
-                                      'Q603_concreting_sand,' +
-                                      'Q604_bituminous_gravel,' +
-                                      'Q605_concreting_gravel,' +
-                                      'Q606_other_gravel,' +
-                                      'Q607_constructional_fill',
+                    "questions_list": ["Q601_asphalting_sand",
+                                       "Q602_building_soft_sand",
+                                       "Q603_concreting_sand",
+                                       "Q604_bituminous_gravel",
+                                       "Q605_concreting_gravel",
+                                       "Q606_other_gravel",
+                                       "Q607_constructional_fill"]
                 }
 
                 response = atypicals_method.lambda_handler(
@@ -221,13 +200,13 @@ class TestClass():
             content = file.read()
             event = {
                     "jason_data": content,
-                    "questions_list": 'Q601_asphalting_sand,' +
-                                      'Q602_building_soft_sand,' +
-                                      'Q603_concreting_sand,' +
-                                      'Q604_bituminous_gravel,' +
-                                      'Q605_concreting_gravel,' +
-                                      'Q606_other_gravel,' +
-                                      'Q607_constructional_fill',
+                    "questions_list": ["Q601_asphalting_sand",
+                                       "Q602_building_soft_sand",
+                                       "Q603_concreting_sand",
+                                       "Q604_bituminous_gravel",
+                                       "Q605_concreting_gravel",
+                                       "Q606_other_gravel",
+                                       "Q607_constructional_fill"]
                      }
             response = atypicals_method.lambda_handler(
                 event, context_object

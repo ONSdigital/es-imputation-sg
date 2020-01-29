@@ -21,13 +21,13 @@ with open("tests/fixtures/recalculate_means_input.json", "r") as file:
 mock_event = {
     "json_data": json.loads(in_file),
     "distinct_values": ["strata", "region"],
-    "questions_list": 'Q601_asphalting_sand,'
-                      'Q602_building_soft_sand,'
-                      'Q603_concreting_sand,'
-                      'Q604_bituminous_gravel,'
-                      'Q605_concreting_gravel,'
-                      'Q606_other_gravel,'
-                      'Q607_constructional_fill'
+    "questions_list": ['Q601_asphalting_sand,'
+                       'Q602_building_soft_sand,'
+                       'Q603_concreting_sand,'
+                       'Q604_bituminous_gravel,'
+                       'Q605_concreting_gravel,'
+                       'Q606_other_gravel,'
+                       'Q607_constructional_fill']
 }
 
 mock_wrangles_event = {
@@ -37,7 +37,14 @@ mock_wrangles_event = {
     "period": 201809,
     "run_id": "example",
     "distinct_values": ["region"],
-    "queue_url": "Earl"
+    "queue_url": "Earl",
+    "questions_list": ["Q601_asphalting_sand",
+                       "Q602_building_soft_sand",
+                       "Q603_concreting_sand",
+                       "Q604_bituminous_gravel",
+                       "Q605_concreting_gravel",
+                       "Q606_other_gravel",
+                       "Q607_constructional_fill"]
   }
 }
 
@@ -60,10 +67,6 @@ class TestRecalculateMeans(unittest.TestCase):
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
-                'questions_list': 'Q601_asphalting_sand,Q602_building_soft_sand,'
-                                  + 'Q603_concreting_sand,Q604_bituminous_gravel,'
-                                  + 'Q605_concreting_gravel,Q606_other_gravel,'
-                                  + 'Q607_constructional_fill',
                 'sqs_message_group_id': 'mock_message',
                 'sns_topic_arn': 'mock_arn',
                 "incoming_message_group": "I am GROOP",
@@ -139,18 +142,14 @@ class TestRecalculateMeans(unittest.TestCase):
 
         :return:
         """
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        sqs_queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
                 recalculate_means_wrangler.os.environ,
                 {
-                    "checkpoint": "",
-                    "sqs_queue_url": sqs_queue_url
+                    "checkpoint": ""
                 }
         ):
             # Removing the checkpoint to allow for test of missing parameter
-            recalculate_means_wrangler.os.environ.pop("questions_list")
+            recalculate_means_wrangler.os.environ.pop("checkpoint")
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 recalculate_means_wrangler.lambda_handler(
