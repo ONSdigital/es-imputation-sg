@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
-from es_aws_functions import aws_functions, exception_classes
+from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
@@ -20,12 +20,10 @@ class EnvironSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    previous_period_file = fields.Str(required=True)
     reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
-    time = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -76,25 +74,31 @@ def lambda_handler(event, context):
         period = event['RuntimeVariables']['period']
         periodicity = event['RuntimeVariables']['periodicity']
         period_column = event['RuntimeVariables']['period_column']
-        previous_period_file = config['previous_period_file']
         response_type = config['response_type']  # Set as "response_type"
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
-        time = config['time']  # Set as "period"
-        reference = config['reference']  # Set as "responder_id"
 
-        previous_period_data = aws_functions.read_dataframe_from_s3(
-            bucket_name, previous_period_file)
-        logger.info("Completed reading data from s3")
+        reference = config['reference']  # Set as "responder_id"
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group)
+
+        previous_period = general_functions.calculate_adjacent_periods(period,
+                                                                       "03")
+        logger.info("Completed reading data from s3")
+        previous_period_data = data[
+            data[period_column] == int(previous_period)]
+
+        # Save previous period data to s3 for apply to pick up later
+        aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
+                                 previous_period_data.to_json(orient='records'))
+
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
         filtered_non_responders = data.loc[(data[response_type] == 1) &
-                                           (data[time] == int(period))]
+                                           (data[period_column] == int(period))]
 
         logger.info("Successfully created filtered non responders DataFrame")
 
