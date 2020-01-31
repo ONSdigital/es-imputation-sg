@@ -18,8 +18,6 @@ class EnvironSchema(Schema):
     """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     period = fields.Str(required=True)
@@ -69,12 +67,13 @@ def lambda_handler(event, context):
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        incoming_message_group = event['RuntimeVariables']["incoming_message_group"]
+        in_file_name = event['RuntimeVariables']["in_file_name"]
+
         # Environment vars
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
         current_period = config["period"]
-        incoming_message_group = config["incoming_message_group"]
-        in_file_name = config["in_file_name"]
         method_name = config["method_name"]
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
