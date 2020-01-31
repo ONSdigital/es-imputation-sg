@@ -42,8 +42,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: calculate_movement_out.json
-      incoming_message_group: imputation-calculate-movement-out
       method_name: es-add-regionless-method
       out_file_name: add_allGB_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
