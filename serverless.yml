@@ -80,8 +80,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: calculate_factors_out.json
-      incoming_message_group: imputation-calculate-factors-out
       method_name: es-imputation-apply-factors-method
       out_file_name: imputation_apply_out.json
       period: 201809
@@ -125,8 +123,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: iqrs_out.json
-      incoming_message_group: imputation-iqrs-out
       method_name: es-imputation-atypicals-method
       out_file_name: atypicals_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -165,8 +161,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: recalculate_means_out.json
-      incoming_message_group: imputation-recalculate-means-out
       method_name: es-imputation-calculate-factors-method
       out_file_name: calculate_factors_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
