@@ -14,8 +14,6 @@ class EnvironSchema(Schema):
     """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
@@ -59,8 +57,6 @@ def lambda_handler(event, context):
         # Set up environment variables
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
-        in_file_name = config["in_file_name"]
-        incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
         sns_topic_arn = config['sns_topic_arn']
@@ -69,6 +65,10 @@ def lambda_handler(event, context):
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
         questions_list = event['RuntimeVariables']['questions_list']
+        in_file_name = event['RuntimeVariables']['in_file_name'][
+            'imputation_recalc_means']
+        incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
+            'imputation_recalc_means']
 
         data, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url,

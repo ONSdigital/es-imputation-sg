@@ -44,7 +44,13 @@ mock_wrangles_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"]
+                       "Q607_constructional_fill"],
+    "in_file_name": {
+        "imputation_recalc_means": "test"
+    },
+    "incoming_message_group": {
+        "imputation_recalc_means": "test"
+    }
   }
 }
 
@@ -69,8 +75,6 @@ class TestRecalculateMeans(unittest.TestCase):
                 'method_name': 'mock_method',
                 'sqs_message_group_id': 'mock_message',
                 'sns_topic_arn': 'mock_arn',
-                "incoming_message_group": "I am GROOP",
-                "in_file_name": "Test",
                 "out_file_name": "Test",
                 "bucket_name": "Mike"
             }
