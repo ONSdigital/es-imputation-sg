@@ -15,8 +15,6 @@ class EnvironSchema(Schema):
     """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
@@ -53,6 +51,8 @@ def lambda_handler(event, context):
 
         # Event vars
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
+        incoming_message_group = event['RuntimeVariables']["incoming_message_group"]["add_gb_region"]
+        in_file_name = event['RuntimeVariables']["in_file_name"]["add_gb_region"]
         regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
         region_column = factors_parameters['RuntimeVariables']['region_column']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
@@ -60,8 +60,6 @@ def lambda_handler(event, context):
         # Set up clients
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
-        incoming_message_group = config["incoming_message_group"]
-        in_file_name = config["in_file_name"]
         method_name = config["method_name"]
         out_file_name = config["out_file_name"]
         sns_topic_arn = config["sns_topic_arn"]
