@@ -286,8 +286,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: calculate_means_out.json
-      incoming_message_group: imputation-calculate-means-out
       method_name: es-imputation-iqrs-method
       out_file_name: iqrs_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
