@@ -15,6 +15,7 @@ class MockContext:
 
 with open("tests/fixtures/wrangler_input_test_data.json", "r") as file:
     in_file = file.read()
+
 mock_event = {
     "json_data": json.loads(in_file),
     "distinct_values": ["strata", "region"],
@@ -45,6 +46,12 @@ mock_wrangles_event = {
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
+    "in_file_name": {
+        "imputation_movement": "Test"
+    },
+    "incoming_message_group": {
+        "imputation_movement": "bananas"
+    }
   }
 }
 
@@ -65,19 +72,12 @@ class TestClass(unittest.TestCase):
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
-            'time': 'period',
             'response_type': 'response_type',
-            'non_response_file': 'output_file.json',
             'reference': 'responder_id',
-            'segmentation': 'strata',
             'stored_segmentation': 'goodstrata',
             'current_time': 'current_period',
             'previous_time': 'previous_period',
-            'current_segmentation': 'current_strata',
-            'previous_segmentation': 'previous_strata',
-            'incoming_message_group': 'bananas',
-            'in_file_name': 'Test',
-            'out_file_name': 'Test',
+            'out_file_name': 'Test'
         })
         cls.mock_os = cls.mock_os_patcher.start()
 
@@ -126,8 +126,7 @@ class TestClass(unittest.TestCase):
         assert response['success']
         assert output == method_output
 
-    @mock.patch('calculate_movement_wrangler.' +
-                'aws_functions.send_sns_message')
+    @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
     @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
