@@ -67,8 +67,9 @@ def lambda_handler(event, context):
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        incoming_message_group = event['RuntimeVariables']["incoming_message_group"]
-        in_file_name = event['RuntimeVariables']["in_file_name"]
+        incoming_message_group = \
+            event['RuntimeVariables']["incoming_message_group"]['apply']
+        in_file_name = event['RuntimeVariables']["in_file_name"]['apply']
 
         # Environment vars
         checkpoint = config["checkpoint"]

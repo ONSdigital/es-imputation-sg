@@ -62,7 +62,8 @@ def lambda_handler(event, context):
 
         distinct_values = event['RuntimeVariables']["distinct_values"]
         in_file_name = event['RuntimeVariables']["in_file_name"]["iqrs"]
-        incoming_message_group = event['RuntimeVariables']['incoming_message_group']["iqrs"]
+        incoming_message_group = \
+            event['RuntimeVariables']['incoming_message_group']["iqrs"]
         questions_list = event['RuntimeVariables']['questions_list']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
 

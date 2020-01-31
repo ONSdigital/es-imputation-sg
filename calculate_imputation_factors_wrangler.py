@@ -69,8 +69,9 @@ def lambda_handler(event, context):
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
         questions_list = event['RuntimeVariables']['questions_list']
-        in_file_name = event['RuntimeVariables']["in_file_name"]
-        incoming_message_group = event['RuntimeVariables']['incoming_message_group']
+        in_file_name = event['RuntimeVariables']["in_file_name"]['calcfactors']
+        incoming_message_group = \
+            event['RuntimeVariables']['incoming_message_group']['calcfactors']
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,

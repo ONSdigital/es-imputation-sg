@@ -27,8 +27,8 @@ mock_event = {
     "queue_url": "Earl",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
-    "incoming_message_group": "I am GROOP",
-    "in_file_name": "Test",
+    "incoming_message_group": {"calcfactors": "I am GROOP"},
+    "in_file_name": {"calcfactors": "Test"},
     "factors_parameters":
     {
         "factors_type": "factors_calculation_a",

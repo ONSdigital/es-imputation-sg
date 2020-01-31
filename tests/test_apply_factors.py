@@ -39,8 +39,8 @@ mock_wrangles_event = {
                                "Q606_other_gravel",
                                "Q607_constructional_fill"],
 
-            "incoming_message_group": "Sheep",
-            "in_file_name": "Test",
+            "incoming_message_group": {"apply": "Sheep"},
+            "in_file_name": {"apply": "Test"},
             "factors_parameters":
                 {
                     "RuntimeVariables":

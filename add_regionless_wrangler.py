@@ -51,7 +51,8 @@ def lambda_handler(event, context):
 
         # Event vars
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
-        incoming_message_group = event['RuntimeVariables']["incoming_message_group"]["add_gb_region"]
+        incoming_message_group = \
+            event['RuntimeVariables']["incoming_message_group"]["add_gb_region"]
         in_file_name = event['RuntimeVariables']["in_file_name"]["add_gb_region"]
         regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
         region_column = factors_parameters['RuntimeVariables']['region_column']
