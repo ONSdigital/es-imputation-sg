@@ -27,9 +27,11 @@ mock_event = {
     "queue_url": "Earl",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
+    "incoming_message_group": "I am GROOP",
+    "in_file_name": "Test",
     "factors_parameters":
     {
-        "factors_type": "factors_calcualtion_a",
+        "factors_type": "factors_calculation_a",
         "percentage_movement": True,
         "survey_column": "survey",
         "region_column": "region",
@@ -81,8 +83,6 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "method_name": "mock_method",
                 "period_column": "mock_period",
                 "sqs_message_group_id": "mock_message",
-                "incoming_message_group": "I am GROOP",
-                "in_file_name": "Test",
                 "out_file_name": "Test",
                 "bucket_name": "Mike"
             },
@@ -317,7 +317,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                                     "Q607_constructional_fill"],
                  "factors_parameters": {
                         "RuntimeVariables": {
-                            "factors_type": "factors_calcualtion_a",
+                            "factors_type": "factors_calculation_a",
                             "percentage_movement": True,
                             "survey_column": "survey",
                             "region_column": "region",
