@@ -129,17 +129,12 @@ class TestClass(unittest.TestCase):
     @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
     @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe')
-    @mock.patch('calculate_movement_wrangler.aws_functions.read_dataframe_from_s3')
-    def test_full_response(self, mock_s3_return, mock_sqs_return,
+    @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3')
+    def test_full_response(self, mock_s3, mock_sqs_return,
                            mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data_full_response.json') as file:
             input_data = json.load(file)
-
-        with open('tests/fixtures/s3_previous_period_data.json') as file:
-            previous_data = json.load(file)
-
-        mock_s3_return.return_value = previous_data
 
         mock_sqs_return.return_value = pd.DataFrame(input_data), 666
 
@@ -190,14 +185,9 @@ class TestClass(unittest.TestCase):
                                   mock_send_sqs, mock_sns_message):
 
         with open('tests/fixtures/wrangler_input_test_data.json') as file:
-            input_data = json.load(file)
+            input_data = pd.DataFrame(json.load(file))
 
-        with open('tests/fixtures/s3_previous_period_data.json') as file:
-            previous_data = json.load(file)
-
-        mock_s3_return.return_value = previous_data
-
-        mock_sqs_return.return_value = json.dumps(input_data), 666
+        mock_sqs_return.return_value = input_data, 666
 
         with open('tests/fixtures/method_output_compare_result.json', "rb") as file:
             mock_lambda.return_value.invoke.return_value = {

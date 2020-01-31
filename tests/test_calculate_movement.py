@@ -116,6 +116,7 @@ class TestStringMethods(unittest.TestCase):
 
     @mock_sqs
     @mock_lambda
+    @mock_s3
     def test_wrangler_catch_exception(self):
         with mock.patch.dict(calculate_movement_wrangler.os.environ, {
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:8:some-topic',
@@ -128,20 +129,17 @@ class TestStringMethods(unittest.TestCase):
             'response_type': 'response_type',
             'output_file': 'output_file.json',
             'reference': 'responder_id',
-            'current_time': 'current_period',
-            'previous_time': 'previous_period',
             'incoming_message_group': 'bananas',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
-            'previous_period_file': 'test',
             'period': '202020',
             'non_response_file': 'Test',
         }):
 
-            # using get_from_s3 to force exception early on.
+            # using get_data to force exception early on.
 
             with mock.patch('calculate_movement_wrangler'
-                            '.aws_functions.read_dataframe_from_s3') as mocked:
+                            '.aws_functions.get_data') as mocked:
 
                 mocked.side_effect = Exception('SQS Failure')
                 with unittest.TestCase.assertRaises(
@@ -209,7 +207,6 @@ class TestStringMethods(unittest.TestCase):
             'sqs_message_group_id': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
-            'time': 'period',
             'response_type': 'response_type',
             'non_response_file': 'output_file.json',
             'reference': 'responder_id',
@@ -217,6 +214,7 @@ class TestStringMethods(unittest.TestCase):
             'current_time': 'current_period',
             'previous_time': 'previous_period',
             'out_file_name': 'Test'
+
             },
         ):
             with unittest.TestCase.assertRaises(
