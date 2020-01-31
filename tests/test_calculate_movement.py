@@ -29,8 +29,14 @@ mock_event = {
                                "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
-            "periodicity": "03"
-        }
+            "periodicity": "03",
+            "in_file_name": {
+                "imputation_movement": "Test"
+            },
+            "incoming_message_group": {
+                "imputation_movement": "bananas"
+            }
+}
 
 mock_event_b = {
             "json_data": in_file,
@@ -45,8 +51,14 @@ mock_event_b = {
                                "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
-            "periodicity": "03"
-        }
+            "periodicity": "03",
+            "in_file_name": {
+                "imputation_movement": "Test"
+            },
+            "incoming_message_group": {
+                "imputation_movement": "bananas"
+            }
+}
 
 mock_wrangles_event = {
   "MessageStructure": "json",
@@ -64,7 +76,13 @@ mock_wrangles_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"]
+                       "Q607_constructional_fill"],
+    "in_file_name": {
+          "imputation_movement": "Test"
+    },
+    "incoming_message_group": {
+        "imputation_movement": "bananas"
+    }
   }
 }
 
@@ -192,11 +210,11 @@ class TestStringMethods(unittest.TestCase):
             'response_type': 'response_type',
             'non_response_file': 'output_file.json',
             'reference': 'responder_id',
+            'segmentation': 'strata',
             'current_time': 'current_period',
             'previous_time': 'previous_period',
-            'incoming_message_group': 'bananas',
-            'in_file_name': 'Test',
-            'out_file_name': 'Test',
+            'out_file_name': 'Test'
+
             },
         ):
             with unittest.TestCase.assertRaises(

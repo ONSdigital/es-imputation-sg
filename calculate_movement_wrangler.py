@@ -16,8 +16,6 @@ class EnvironSchema(Schema):
     """
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
-    in_file_name = fields.Str(required=True)
-    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     reference = fields.Str(required=True)
@@ -61,23 +59,23 @@ def lambda_handler(event, context):
         logger.info("Setting-up environment configs")
 
         # Event vars
+        period = event['RuntimeVariables']['period']
         movement_type = event['RuntimeVariables']["movement_type"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
         questions_list = event['RuntimeVariables']['questions_list']
+        periodicity = event['RuntimeVariables']['periodicity']
+        period_column = event['RuntimeVariables']['period_column']
+        in_file_name = event['RuntimeVariables']['in_file_name']['imputation_movement']
+        incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
+            'imputation_movement']
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
-        in_file_name = config["in_file_name"]
-        incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
-        period = event['RuntimeVariables']['period']
-        periodicity = event['RuntimeVariables']['periodicity']
-        period_column = event['RuntimeVariables']['period_column']
         response_type = config['response_type']  # Set as "response_type"
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
-
         reference = config['reference']  # Set as "responder_id"
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,

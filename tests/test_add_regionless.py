@@ -35,6 +35,8 @@ mock_event = {
             "regional_mean": "third_imputation_factor"
         }
     },
+    "in_file_name": {"add_gb_region": "calculate_movement_out.json"},
+    "incoming_message_group": {"add_gb_region": "imputation-calculate-movement-out"},
     "run_id": "bob"
   }
 }

@@ -19,6 +19,8 @@ class MockContext:
 mock_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
+    "in_file_name": {"iqrs": "calculate_means_out.json"},
+    "incoming_message_group": {"iqrs": "imputation-calculate-means-out"},
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
