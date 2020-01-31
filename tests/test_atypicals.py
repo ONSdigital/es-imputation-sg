@@ -24,6 +24,8 @@ mock_event = {
     "run_id": "example",
     "distinct_values": ["region"],
     "queue_url": "Earl",
+    'incoming_message_group': 'mock_group',
+    "in_file_name": "Test",
     "questions_list": ["Q601_asphalting_sand",
                        "Q602_building_soft_sand",
                        "Q603_concreting_sand",
@@ -50,8 +52,6 @@ class TestClass():
                 'error_handler_arn': 'mock_error_handler_arn',
                 'bucket_name': 'mock_bucket',
                 'input_data': 'mock_data',
-                'incoming_message_group': 'mock_group',
-                "in_file_name": "Test",
                 "out_file_name": "Test",
             }
         )
