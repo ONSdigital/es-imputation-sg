@@ -68,21 +68,15 @@ def lambda_handler(event, context):
         in_file_name = event['RuntimeVariables']['in_file_name']['imputation_movement']
         incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
             'imputation_movement']
-        time = event['RuntimeVariables']['period_column']
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         method_name = config['method_name']
         out_file_name = config["out_file_name"]
-
-        period = event['RuntimeVariables']['period']
-        periodicity = event['RuntimeVariables']['periodicity']
-        period_column = event['RuntimeVariables']['period_column']
         response_type = config['response_type']  # Set as "response_type"
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
         reference = config['reference']  # Set as "responder_id"
-
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
