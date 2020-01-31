@@ -67,8 +67,8 @@ def lambda_handler(event, context):
         periodicity = event['RuntimeVariables']['periodicity']
         period_column = event['RuntimeVariables']['period_column']
         in_file_name = event['RuntimeVariables']['in_file_name']['imputation_movement']
-        incoming_message_group = event['RuntimeVariables']['incoming_message_group']
-        ['imputation_movement']
+        incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
+            'imputation_movement']
         time = event['RuntimeVariables']['period_column']
 
         checkpoint = config['checkpoint']

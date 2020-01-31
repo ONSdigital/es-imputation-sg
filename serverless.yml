@@ -199,8 +199,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: calculate_movement_out.json
-      incoming_message_group: add-all-gb-region-out
       method_name: es-imputation-calculate-means-method
       out_file_name: calculate_means_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
@@ -318,8 +316,6 @@ functions:
     environment:
       checkpoint: 3
       bucket_name: results-s3-bucket
-      in_file_name: atypicals_out.json
-      incoming_message_group: imputation-atypicals-out
       method_name: es-imputation-calculate-means-method
       out_file_name: recalculate_means_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults

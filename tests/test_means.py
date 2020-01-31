@@ -46,7 +46,13 @@ mock_wrangles_event = {
                        'Q604_bituminous_gravel',
                        'Q605_concreting_gravel',
                        'Q606_other_gravel',
-                       'Q607_constructional_fill']
+                       'Q607_constructional_fill'],
+    "in_file_name": {
+      "imputation_means": "calculate_movement_out.json",
+    },
+    "incoming_message_group": {
+      "imputation_means": "imputation-calculate-movement-out",
+    }
   }
 }
 
@@ -68,8 +74,6 @@ class TestMeans(unittest.TestCase):
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
                 "sns_topic_arn": "mock_arn",
-                "incoming_message_group": "I am GROOP",
-                "in_file_name": "Test",
                 "out_file_name": "Test",
                 "bucket_name": "Mike"
 
