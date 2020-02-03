@@ -20,7 +20,6 @@ class EnvironSchema(Schema):
     bucket_name = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    period = fields.Str(required=True)
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     response_type = fields.Str(required=True)
@@ -61,6 +60,7 @@ def lambda_handler(event, context):
         sum_columns = event['RuntimeVariables']["sum_columns"]
         period_column = event['RuntimeVariables']['period_column']
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
+        current_period = event["RuntimeVariables"]["period"]
         regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
         region_column = factors_parameters["RuntimeVariables"]['region_column']
         questions_list = event['RuntimeVariables']['questions_list']
@@ -74,7 +74,6 @@ def lambda_handler(event, context):
         # Environment vars
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
-        current_period = config["period"]
         method_name = config["method_name"]
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
