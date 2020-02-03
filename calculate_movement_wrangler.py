@@ -93,7 +93,7 @@ def lambda_handler(event, context):
         # Save previous period data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
                                  previous_period_data.to_json(orient='records'))
-        # Save previous period data to s3 for apply to pick up later
+        # Save raw data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'raw_datafile.json',
                                  data.to_json(orient='records'))
         logger.info("Successfully retrieved data")
