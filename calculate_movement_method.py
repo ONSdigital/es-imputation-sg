@@ -3,7 +3,6 @@ import logging
 
 import boto3
 import pandas as pd
-from es_aws_functions import general_functions
 
 import imputation_functions as imp_func
 
