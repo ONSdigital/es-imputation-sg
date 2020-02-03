@@ -87,11 +87,15 @@ def lambda_handler(event, context):
         logger.info("Completed reading data from s3")
         previous_period_data = data[
             data[period_column] == int(previous_period)]
-
+        data = data[
+            data[period_column] == int(period)]
+        logger.info("Split input data")
         # Save previous period data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
                                  previous_period_data.to_json(orient='records'))
-
+        # Save previous period data to s3 for apply to pick up later
+        aws_functions.save_to_s3(bucket_name, 'raw_datafile.json',
+                                 data.to_json(orient='records'))
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
