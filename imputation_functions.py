@@ -1,3 +1,4 @@
+
 import pandas as pd
 
 
@@ -107,11 +108,7 @@ def factors_calculation_a(row, questions, parameters):
                             third_imputation_factors.query(
                                 str(factor_filter))["imputation_factor_" + question]
                             .take([0])))
-                row["imputation_factor_" + question] =\
-                    float(pd.to_numeric(
-                        third_imputation_factors.query(
-                            str(factor_filter))["imputation_factor_" + question].
-                        take([0])))
+
             else:
                 row["imputation_factor_" + question] =\
                     float(pd.to_numeric(row["mean_" + question]))
