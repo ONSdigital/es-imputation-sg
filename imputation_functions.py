@@ -91,17 +91,24 @@ def factors_calculation_a(row, questions, parameters):
                 if region_column in distinct_values:
                     distinct_values.remove(region_column)
 
-                # Find the correct mean (region or region+strata handling)
-                for value in distinct_values:
-                    if value != distinct_values[0]:
-                        factor_filter += " & "
-                    factor_filter += "(%s == '%s')" % (value, row[value])
+                if len(distinct_values) < 1:
+                    row["imputation_factor_" + question] = \
+                        float(pd.to_numeric(
+                            third_imputation_factors["imputation_factor_" + question]
+                                .take([0])))
+                else:
+                    # Find the correct mean (region or region+strata handling)
+                    for value in distinct_values:
+                        if value != distinct_values[0]:
+                            factor_filter += " & "
+                        factor_filter += "(%s == '%s')" % (value, row[value])
 
-                row["imputation_factor_" + question] =\
-                    float(pd.to_numeric(
-                        third_imputation_factors.query(
-                            str(factor_filter))["imputation_factor_" + question].
-                        take([0])))
+                    row["imputation_factor_" + question] = \
+                        float(pd.to_numeric(
+                            third_imputation_factors.query(
+                                str(factor_filter))["imputation_factor_" + question]
+                            .take([0])))
+
             else:
                 row["imputation_factor_" + question] =\
                     float(pd.to_numeric(row["mean_" + question]))
