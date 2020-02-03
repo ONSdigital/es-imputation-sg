@@ -29,7 +29,7 @@ mock_event = {
                                "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
-            "periodicity": "03",
+            "previous_period": "201806",
             "in_file_name": {
                 "imputation_movement": "Test"
             },
@@ -51,7 +51,7 @@ mock_event_b = {
                                "Q607_constructional_fill"],
             "current_period": 201809,
             "period_column": "period",
-            "periodicity": "03",
+            "previous_period": "201806",
             "in_file_name": {
                 "imputation_movement": "Test"
             },
