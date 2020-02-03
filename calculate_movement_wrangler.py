@@ -83,7 +83,7 @@ def lambda_handler(event, context):
                                                             incoming_message_group)
 
         previous_period = general_functions.calculate_adjacent_periods(period,
-                                                                       "03")
+                                                                       periodicity)
         logger.info("Completed reading data from s3")
         previous_period_data = data[
             data[period_column] == int(previous_period)]
@@ -131,7 +131,7 @@ def lambda_handler(event, context):
                 "questions_list": questions_list,
                 "current_period": period,
                 "period_column": period_column,
-                "periodicity": periodicity
+                "previous_period": previous_period
             }
 
             logger.info("Successfully created movement columns on the data")

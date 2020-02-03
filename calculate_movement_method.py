@@ -3,7 +3,6 @@ import logging
 
 import boto3
 import pandas as pd
-from es_aws_functions import general_functions
 
 import imputation_functions as imp_func
 
@@ -33,15 +32,10 @@ def lambda_handler(event, context):
         questions_list = event["questions_list"]
         current_period = event['current_period']
         period_column = event['period_column']
-        periodicity = event['periodicity']
+        previous_period = event['previous_period']
 
         # Get relative calculation function
         calculation = getattr(imp_func, movement_type)
-
-        # Declared inside of lambda_handler so that tests work correctly on local.
-
-        previous_period = general_functions.calculate_adjacent_periods(current_period,
-                                                                       periodicity)
 
         df = pd.DataFrame(json.loads(json_data))
 
