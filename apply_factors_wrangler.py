@@ -80,7 +80,6 @@ def lambda_handler(event, context):
         sns_topic_arn = config["sns_topic_arn"]
         response_type = config['response_type']
         reference = config['reference']
-        strata_column = config['strata_column']
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
@@ -148,18 +147,19 @@ def lambda_handler(event, context):
         dropped_rows = non_responder_dataframe_with_prev[
             ~non_responder_dataframe_with_prev[reference].isin(
                 non_responders_with_factors[reference])].dropna()
-        if(len(dropped_rows) > 0):
-            if(strata_column in dropped_rows.columns.values):
+        if (len(dropped_rows) > 0):
+            merge_values = distinct_values.remove(region_column)
+            if merge_values is None:
                 regionless_factors = \
                     factors_dataframe[
                         produce_columns("imputation_factor_",
                                         questions_list,
                                         distinct_values)
                     ][factors_dataframe[region_column] == regionless_code]
-                regionless_factors = regionless_factors.drop(
-                    [region_column], inplace=False, axis=1)
+
                 dropped_rows_with_factors = \
-                    pd.merge(dropped_rows, regionless_factors, on='strata', how="inner")
+                    pd.merge(dropped_rows, regionless_factors,
+                             on=merge_values, how="inner")
                 non_responders_with_factors = \
                     pd.concat([non_responders_with_factors, dropped_rows_with_factors])
                 logger.info("Successfully merged missing rows with non_responders")
