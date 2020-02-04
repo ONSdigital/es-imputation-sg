@@ -71,7 +71,8 @@ def lambda_handler(event, context):
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
-                                                            incoming_message_group)
+                                                            incoming_message_group,
+                                                            run_id)
         logger.info("Succesfully retrieved data.")
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
         for col in iqrs_columns:
@@ -101,14 +102,14 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
-                                sqs_message_group_id)
+                                sqs_message_group_id, run_id)
 
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
-        logger.info(aws_functions.delete_data(bucket_name, in_file_name))
+        logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
         logger.info("Successfully deleted input data from s3")
         aws_functions.send_sns_message(checkpoint, sns_topic_arn, 'Imputation - IQRs.')
 

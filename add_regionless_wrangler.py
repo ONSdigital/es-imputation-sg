@@ -72,7 +72,8 @@ def lambda_handler(event, context):
         input_data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url,
                                                                   bucket_name,
                                                                   in_file_name,
-                                                                  incoming_message_group)
+                                                                  incoming_message_group,
+                                                                  run_id)
 
         logger.info("Successfully retrieved input data from s3")
 
@@ -99,7 +100,7 @@ def lambda_handler(event, context):
         # Save
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
-                                sqs_message_group_id)
+                                sqs_message_group_id, run_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
@@ -107,7 +108,7 @@ def lambda_handler(event, context):
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn, 'Add a all-GB region.')
         logger.info("Successfully sent message to sns")
-        logger.info(aws_functions.delete_data(bucket_name, in_file_name))
+        logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
 
     except AttributeError as e:
         error_message = (
