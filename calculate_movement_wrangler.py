@@ -80,7 +80,8 @@ def lambda_handler(event, context):
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
-                                                            incoming_message_group)
+                                                            incoming_message_group,
+                                                            run_id)
 
         previous_period = general_functions.calculate_adjacent_periods(period,
                                                                        periodicity)
@@ -92,10 +93,10 @@ def lambda_handler(event, context):
         logger.info("Split input data")
         # Save previous period data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
-                                 previous_period_data.to_json(orient='records'))
+                                 previous_period_data.to_json(orient='records'), run_id)
         # Save raw data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'raw_datafile.json',
-                                 data.to_json(orient='records'))
+                                 data.to_json(orient='records'), run_id)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
@@ -154,7 +155,7 @@ def lambda_handler(event, context):
             imputation_run_type = "Calculate Movement."
             aws_functions.save_data(bucket_name, out_file_name,
                                     json_response["data"], sqs_queue_url,
-                                    sqs_message_group_id)
+                                    sqs_message_group_id, run_id)
 
             logger.info("Successfully sent the data to s3")
 
@@ -168,7 +169,7 @@ def lambda_handler(event, context):
                 in_file_name,
                 data.to_json(orient="records"),
                 sqs_queue_url,
-                sqs_message_group_id
+                sqs_message_group_id, run_id
             )
 
             logger.info("Successfully sent the unchanged data to s3")

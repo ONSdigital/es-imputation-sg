@@ -84,19 +84,21 @@ def lambda_handler(event, context):
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded imputation
-        input_data = aws_functions.read_dataframe_from_s3(bucket_name, raw_input_file)
+        input_data = aws_functions.read_dataframe_from_s3(bucket_name, raw_input_file,
+                                                          run_id)
         # Split out non responder data from input
         non_responder_dataframe = input_data[input_data[response_type] == 1]
         logger.info("Successfully retrieved raw-input data from s3")
 
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
-            sqs_queue_url, bucket_name, in_file_name, incoming_message_group)
+            sqs_queue_url, bucket_name, in_file_name, incoming_message_group, run_id)
         logger.info("Successfully retrieved factors data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
-                                                                previous_data_file)
+                                                                previous_data_file,
+                                                                run_id)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data[response_type] == 2]
@@ -213,7 +215,7 @@ def lambda_handler(event, context):
 
         message = filtered_data.to_json(orient="records")
 
-        aws_functions.save_to_s3(bucket_name, out_file_name, message)
+        aws_functions.save_to_s3(bucket_name, out_file_name, message, run_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
@@ -222,7 +224,7 @@ def lambda_handler(event, context):
         aws_functions.send_sns_message(checkpoint, sns_topic_arn,
                                        'Imputation - Apply Factors.')
         logger.info("Successfully sent message to sns")
-        logger.info(aws_functions.delete_data(bucket_name, in_file_name))
+        logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
 
     except TypeError as e:
         error_message = (
