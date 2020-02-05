@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+from es_aws_functions import general_functions
 
 
 def lambda_handler(event, context):
@@ -28,8 +29,9 @@ def lambda_handler(event, context):
             # Loop through each question value, impute based on factor and previous value
             # then drop the previous value and the imp factor
             working_dataframe[question] = working_dataframe.apply(
-                lambda x: round(x["prev_" + question] *
-                                x["imputation_factor_" + question]),
+                lambda x:
+                general_functions.sas_round(x["prev_" + question] *
+                                            x["imputation_factor_" + question]),
                 axis=1,
             )
 

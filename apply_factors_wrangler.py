@@ -198,15 +198,6 @@ def lambda_handler(event, context):
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
 
-        # rows in current period not suitable for imputation
-        # (eg, no matching row in previous, or non_responder in previous)
-        # Need to be joined back onto the final output
-        dropped_rows = non_responder_dataframe[
-            ~non_responder_dataframe[reference].
-            isin(final_imputed[reference])].dropna()
-        final_imputed = pd.concat([final_imputed, dropped_rows])
-        logger.info("Successfully joined tacked on unimputable data")
-
         # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list,
                                        produce_columns("prev_", questions_list))
