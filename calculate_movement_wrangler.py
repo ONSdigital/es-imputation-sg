@@ -68,6 +68,8 @@ def lambda_handler(event, context):
         in_file_name = event['RuntimeVariables']['in_file_name']['imputation_movement']
         incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
             'imputation_movement']
+        skip_imputation_file_name = event['RuntimeVariables']['in_file_name'][
+            'aggregation_by_column'][0]
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -164,15 +166,21 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
 
-            aws_functions.save_data(
+            aws_functions.save_to_s3(
                 bucket_name,
-                in_file_name,
+                skip_imputation_file_name,
                 data.to_json(orient="records"),
-                sqs_queue_url,
-                sqs_message_group_id, run_id
+                run_id
             )
 
             logger.info("Successfully sent the unchanged data to s3")
+
+            if receipt_handler:
+                sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
+
+            aws_functions.send_sns_message(checkpoint, sns_topic_arn,
+                                           'Imputation - Did not run')
+            logger.info("Successfully sent message to sns")
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
