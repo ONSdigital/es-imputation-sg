@@ -25,6 +25,7 @@ class EnvironSchema(Schema):
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
     strata_column = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -78,6 +79,7 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
+        sqs_message_group_id = config["sqs_message_group_id"]
         response_type = config['response_type']
         reference = config['reference']
         sqs = boto3.client('sqs', 'eu-west-2')
@@ -206,7 +208,9 @@ def lambda_handler(event, context):
 
         message = filtered_data.to_json(orient="records")
 
-        aws_functions.save_to_s3(bucket_name, out_file_name, message, run_id)
+        aws_functions.save_data(bucket_name, out_file_name,
+                                message, sqs_queue_url,
+                                sqs_message_group_id, run_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
