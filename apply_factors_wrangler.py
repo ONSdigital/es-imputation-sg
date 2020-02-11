@@ -167,8 +167,13 @@ def lambda_handler(event, context):
                     pd.merge(dropped_rows, regionless_factors,
                              on=merge_values, how="inner")
             else:
-                # Still To Do!!
-                print("Temp")
+                dropped_rows["Temp_Key"] = 0
+                regionless_factors["Temp_Key"] = 0
+                dropped_rows_with_factors = \
+                    pd.merge(dropped_rows, regionless_factors,
+                             on="Temp_Key", how="inner")
+                dropped_rows_with_factors = dropped_rows_with_factors.drop("Temp_Key",
+                                                                           axis=1)
 
             non_responders_with_factors = \
                 pd.concat([non_responders_with_factors, dropped_rows_with_factors])
