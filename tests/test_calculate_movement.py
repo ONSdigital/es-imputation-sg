@@ -31,7 +31,8 @@ mock_event = {
             "period_column": "period",
             "previous_period": "201806",
             "in_file_name": {
-                "imputation_movement": "Test"
+                "imputation_movement": "Test",
+                "aggregation_by_column": ["not_apply_out.json"]
             },
             "incoming_message_group": {
                 "imputation_movement": "bananas"
@@ -53,7 +54,8 @@ mock_event_b = {
             "period_column": "period",
             "previous_period": "201806",
             "in_file_name": {
-                "imputation_movement": "Test"
+                "imputation_movement": "Test",
+                "aggregation_by_column": ["not_apply_out.json"]
             },
             "incoming_message_group": {
                 "imputation_movement": "bananas"
@@ -78,7 +80,8 @@ mock_wrangles_event = {
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
     "in_file_name": {
-          "imputation_movement": "Test"
+        "imputation_movement": "Test",
+        "aggregation_by_column": ["not_apply_out.json"]
     },
     "incoming_message_group": {
         "imputation_movement": "bananas"
