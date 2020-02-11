@@ -22,6 +22,7 @@ class EnvironSchema(Schema):
     out_file_name = fields.Str(required=True)
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
     strata_column = fields.Str(required=True)
@@ -78,6 +79,7 @@ def lambda_handler(event, context):
         out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
+        sqs_message_group_id = config["sqs_message_group_id"]
         response_type = config['response_type']
         reference = config['reference']
         sqs = boto3.client('sqs', 'eu-west-2')
@@ -141,30 +143,43 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully merged non-responders with factors")
 
-        # Region/strata combinations that exist in responder data
-        # but not non_responders get dropped off on join
-        # With factors. Identify these, merge on the regionless factor.
-        # Then concat onto original dataset.
-        # It looked a lot nicer before flake8....
+        # Collects all rows where an imputation factor doesn't exist.
         dropped_rows = non_responder_dataframe_with_prev[
             ~non_responder_dataframe_with_prev[reference].isin(
                 non_responders_with_factors[reference])].dropna()
-        if (len(dropped_rows) > 0):
-            merge_values = distinct_values.remove(region_column)
-            if merge_values is None:
-                regionless_factors = \
-                    factors_dataframe[
-                        produce_columns("imputation_factor_",
-                                        questions_list,
-                                        distinct_values)
-                    ][factors_dataframe[region_column] == regionless_code]
 
+        if len(dropped_rows) > 0:
+            merge_values = distinct_values
+            merge_values.remove(region_column)
+
+            # Collect the GB region imputation factors if they exist.
+            regionless_factors = \
+                factors_dataframe[
+                    produce_columns("imputation_factor_",
+                                    questions_list,
+                                    distinct_values)
+                ][factors_dataframe[region_column] == regionless_code]
+
+            if merge_values is not None:
+                # Basic merge where we have values to merge on.
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,
                              on=merge_values, how="inner")
-                non_responders_with_factors = \
-                    pd.concat([non_responders_with_factors, dropped_rows_with_factors])
-                logger.info("Successfully merged missing rows with non_responders")
+            else:
+                # Added a column to both dataframes to use for the merge.
+                dropped_rows["Temp_Key"] = 0
+                regionless_factors["Temp_Key"] = 0
+
+                dropped_rows_with_factors = \
+                    pd.merge(dropped_rows, regionless_factors,
+                             on="Temp_Key", how="inner")
+
+                dropped_rows_with_factors = dropped_rows_with_factors.drop("Temp_Key",
+                                                                           axis=1)
+
+            non_responders_with_factors = \
+                pd.concat([non_responders_with_factors, dropped_rows_with_factors])
+            logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
             "json_data": json.loads(
@@ -198,16 +213,22 @@ def lambda_handler(event, context):
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
 
+        final_imputed["zero_data"] = final_imputed.apply(
+            lambda x: do_check(x, questions_list), axis=1)
+        final_imputed = final_imputed[~final_imputed["zero_data"]]
+
         # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list,
-                                       produce_columns("prev_", questions_list))
+                                       produce_columns("prev_", questions_list,
+                                                       ["zero_data"]))
 
         filtered_data = final_imputed.drop(cols_to_drop, axis=1)
 
         message = filtered_data.to_json(orient="records")
 
-        aws_functions.save_to_s3(bucket_name, out_file_name, message, run_id)
-        logger.info("Successfully sent data to s3")
+        aws_functions.save_data(bucket_name, out_file_name,
+                                message, sqs_queue_url,
+                                sqs_message_group_id, run_id)
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
@@ -219,76 +240,76 @@ def lambda_handler(event, context):
 
     except TypeError as e:
         error_message = (
-            "Bad data type encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "Bad data type encountered in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "Parameter validation error in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
         error_message = (
-            "AWS Error ("
-            + str(e.response["Error"]["Code"])
-            + ") "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "AWS Error ("
+                + str(e.response["Error"]["Code"])
+                + ") "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
         error_message = (
-            "Key Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "Key Error in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
         error_message = (
-            "Incomplete Lambda response encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "Incomplete Lambda response encountered in "
+                + current_module
+                + " |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except exception_classes.MethodFailure as e:
         error_message = e.error_message
         log_message = "Error in " + method_name + "." \
-            + " | Run_id: " + str(run_id)
+                      + " | Run_id: " + str(run_id)
     except Exception as e:
         error_message = (
-            "General Error in "
-            + current_module
-            + " ("
-            + str(type(e))
-            + ") |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
+                "General Error in "
+                + current_module
+                + " ("
+                + str(type(e))
+                + ") |- "
+                + str(e.args)
+                + " | Request ID: "
+                + str(context.aws_request_id)
+                + " | Run_id: " + str(run_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:
@@ -298,3 +319,13 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
     return {"success": True, "checkpoint": checkpoint}
+
+
+def do_check(x, questions_list):
+    total_data = 0
+    for question in questions_list:
+        total_data += x[question]
+    if total_data == 0:
+        return True
+    else:
+        return False

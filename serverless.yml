@@ -88,6 +88,7 @@ functions:
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       response_type: response_type
       reference: responder_id
+      sqs_message_group_id: imputation-apply-factors-out
 
 
   deploy-apply-factors-method:
