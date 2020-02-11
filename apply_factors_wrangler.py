@@ -143,18 +143,16 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully merged non-responders with factors")
 
-        # Region/strata combinations that exist in responder data
-        # but not non_responders get dropped off on join
-        # With factors. Identify these, merge on the regionless factor.
-        # Then concat onto original dataset.
-        # It looked a lot nicer before flake8....
+        # Collects all rows where an imputation factor doesn't exist.
         dropped_rows = non_responder_dataframe_with_prev[
             ~non_responder_dataframe_with_prev[reference].isin(
                 non_responders_with_factors[reference])].dropna()
+
         if len(dropped_rows) > 0:
             merge_values = distinct_values
             merge_values.remove(region_column)
 
+            # Collect the GB region imputation factors if they exist.
             regionless_factors = \
                 factors_dataframe[
                     produce_columns("imputation_factor_",
@@ -163,15 +161,19 @@ def lambda_handler(event, context):
                 ][factors_dataframe[region_column] == regionless_code]
 
             if merge_values is not None:
+                # Basic merge where we have values to merge on.
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,
                              on=merge_values, how="inner")
             else:
+                # Added a column to both dataframes to use for the merge.
                 dropped_rows["Temp_Key"] = 0
                 regionless_factors["Temp_Key"] = 0
+
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,
                              on="Temp_Key", how="inner")
+
                 dropped_rows_with_factors = dropped_rows_with_factors.drop("Temp_Key",
                                                                            axis=1)
 
