@@ -213,7 +213,7 @@ def lambda_handler(event, context):
 
         final_imputed["zero_data"] = final_imputed.apply(
             lambda x: do_check(x, questions_list), axis=1)
-        final_imputed = final_imputed[final_imputed["zero_data"] == False]
+        final_imputed = final_imputed[final_imputed["zero_data"] is False]
 
         # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list,
