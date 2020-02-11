@@ -155,20 +155,24 @@ def lambda_handler(event, context):
             merge_values = distinct_values
             merge_values.remove(region_column)
 
+            regionless_factors = \
+                factors_dataframe[
+                    produce_columns("imputation_factor_",
+                                    questions_list,
+                                    distinct_values)
+                ][factors_dataframe[region_column] == regionless_code]
+
             if merge_values is not None:
-                regionless_factors = \
-                    factors_dataframe[
-                        produce_columns("imputation_factor_",
-                                        questions_list,
-                                        distinct_values)
-                    ][factors_dataframe[region_column] == regionless_code]
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,
                              on=merge_values, how="inner")
+            else:
+                # Still To Do!!
+                print("Temp")
 
-                non_responders_with_factors = \
-                    pd.concat([non_responders_with_factors, dropped_rows_with_factors])
-                logger.info("Successfully merged missing rows with non_responders")
+            non_responders_with_factors = \
+                pd.concat([non_responders_with_factors, dropped_rows_with_factors])
+            logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
             "json_data": json.loads(
