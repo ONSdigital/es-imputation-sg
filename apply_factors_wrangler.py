@@ -126,7 +126,7 @@ def lambda_handler(event, context):
 
         # filter factors df to only get current period
         factors_dataframe = factors_dataframe[
-            factors_dataframe[period_column] == int(current_period)]
+            factors_dataframe[period_column].astype('str') == str(current_period)]
 
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(
