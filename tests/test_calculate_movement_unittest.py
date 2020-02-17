@@ -48,7 +48,7 @@ mock_wrangles_event = {
                        "Q607_constructional_fill"],
     "in_file_name": {
         "imputation_movement": "Test",
-        "aggregation_by_column": ["not_apply_out.json"]
+        "skip_imputation": "not_apply_out.json"
     },
     "incoming_message_group": {
         "imputation_movement": "bananas"
@@ -71,6 +71,7 @@ class TestClass(unittest.TestCase):
             'previous_period_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
             'sqs_message_group_id': 'output_something_something',
+            'sqs_message_group_id_skip': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'response_type': 'response_type',

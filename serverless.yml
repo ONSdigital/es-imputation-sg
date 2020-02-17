@@ -244,6 +244,7 @@ functions:
       response_type: response_type
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       sqs_message_group_id: imputation-calculate-movement-out
+      sqs_message_group_id_skip: imputation-apply-factors-out
 
   deploy-calculate-movement-method:
     name: es-imputation-calculate-movement-method

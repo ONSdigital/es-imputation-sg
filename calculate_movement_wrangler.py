@@ -22,6 +22,7 @@ class EnvironSchema(Schema):
     response_type = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
+    sqs_message_group_id_skip = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -69,7 +70,7 @@ def lambda_handler(event, context):
         incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
             'imputation_movement']
         skip_imputation_file_name = event['RuntimeVariables']['in_file_name'][
-            'aggregation_by_column'][0]
+            'skip_imputation']
 
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
@@ -78,6 +79,7 @@ def lambda_handler(event, context):
         response_type = config['response_type']  # Set as "response_type"
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
+        sqs_message_group_id_skip = config['sqs_message_group_id_skip']
         reference = config['reference']  # Set as "responder_id"
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
@@ -166,10 +168,12 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
 
-            aws_functions.save_to_s3(
+            aws_functions.save_data(
                 bucket_name,
                 skip_imputation_file_name,
                 data.to_json(orient="records"),
+                sqs_queue_url,
+                sqs_message_group_id_skip,
                 run_id
             )
 
