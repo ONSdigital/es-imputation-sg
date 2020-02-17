@@ -39,8 +39,8 @@ def lambda_handler(event, context):
 
         df = pd.DataFrame(json.loads(json_data))
 
-        sorted_current = df[df[period_column] == int(current_period)]
-        sorted_previous = df[df[period_column] == int(previous_period)]
+        sorted_current = df[df[period_column].astype('str') == str(current_period)]
+        sorted_previous = df[df[period_column].astype('str') == str(previous_period)]
 
         for question in questions_list:
 
