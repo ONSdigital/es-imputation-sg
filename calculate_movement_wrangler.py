@@ -91,9 +91,9 @@ def lambda_handler(event, context):
                                                                        periodicity)
         logger.info("Completed reading data from s3")
         previous_period_data = data[
-            data[period_column].astype('int') == int(previous_period)]
+            data[period_column].astype('str') == str(previous_period)]
         data = data[
-            data[period_column].astype('int') == int(period)]
+            data[period_column].astype('str') == str(period)]
         logger.info("Split input data")
         # Save previous period data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
@@ -105,7 +105,8 @@ def lambda_handler(event, context):
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
         filtered_non_responders = data.loc[(data[response_type] == 1) &
-                                           (data[period_column] == int(period))]
+                                           (data[period_column].astype('str') ==
+                                            str(period))]
 
         logger.info("Successfully created filtered non responders DataFrame")
 
