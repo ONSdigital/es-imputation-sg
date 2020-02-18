@@ -124,10 +124,6 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully merged previous period data with non-responder df")
 
-        # filter factors df to only get current period
-        factors_dataframe = factors_dataframe[
-            factors_dataframe[period_column].astype('str') == str(current_period)]
-
         # Merge the factors onto the non responders
         non_responders_with_factors = pd.merge(
             non_responder_dataframe_with_prev,
