@@ -59,9 +59,7 @@ def lambda_handler(event, context):
         # Event vars
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
-        period_column = event['RuntimeVariables']['period_column']
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
-        current_period = event["RuntimeVariables"]["period"]
         regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
         region_column = factors_parameters["RuntimeVariables"]['region_column']
         questions_list = event['RuntimeVariables']['questions_list']
