@@ -59,8 +59,8 @@ def lambda_handler(event, context):
         logger.info("Vaildated params")
 
         # Environment Variables
-        checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
+        checkpoint = config['checkpoint']
         method_name = config['method_name']
         reference = config['reference']
         response_type = config['response_type']

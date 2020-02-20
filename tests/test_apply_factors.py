@@ -26,7 +26,8 @@ mock_wrangles_event = {
             "period": 201809,
             "run_id": "example",
             "distinct_values": ["region", "strata"],
-            "raw_input_file": "non_responders_output.json",
+            "current_data": "non_responders_output.json",
+            "previous_data": "previous_period_enriched_stratared.json",
             "sum_columns": [{"column_name": "Q608_total", "data": {
                             "Q603_concreting_sand": "+",
                             "Q602_building_soft_sand": "+"}}
@@ -78,7 +79,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -127,7 +127,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "lambda_method_function",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -256,7 +255,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -397,7 +395,6 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -431,7 +428,6 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "previous_data_file": "previous_period_enriched_stratared.json",
                     "response_type": "response_type",
                     "reference": "responder_id",
                     "strata_column": "strata"
@@ -475,7 +471,6 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "previous_data_file": "previous_period_enriched_stratared.json",
                     "response_type": "response_type",
                     "reference": "responder_id",
                     "strata_column": "strata"
@@ -507,7 +502,6 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -571,7 +565,6 @@ class TestApplyFactors(unittest.TestCase):
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
-                "previous_data_file": "previous_period_enriched_stratared.json",
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +

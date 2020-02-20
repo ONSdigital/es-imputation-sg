@@ -15,8 +15,8 @@ class InputSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
 
@@ -48,26 +48,27 @@ def lambda_handler(event, context):
         sqs = boto3.client("sqs", region_name="eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        # Environment variables
         config, errors = InputSchema().load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
+        logger.info("Validated params")
 
-        checkpoint = config['checkpoint']
+        # Environment variables
         bucket_name = config['bucket_name']
+        checkpoint = config['checkpoint']
         method_name = config['method_name']
         sns_topic_arn = config['sns_topic_arn']
 
         # Runtime Variables
+        distinct_values = event['RuntimeVariables']["distinct_values"]
         in_file_name = event['RuntimeVariables']['in_file_name']
         incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
         questions_list = event['RuntimeVariables']['questions_list']
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
-        logger.info("Validated params")
+        logger.info("Retrieved configuration variables.")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
