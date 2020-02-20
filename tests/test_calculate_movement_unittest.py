@@ -26,7 +26,7 @@ mock_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"],
+                       "Q607_constructional_fill"]
 }
 
 mock_wrangles_event = {
@@ -46,13 +46,14 @@ mock_wrangles_event = {
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
-    "in_file_name": {
-        "imputation_movement": "Test",
-        "skip_imputation": "not_apply_out.json"
-    },
-    "incoming_message_group": {
-        "imputation_movement": "bananas"
-    }
+    "in_file_name": "Test",
+    "out_file_name_skip": "not_apply_out.json",
+    "incoming_message_group_id": "bananas",
+    'out_file_name': 'Test',
+    'outgoing_message_group_id': 'output_something_something',
+    'outgoing_message_group_id_skip': 'output_something_something',
+    'previous_data': 'file_to_get_from_s3.json',
+    'current_data': ''
   }
 }
 
@@ -68,18 +69,14 @@ class TestClass(unittest.TestCase):
 
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
-            'previous_period_file': 'file_to_get_from_s3.json',
             'bucket_name': 'some-bucket-name',
-            'sqs_message_group_id': 'output_something_something',
-            'sqs_message_group_id_skip': 'output_something_something',
             'checkpoint': '3',
             'method_name': 'method_name_here',
             'response_type': 'response_type',
             'reference': 'responder_id',
             'stored_segmentation': 'goodstrata',
             'current_time': 'current_period',
-            'previous_time': 'previous_period',
-            'out_file_name': 'Test'
+            'previous_time': 'previous_period'
         })
         cls.mock_os = cls.mock_os_patcher.start()
 
