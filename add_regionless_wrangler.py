@@ -66,11 +66,12 @@ def lambda_handler(event, context):
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded this step
-        input_data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url,
-                                                                  bucket_name,
-                                                                  in_file_name,
-                                                                  incoming_message_group_id,
-                                                                  run_id)
+        input_data, receipt_handler = aws_functions.get_dataframe(
+                                                        sqs_queue_url,
+                                                        bucket_name,
+                                                        in_file_name,
+                                                        incoming_message_group_id,
+                                                        run_id)
 
         logger.info("Successfully retrieved input data from s3")
 
