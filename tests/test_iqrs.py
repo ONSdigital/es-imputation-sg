@@ -19,8 +19,10 @@ class MockContext:
 mock_event = {
   "MessageStructure": "json",
   "RuntimeVariables": {
-    "in_file_name": {"iqrs": "calculate_means_out.json"},
-    "incoming_message_group": {"iqrs": "imputation-calculate-means-out"},
+    "in_file_name": "calculate_means_out.json",
+    "incoming_message_group_id": "imputation-calculate-means-out",
+    'out_file_name': 'Test',
+    'outgoing_message_group_id': 'mock_message',
     "movement_type": "movement_calculation_b",
     "period": 201809,
     "run_id": "example",
@@ -46,10 +48,6 @@ class TestWranglerAndMethod():
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'bucket_name': 'mock_bucket',
             'questions_list': "why?",
-            'incoming_message_group': 'mock_group',
-            'in_file_name': 'Test',
-            'out_file_name': 'Test',
-            'sqs_message_group_id': 'mock_message',
             'sns_topic_arn': 'mock_arn',
             'checkpoint': 'mock_checkpoint',
             'method_name': 'mock_method',

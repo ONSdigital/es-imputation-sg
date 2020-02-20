@@ -45,12 +45,10 @@ mock_wrangles_event = {
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
-    "in_file_name": {
-        "imputation_recalc_means": "test"
-    },
-    "incoming_message_group": {
-        "imputation_recalc_means": "test"
-    }
+    "in_file_name": "test",
+    "incoming_message_group_id": "test",
+    "out_file_name": "Test",
+    'outgoing_message_group_id': 'mock_message'
   }
 }
 
@@ -73,9 +71,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
-                'sqs_message_group_id': 'mock_message',
                 'sns_topic_arn': 'mock_arn',
-                "out_file_name": "Test",
                 "bucket_name": "Mike"
             }
         )

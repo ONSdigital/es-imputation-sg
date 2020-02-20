@@ -47,12 +47,10 @@ mock_wrangles_event = {
                        'Q605_concreting_gravel',
                        'Q606_other_gravel',
                        'Q607_constructional_fill'],
-    "in_file_name": {
-      "imputation_means": "calculate_movement_out.json",
-    },
-    "incoming_message_group": {
-      "imputation_means": "imputation-calculate-movement-out",
-    }
+    "in_file_name": "calculate_movement_out.json",
+    "incoming_message_group_id": "imputation-calculate-movement-out",
+    "outgoing_message_group_id": "mock_message",
+    "out_file_name": "Test",
   }
 }
 
@@ -66,7 +64,6 @@ class TestMeans(unittest.TestCase):
             "os.environ",
             {
                 "error_handler_arn": "mock_arn",
-                "sqs_message_group_id": "mock_message",
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "sqs_queue_url": "mock_queue",
@@ -74,7 +71,6 @@ class TestMeans(unittest.TestCase):
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
                 "sns_topic_arn": "mock_arn",
-                "out_file_name": "Test",
                 "bucket_name": "Mike"
 
             },

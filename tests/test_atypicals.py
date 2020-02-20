@@ -24,8 +24,10 @@ mock_event = {
     "run_id": "example",
     "distinct_values": ["region"],
     "queue_url": "Earl",
-    'incoming_message_group': {"atypicals": 'mock_group'},
-    "in_file_name": {"atypicals": "Test"},
+    'incoming_message_group_id': 'mock_group',
+    "in_file_name": "Test",
+    'outgoing_message_group_id': 'mock_sqs_message_name',
+    "out_file_name": "Test",
     "questions_list": ["Q601_asphalting_sand",
                        "Q602_building_soft_sand",
                        "Q603_concreting_sand",
@@ -48,11 +50,9 @@ class TestClass():
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
                 'method_name': 'mock_method_name',
-                'sqs_message_group_id': 'mock_sqs_message_name',
                 'error_handler_arn': 'mock_error_handler_arn',
                 'bucket_name': 'mock_bucket',
                 'input_data': 'mock_data',
-                "out_file_name": "Test",
             }
         )
         cls.mock_os = cls.mock_os_patcher.start()
