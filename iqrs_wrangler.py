@@ -18,9 +18,7 @@ class InputSchema(Schema):
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -56,14 +54,14 @@ def lambda_handler(event, context):
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         method_name = config['method_name']
-        out_file_name = config["out_file_name"]
         sns_topic_arn = config['sns_topic_arn']
-        sqs_message_group_id = config['sqs_message_group_id']
 
+        # Runtime Variables
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         distinct_values = event['RuntimeVariables']["distinct_values"]
-        in_file_name = event['RuntimeVariables']["in_file_name"]["iqrs"]
-        incoming_message_group = \
-            event['RuntimeVariables']['incoming_message_group']["iqrs"]
         questions_list = event['RuntimeVariables']['questions_list']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
@@ -71,7 +69,7 @@ def lambda_handler(event, context):
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
-                                                            incoming_message_group,
+                                                            incoming_message_group_id,
                                                             run_id)
         logger.info("Succesfully retrieved data.")
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
@@ -102,7 +100,7 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
-                                sqs_message_group_id, run_id)
+                                outgoing_message_group_id, run_id)
 
         logger.info("Successfully sent data to s3")
 

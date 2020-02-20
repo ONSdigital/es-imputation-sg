@@ -19,10 +19,8 @@ class EnvironSchema(Schema):
     checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
     previous_data_file = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
     response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
     strata_column = fields.Str(required=True)
@@ -56,7 +54,11 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
-        # Event vars
+        # Runtime Variables
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         distinct_values = event['RuntimeVariables']["distinct_values"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
@@ -66,18 +68,13 @@ def lambda_handler(event, context):
         raw_input_file \
             = event['RuntimeVariables']['raw_input_file']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        incoming_message_group = \
-            event['RuntimeVariables']["incoming_message_group"]['apply']
-        in_file_name = event['RuntimeVariables']["in_file_name"]['apply']
 
         # Environment vars
         checkpoint = config["checkpoint"]
         bucket_name = config["bucket_name"]
         method_name = config["method_name"]
-        out_file_name = config["out_file_name"]
         previous_data_file = config["previous_data_file"]
         sns_topic_arn = config["sns_topic_arn"]
-        sqs_message_group_id = config["sqs_message_group_id"]
         response_type = config['response_type']
         reference = config['reference']
         sqs = boto3.client('sqs', 'eu-west-2')
@@ -92,7 +89,7 @@ def lambda_handler(event, context):
 
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
-            sqs_queue_url, bucket_name, in_file_name, incoming_message_group, run_id)
+            sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, run_id)
         logger.info("Successfully retrieved factors data from s3")
 
         # Read in previous period data for current period non-responders
@@ -222,7 +219,7 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 message, sqs_queue_url,
-                                sqs_message_group_id, run_id)
+                                outgoing_message_group_id, run_id)
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
