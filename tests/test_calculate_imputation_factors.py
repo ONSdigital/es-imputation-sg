@@ -84,6 +84,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period_column": "mock_period",
+                "run_environment": "development",
                 "bucket_name": "Mike"
             },
         )
@@ -94,6 +95,7 @@ class TestWranglerAndMethod(unittest.TestCase):
             {
                 "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
+                "run_environment": "development",
                 "period": "mock_period"
             },
         )

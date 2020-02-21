@@ -16,6 +16,7 @@ class EnvironSchema(Schema):
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
+    run_environment = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
 
 
@@ -51,6 +52,7 @@ def lambda_handler(event, context):
         bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
+        run_environment = config['run_environment']
         sns_topic_arn = config["sns_topic_arn"]
 
         # Runtime Variables
@@ -91,7 +93,7 @@ def lambda_handler(event, context):
             FunctionName=method_name,
             Payload=json.dumps(payload),
         )
-        logger.info("Succesfully invoked method.")
+        logger.info("Successfully invoked method.")
 
         json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
@@ -103,14 +105,18 @@ def lambda_handler(event, context):
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
                                 outgoing_message_group_id, run_id)
-        logger.info("Successfully sent data to s3")
+        logger.info("Successfully sent data to s3.")
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
+            logger.info("Successfully deleted message from sqs.")
+
+        if run_environment != "development":
+            logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
+            logger.info("Successfully deleted input data.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn, 'Add a all-GB region.')
-        logger.info("Successfully sent message to sns")
-        logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
+        logger.info("Successfully sent message to sns.")
 
     except AttributeError as e:
         error_message = (

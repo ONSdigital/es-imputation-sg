@@ -81,6 +81,7 @@ class TestApplyFactors(unittest.TestCase):
                 "period": "201809",
                 "response_type": "response_type",
                 "reference": "responder_id",
+                "run_environment": "development",
                 "strata_column": "strata"
             },
         ):
@@ -129,6 +130,7 @@ class TestApplyFactors(unittest.TestCase):
                 "period": "201809",
                 "response_type": "response_type",
                 "reference": "responder_id",
+                "run_environment": "development",
                 "strata_column": "strata"
             },
         ):
@@ -257,6 +259,7 @@ class TestApplyFactors(unittest.TestCase):
                 "period": "201809",
                 "response_type": "response_type",
                 "reference": "responder_id",
+                "run_environment": "development",
                 "strata_column": "strata"
             },
         ):
@@ -397,6 +400,7 @@ class TestApplyFactors(unittest.TestCase):
                 "period": "201809",
                 "response_type": "response_type",
                 "reference": "responder_id",
+                "run_environment": "development",
                 "strata_column": "strata"
             },
         ):
@@ -430,6 +434,7 @@ class TestApplyFactors(unittest.TestCase):
                     "period": "201809",
                     "response_type": "response_type",
                     "reference": "responder_id",
+                    "run_environment": "development",
                     "strata_column": "strata"
                 },
         ):
@@ -473,6 +478,7 @@ class TestApplyFactors(unittest.TestCase):
                     "period": "201809",
                     "response_type": "response_type",
                     "reference": "responder_id",
+                    "run_environment": "development",
                     "strata_column": "strata"
                 },
         ):
@@ -504,6 +510,7 @@ class TestApplyFactors(unittest.TestCase):
                 "period": "201809",
                 "response_type": "response_type",
                 "reference": "responder_id",
+                "run_environment": "development",
                 "strata_column": "strata"
             },
         ):
@@ -564,6 +571,7 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
+                "run_environment": "development",
                 "sqs_queue_url": sqs_queue_url,
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +

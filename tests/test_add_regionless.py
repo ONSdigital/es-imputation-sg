@@ -57,6 +57,7 @@ class TestApplyFactors(unittest.TestCase):
                 'checkpoint': '0',
                 'method_name': 'mock_method_name',
                 'bucket_name': 'mock_bucket',
+                "run_environment": "development"
             }
         )
         cls.mock_os = cls.mock_os_patcher.start()

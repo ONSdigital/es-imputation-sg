@@ -23,6 +23,8 @@ provider:
 custom:
   accounts: ${ssm:/aws/reference/secretsmanager/results-aws-accounts~true}
   accountId: ${self:custom.accounts.account-id}
+  currentEnvironment: ${ssm:/aws/reference/secretsmanager/results-aws-environment~true}
+  environmentType: ${self:custom.currentEnvironment.environment-type}
 
 functions:
   deploy-add-regionless-wrangler:
@@ -43,6 +45,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-add-regionless-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-add-regionless-method:
@@ -82,9 +85,9 @@ functions:
       period: 201809
       reference: responder_id
       response_type: response_type
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       strata_column: strata
-
 
   deploy-apply-factors-method:
     name: es-imputation-apply-factors-method
@@ -120,6 +123,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-imputation-atypicals-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-atypicals-method:
@@ -156,6 +160,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-imputation-calculate-factors-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-calculate-factors-method:
@@ -192,6 +197,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-calculate-means-method:
@@ -266,6 +272,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-imputation-iqrs-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-iqrs-method:
@@ -302,6 +309,7 @@ functions:
       bucket_name: results-s3-bucket
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
+      run_environment: ${self:custom.environmentType}
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
 plugins:

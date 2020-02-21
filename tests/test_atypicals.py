@@ -53,6 +53,7 @@ class TestClass():
                 'error_handler_arn': 'mock_error_handler_arn',
                 'bucket_name': 'mock_bucket',
                 'input_data': 'mock_data',
+                "run_environment": "development"
             }
         )
         cls.mock_os = cls.mock_os_patcher.start()

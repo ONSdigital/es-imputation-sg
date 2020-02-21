@@ -152,7 +152,7 @@ def lambda_handler(event, context):
             imputed_data = lambda_client.invoke(FunctionName=method_name,
                                                 Payload=json.dumps(json_payload))
 
-            logger.info("Succesfully invoked method.")
+            logger.info("Successfully invoked method.")
 
             json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
             logger.info("JSON extracted from method response.")

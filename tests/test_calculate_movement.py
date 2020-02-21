@@ -139,6 +139,7 @@ class TestStringMethods(unittest.TestCase):
             'out_file_name': 'Test',
             'period': '202020',
             'non_response_file': 'Test',
+            "run_environment": "development"
         }):
 
             # using get_data to force exception early on.
@@ -193,6 +194,7 @@ class TestStringMethods(unittest.TestCase):
             'incoming_message_group': 'bananas',
             'in_file_name': 'Test',
             'out_file_name': 'Test',
+            "run_environment": "development"
             }
         ):
             # Removing the previous_period to allow for test of missing parameter
@@ -220,7 +222,8 @@ class TestStringMethods(unittest.TestCase):
             'segmentation': 'strata',
             'current_time': 'current_period',
             'previous_time': 'previous_period',
-            'out_file_name': 'Test'
+            'out_file_name': 'Test',
+            "run_environment": "development"
 
             },
         ):
