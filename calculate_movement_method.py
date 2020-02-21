@@ -64,7 +64,7 @@ def lambda_handler(event, context):
             sorted_current['movement_' + question] = result_list
 
         filled_dataframe = sorted_current.fillna(0.0)
-        logger.info("Succesfully finished calculations of movement.")
+        logger.info("Successfully finished calculations of movement.")
 
         final_output = {"data": filled_dataframe.to_json(orient='records')}
 

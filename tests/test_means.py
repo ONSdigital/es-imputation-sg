@@ -70,6 +70,7 @@ class TestMeans(unittest.TestCase):
                 "movement_columns": "movement_Q601_asphalting_sand,movement_Q602_building_soft_sand,movement_Q603_concreting_sand,movement_Q604_bituminous_gravel,movement_Q605_concreting_gravel,movement_Q606_other_gravel,movement_Q607_constructional_fill",  # noqa: E501
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
+                "run_environment": "development",
                 "sns_topic_arn": "mock_arn",
                 "bucket_name": "Mike"
 

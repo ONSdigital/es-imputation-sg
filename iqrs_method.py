@@ -36,7 +36,7 @@ def lambda_handler(event, context):
             distinct_values
         )
 
-        logger.info("Succesfully finished calculations of IQRS.")
+        logger.info("Successfully finished calculations of IQRS.")
 
         json_out = iqrs_df.to_json(orient='records')
         final_output = {"data": json_out}

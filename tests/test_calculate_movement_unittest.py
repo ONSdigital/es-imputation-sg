@@ -76,6 +76,7 @@ class TestClass(unittest.TestCase):
             'reference': 'responder_id',
             'stored_segmentation': 'goodstrata',
             'current_time': 'current_period',
+            "run_environment": "development",
             'previous_time': 'previous_period'
         })
         cls.mock_os = cls.mock_os_patcher.start()

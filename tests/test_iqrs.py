@@ -53,6 +53,7 @@ class TestWranglerAndMethod():
             'method_name': 'mock_method',
             'input_data': 'mock_data',
             'error_handler_arn': 'mock_arn',
+            "run_environment": "development",
             'distinct_values': 'region, strata'
             })
 

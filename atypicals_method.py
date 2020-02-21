@@ -29,7 +29,7 @@ def lambda_handler(event, context):
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list, [])
         mean_columns = imp_func.produce_columns("mean_", questions_list, [])
 
-        logger.info("Succesfully retrieved data from event.")
+        logger.info("Successfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,
@@ -38,7 +38,7 @@ def lambda_handler(event, context):
             iqrs_columns,
             mean_columns
         )
-        logger.info("Succesfully finished calculations of atypicals.")
+        logger.info("Successfully finished calculations of atypicals.")
 
         json_out = atypicals_df.to_json(orient='records')
 

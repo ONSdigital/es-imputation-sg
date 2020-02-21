@@ -72,6 +72,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
                 'sns_topic_arn': 'mock_arn',
+                "run_environment": "development",
                 "bucket_name": "Mike"
             }
         )

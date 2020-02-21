@@ -34,7 +34,7 @@ def lambda_handler(event, context):
 
         df = pd.DataFrame(json_data)
 
-        logger.info("Succesfully retrieved data from event.")
+        logger.info("Successfully retrieved data from event.")
 
         workingdf = df[movement_columns+distinct_values]
 
@@ -80,7 +80,7 @@ def lambda_handler(event, context):
                 axis=1,
             )
 
-        logger.info("Succesfully finished calculations of means.")
+        logger.info("Successfully finished calculations of means.")
 
         final_output = {"data": df.to_json(orient="records")}
 
