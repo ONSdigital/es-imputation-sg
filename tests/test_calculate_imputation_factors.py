@@ -27,8 +27,10 @@ mock_event = {
     "queue_url": "Earl",
     "distinct_values": ["strata", "region"],
     "period_column": "period",
-    "incoming_message_group": {"calcfactors": "I am GROOP"},
-    "in_file_name": {"calcfactors": "Test"},
+    "incoming_message_group_id": "I am GROOP",
+    "in_file_name": "Test",
+    "outgoing_message_group_id": "mock_message",
+    "out_file_name": "Test",
     "factors_parameters":
     {
         "factors_type": "factors_calculation_a",
@@ -82,8 +84,6 @@ class TestWranglerAndMethod(unittest.TestCase):
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period_column": "mock_period",
-                "sqs_message_group_id": "mock_message",
-                "out_file_name": "Test",
                 "bucket_name": "Mike"
             },
         )

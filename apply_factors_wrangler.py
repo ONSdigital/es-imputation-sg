@@ -16,16 +16,12 @@ class EnvironSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
-    previous_data_file = fields.Str(required=True)
-    sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
-    response_type = fields.Str(required=True)
     reference = fields.Str(required=True)
-    strata_column = fields.Str(required=True)
+    response_type = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -56,35 +52,36 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
-        # Event vars
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        sum_columns = event['RuntimeVariables']["sum_columns"]
-        factors_parameters = event["RuntimeVariables"]["factors_parameters"]
-        regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
-        region_column = factors_parameters["RuntimeVariables"]['region_column']
-        questions_list = event['RuntimeVariables']['questions_list']
-        raw_input_file \
-            = event['RuntimeVariables']['raw_input_file']
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        incoming_message_group = \
-            event['RuntimeVariables']["incoming_message_group"]['apply']
-        in_file_name = event['RuntimeVariables']["in_file_name"]['apply']
-
-        # Environment vars
-        checkpoint = config["checkpoint"]
-        bucket_name = config["bucket_name"]
-        method_name = config["method_name"]
-        out_file_name = config["out_file_name"]
-        previous_data_file = config["previous_data_file"]
-        sns_topic_arn = config["sns_topic_arn"]
-        sqs_message_group_id = config["sqs_message_group_id"]
-        response_type = config['response_type']
-        reference = config['reference']
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
+        # Environment Variables
+        bucket_name = config["bucket_name"]
+        checkpoint = config["checkpoint"]
+        method_name = config["method_name"]
+        reference = config['reference']
+        response_type = config['response_type']
+        sns_topic_arn = config["sns_topic_arn"]
+
+        # Runtime Variables
+        current_data = event['RuntimeVariables']['current_data']
+        distinct_values = event['RuntimeVariables']["distinct_values"]
+        factors_parameters = event["RuntimeVariables"]["factors_parameters"]
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
+        previous_data = event['RuntimeVariables']['previous_data']
+        questions_list = event['RuntimeVariables']['questions_list']
+        region_column = factors_parameters["RuntimeVariables"]['region_column']
+        regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        sum_columns = event['RuntimeVariables']["sum_columns"]
+
+        logger.info("Retrieved configuration variables.")
+
         # Get data from module that preceded imputation
-        input_data = aws_functions.read_dataframe_from_s3(bucket_name, raw_input_file,
+        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
                                                           run_id)
         # Split out non responder data from input
         non_responder_dataframe = input_data[input_data[response_type] == 1]
@@ -92,12 +89,12 @@ def lambda_handler(event, context):
 
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
-            sqs_queue_url, bucket_name, in_file_name, incoming_message_group, run_id)
+            sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, run_id)
         logger.info("Successfully retrieved factors data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
-                                                                previous_data_file,
+                                                                previous_data,
                                                                 run_id)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
@@ -222,7 +219,7 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 message, sqs_queue_url,
-                                sqs_message_group_id, run_id)
+                                outgoing_message_group_id, run_id)
 
         if receipt_handler:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)

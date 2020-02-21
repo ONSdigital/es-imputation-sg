@@ -79,13 +79,14 @@ mock_wrangles_event = {
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
-    "in_file_name": {
-        "imputation_movement": "Test",
-        "skip_imputation": "not_apply_out.json"
-    },
-    "incoming_message_group": {
-        "imputation_movement": "bananas"
-    }
+    "in_file_name": "Test",
+    'out_file_name': 'Test',
+    "out_file_name_skip": "not_apply_out.json",
+    "incoming_message_group_id": "bananas",
+    'outgoing_message_group_id': 'output_something_something',
+    'outgoing_message_group_id_skip': 'output_something_something',
+    'previous_data': 'file_to_get_from_s3.json',
+    'current_data': ''
   }
 }
 

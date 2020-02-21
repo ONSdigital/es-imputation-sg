@@ -16,12 +16,10 @@ class EnvironSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -57,25 +55,27 @@ def lambda_handler(event, context):
         lambda_client = boto3.client("lambda")
 
         # Environment variables
-        checkpoint = config["checkpoint"]
         bucket_name = config['bucket_name']
+        checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        out_file_name = config["out_file_name"]
         sns_topic_arn = config["sns_topic_arn"]
-        sqs_message_group_id = config["sqs_message_group_id"]
 
+        # Runtime Variables
         distinct_values = event['RuntimeVariables']["distinct_values"]
-        period_column = event['RuntimeVariables']["period_column"]
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
+        period_column = event['RuntimeVariables']["period_column"]
         questions_list = event['RuntimeVariables']['questions_list']
-        in_file_name = event['RuntimeVariables']["in_file_name"]['calcfactors']
-        incoming_message_group = \
-            event['RuntimeVariables']['incoming_message_group']['calcfactors']
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+
+        logger.info("Retrieved configuration variables.")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
-                                                            incoming_message_group,
+                                                            incoming_message_group_id,
                                                             run_id)
 
         logger.info("Successfully retrieved data")
@@ -120,7 +120,7 @@ def lambda_handler(event, context):
         final_df = output_df[columns_to_keep].drop_duplicates().to_json(orient='records')
         aws_functions.save_data(bucket_name, out_file_name,
                                 final_df, sqs_queue_url,
-                                sqs_message_group_id, run_id)
+                                outgoing_message_group_id, run_id)
 
         logger.info("Successfully sent data to sqs")
 

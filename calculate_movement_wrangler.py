@@ -14,15 +14,12 @@ class EnvironSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
     reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
-    sqs_message_group_id_skip = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -50,42 +47,47 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
 
-        schema = EnvironSchema()
-        config, errors = schema.load(os.environ)
-        if errors:
-            raise ValueError(f"Error validating environment params: {errors}")
-
         # Set up clients
         sqs = boto3.client('sqs', region_name='eu-west-2')
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
         logger.info("Setting-up environment configs")
 
-        # Event vars
-        period = event['RuntimeVariables']['period']
-        movement_type = event['RuntimeVariables']["movement_type"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        questions_list = event['RuntimeVariables']['questions_list']
-        periodicity = event['RuntimeVariables']['periodicity']
-        period_column = event['RuntimeVariables']['period_column']
-        in_file_name = event['RuntimeVariables']['in_file_name']['imputation_movement']
-        incoming_message_group = event['RuntimeVariables']['incoming_message_group'][
-            'imputation_movement']
-        skip_imputation_file_name = event['RuntimeVariables']['in_file_name'][
-            'skip_imputation']
+        schema = EnvironSchema()
+        config, errors = schema.load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment params: {errors}")
+        logger.info("Vaildated params")
 
-        checkpoint = config['checkpoint']
+        # Environment Variables
         bucket_name = config['bucket_name']
+        checkpoint = config['checkpoint']
         method_name = config['method_name']
-        out_file_name = config["out_file_name"]
-        response_type = config['response_type']  # Set as "response_type"
+        reference = config['reference']
+        response_type = config['response_type']
         sns_topic_arn = config['sns_topic_arn']
-        sqs_message_group_id = config['sqs_message_group_id']
-        sqs_message_group_id_skip = config['sqs_message_group_id_skip']
-        reference = config['reference']  # Set as "responder_id"
+
+        # Runtime Variables
+        current_data = event['RuntimeVariables']['current_data']
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        movement_type = event['RuntimeVariables']["movement_type"]
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        out_file_name_skip = event['RuntimeVariables']['out_file_name_skip']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
+        outgoing_message_group_id_skip = event['RuntimeVariables'][
+            "outgoing_message_group_id_skip"]
+        period = event['RuntimeVariables']['period']
+        period_column = event['RuntimeVariables']['period_column']
+        periodicity = event['RuntimeVariables']['periodicity']
+        previous_data = event['RuntimeVariables']['previous_data']
+        questions_list = event['RuntimeVariables']['questions_list']
+        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+
+        logger.info("Retrieved configuration variables.")
 
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
-                                                            incoming_message_group,
+                                                            incoming_message_group_id,
                                                             run_id)
 
         previous_period = general_functions.calculate_adjacent_periods(period,
@@ -97,10 +99,10 @@ def lambda_handler(event, context):
             data[period_column].astype('str') == str(period)]
         logger.info("Split input data")
         # Save previous period data to s3 for apply to pick up later
-        aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
+        aws_functions.save_to_s3(bucket_name, previous_data,
                                  previous_period_data.to_json(orient='records'), run_id)
         # Save raw data to s3 for apply to pick up later
-        aws_functions.save_to_s3(bucket_name, 'raw_datafile.json',
+        aws_functions.save_to_s3(bucket_name, current_data,
                                  data.to_json(orient='records'), run_id)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
@@ -161,7 +163,7 @@ def lambda_handler(event, context):
             imputation_run_type = "Calculate Movement."
             aws_functions.save_data(bucket_name, out_file_name,
                                     json_response["data"], sqs_queue_url,
-                                    sqs_message_group_id, run_id)
+                                    outgoing_message_group_id, run_id)
 
             logger.info("Successfully sent the data to s3")
 
@@ -172,10 +174,10 @@ def lambda_handler(event, context):
 
             aws_functions.save_data(
                 bucket_name,
-                skip_imputation_file_name,
+                out_file_name_skip,
                 data.to_json(orient="records"),
                 sqs_queue_url,
-                sqs_message_group_id_skip,
+                outgoing_message_group_id_skip,
                 run_id
             )
 

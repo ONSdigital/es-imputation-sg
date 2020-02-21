@@ -40,12 +40,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-add-regionless-method
-      out_file_name: add_allGB_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: add-all-gb-region-out
 
   deploy-add-regionless-method:
     name: es-add-regionless-method
@@ -78,17 +76,14 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-apply-factors-method
-      out_file_name: imputation_apply_out.json
       period: 201809
-      strata_column: strata
-      previous_data_file: prev_datafile.json
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      response_type: response_type
       reference: responder_id
-      sqs_message_group_id: imputation-apply-factors-out
+      response_type: response_type
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      strata_column: strata
 
 
   deploy-apply-factors-method:
@@ -122,12 +117,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-atypicals-method
-      out_file_name: atypicals_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-atypicals-out
 
   deploy-atypicals-method:
     name: es-imputation-atypicals-method
@@ -160,12 +153,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-calculate-factors-method
-      out_file_name: calculate_factors_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-calculate-factors-out
 
   deploy-calculate-factors-method:
     name: es-imputation-calculate-factors-method
@@ -198,12 +189,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-calculate-means-method
-      out_file_name: calculate_means_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-calculate-means-out
 
   deploy-calculate-means-method:
     name: es-imputation-calculate-means-method
@@ -235,16 +224,12 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-calculate-movement-method
-      out_file_name: calculate_movement_out.json
-      previous_period_file: prev_datafile.json
       reference: responder_id
       response_type: response_type
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-calculate-movement-out
-      sqs_message_group_id_skip: imputation-apply-factors-out
 
   deploy-calculate-movement-method:
     name: es-imputation-calculate-movement-method
@@ -278,12 +263,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-iqrs-method
-      out_file_name: iqrs_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-iqrs-out
 
   deploy-iqrs-method:
     name: es-imputation-iqrs-method
@@ -316,12 +299,10 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 3
       bucket_name: results-s3-bucket
+      checkpoint: 3
       method_name: es-imputation-calculate-means-method
-      out_file_name: recalculate_means_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: imputation-recalculate-means-out
 
 plugins:
   - serverless-latest-layer-version

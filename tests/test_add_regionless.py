@@ -35,8 +35,10 @@ mock_event = {
             "regional_mean": "third_imputation_factor"
         }
     },
-    "in_file_name": {"add_gb_region": "calculate_movement_out.json"},
-    "incoming_message_group": {"add_gb_region": "imputation-calculate-movement-out"},
+    "in_file_name": "calculate_movement_out.json",
+    "incoming_message_group_id": "imputation-calculate-movement-out",
+    'outgoing_message_group_id': 'mock_sqs_message_name',
+    "out_file_name": "Test",
     "run_id": "bob"
   }
 }
@@ -54,11 +56,7 @@ class TestApplyFactors(unittest.TestCase):
                 'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
                 'method_name': 'mock_method_name',
-                'sqs_message_group_id': 'mock_sqs_message_name',
                 'bucket_name': 'mock_bucket',
-                'incoming_message_group': 'mock_group',
-                "in_file_name": "Test",
-                "out_file_name": "Test",
             }
         )
         cls.mock_os = cls.mock_os_patcher.start()

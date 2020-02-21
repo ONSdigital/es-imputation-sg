@@ -26,7 +26,8 @@ mock_wrangles_event = {
             "period": 201809,
             "run_id": "example",
             "distinct_values": ["region", "strata"],
-            "raw_input_file": "non_responders_output.json",
+            "current_data": "non_responders_output.json",
+            "previous_data": "previous_period_enriched_stratared.json",
             "sum_columns": [{"column_name": "Q608_total", "data": {
                             "Q603_concreting_sand": "+",
                             "Q602_building_soft_sand": "+"}}
@@ -39,8 +40,10 @@ mock_wrangles_event = {
                                "Q606_other_gravel",
                                "Q607_constructional_fill"],
 
-            "incoming_message_group": {"apply": "Sheep"},
-            "in_file_name": {"apply": "Test"},
+            "incoming_message_group_id": "Sheep",
+            "in_file_name": "Test",
+            "outgoing_message_group_id": "apply_factors_out",
+            "out_file_name": "Test",
             "factors_parameters":
                 {
                     "RuntimeVariables":
@@ -76,9 +79,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -127,9 +127,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "lambda_method_function",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -258,9 +255,6 @@ class TestApplyFactors(unittest.TestCase):
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -401,9 +395,6 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -437,9 +428,6 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "previous_data_file": "previous_period_enriched_stratared.json",
-                    "sqs_message_group_id": "apply_factors_out",
-                    "out_file_name": "Test",
                     "response_type": "response_type",
                     "reference": "responder_id",
                     "strata_column": "strata"
@@ -483,9 +471,6 @@ class TestApplyFactors(unittest.TestCase):
                     "method_name": "apply_factors_method",
                     "raw_input_file": "non_responders_output.json",
                     "period": "201809",
-                    "previous_data_file": "previous_period_enriched_stratared.json",
-                    "sqs_message_group_id": "apply_factors_out",
-                    "out_file_name": "Test",
                     "response_type": "response_type",
                     "reference": "responder_id",
                     "strata_column": "strata"
@@ -517,9 +502,6 @@ class TestApplyFactors(unittest.TestCase):
                 "method_name": "apply_factors_method",
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "response_type": "response_type",
                 "reference": "responder_id",
                 "strata_column": "strata"
@@ -583,9 +565,6 @@ class TestApplyFactors(unittest.TestCase):
                 "raw_input_file": "non_responders_output.json",
                 "period": "201809",
                 "sqs_queue_url": sqs_queue_url,
-                "previous_data_file": "previous_period_enriched_stratared.json",
-                "sqs_message_group_id": "apply_factors_out",
-                "out_file_name": "Test",
                 "questions_list": "Q601_asphalting_sand,Q602_building_soft_sand," +
                                   "Q603_concreting_sand,Q604_bituminous_gravel," +
                                   "Q605_concreting_gravel,Q606_other_gravel," +

@@ -13,12 +13,10 @@ class EnvironSchema(Schema):
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
     """
-    checkpoint = fields.Str(required=True)
     bucket_name = fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -49,31 +47,35 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
-        # Event vars
+        # Environment Variables
+        bucket_name = config["bucket_name"]
+        checkpoint = config["checkpoint"]
+        method_name = config["method_name"]
+        sns_topic_arn = config["sns_topic_arn"]
+
+        # Runtime Variables
         factors_parameters = event['RuntimeVariables']["factors_parameters"]
-        incoming_message_group = \
-            event['RuntimeVariables']["incoming_message_group"]["add_gb_region"]
-        in_file_name = event['RuntimeVariables']["in_file_name"]["add_gb_region"]
-        regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
+        in_file_name = event['RuntimeVariables']['in_file_name']
+        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        out_file_name = event['RuntimeVariables']['out_file_name']
+        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         region_column = factors_parameters['RuntimeVariables']['region_column']
+        regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
+        logger.info("Retrieved configuration variables.")
+
         # Set up clients
-        checkpoint = config["checkpoint"]
-        bucket_name = config["bucket_name"]
-        method_name = config["method_name"]
-        out_file_name = config["out_file_name"]
-        sns_topic_arn = config["sns_topic_arn"]
-        sqs_message_group_id = config["sqs_message_group_id"]
         sqs = boto3.client('sqs', 'eu-west-2')
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded this step
-        input_data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url,
-                                                                  bucket_name,
-                                                                  in_file_name,
-                                                                  incoming_message_group,
-                                                                  run_id)
+        input_data, receipt_handler = aws_functions.get_dataframe(
+                                                        sqs_queue_url,
+                                                        bucket_name,
+                                                        in_file_name,
+                                                        incoming_message_group_id,
+                                                        run_id)
 
         logger.info("Successfully retrieved input data from s3")
 
@@ -100,7 +102,7 @@ def lambda_handler(event, context):
         # Save
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
-                                sqs_message_group_id, run_id)
+                                outgoing_message_group_id, run_id)
         logger.info("Successfully sent data to s3")
 
         if receipt_handler:
