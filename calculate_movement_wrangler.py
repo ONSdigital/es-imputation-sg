@@ -99,13 +99,7 @@ def lambda_handler(event, context):
         data = data[
             data[period_column].astype('str') == str(period)]
         logger.info("Split input data")
-        # Save previous period data to s3 for apply to pick up later
-        aws_functions.save_to_s3(bucket_name, previous_data,
-                                 previous_period_data.to_json(orient='records'), location)
-        # Save raw data to s3 for apply to pick up later
-        aws_functions.save_to_s3(bucket_name, current_data,
-                                 data.to_json(orient='records'), location)
-        logger.info("Successfully retrieved data")
+
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
         filtered_non_responders = data.loc[(data[response_type] == 1) &
@@ -118,6 +112,15 @@ def lambda_handler(event, context):
 
         # If greater than 0 it means there is non-responders so Imputation need to be run
         if response_check > 0:
+
+            # Save previous period data to s3 for apply to pick up later
+            aws_functions.save_to_s3(bucket_name, previous_data,
+                                     previous_period_data.to_json(orient='records'),
+                                     location)
+            # Save raw data to s3 for apply to pick up later
+            aws_functions.save_to_s3(bucket_name, current_data,
+                                     data.to_json(orient='records'), location)
+            logger.info("Successfully sent data.")
 
             # Ensure that only responder_ids with a response
             # type of 2 (returned) get picked up
