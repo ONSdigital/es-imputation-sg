@@ -47,6 +47,7 @@ mock_wrangles_event = {
                        "Q607_constructional_fill"],
     "in_file_name": "test",
     "incoming_message_group_id": "test",
+    "location": "Here",
     "out_file_name": "Test",
     'outgoing_message_group_id': 'mock_message'
   }

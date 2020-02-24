@@ -37,6 +37,7 @@ mock_event = {
     },
     "in_file_name": "calculate_movement_out.json",
     "incoming_message_group_id": "imputation-calculate-movement-out",
+    "location": "Here",
     'outgoing_message_group_id': 'mock_sqs_message_name',
     "out_file_name": "Test",
     "run_id": "bob"

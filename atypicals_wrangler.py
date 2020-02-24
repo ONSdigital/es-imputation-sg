@@ -64,6 +64,7 @@ def lambda_handler(event, context):
         # Runtime Variables
         in_file_name = event['RuntimeVariables']['in_file_name']
         incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        location = event['RuntimeVariables']['location']
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         questions_list = event['RuntimeVariables']['questions_list']
@@ -74,7 +75,7 @@ def lambda_handler(event, context):
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group_id,
-                                                            run_id)
+                                                            location)
 
         logger.info("Successfully retrieved data.")
         atypical_columns = imp_func.produce_columns("atyp_", questions_list)
@@ -107,7 +108,7 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
-                                outgoing_message_group_id, run_id)
+                                outgoing_message_group_id, location)
         logger.info("Successfully sent data to s3.")
 
         if receipt_handler:
@@ -115,7 +116,7 @@ def lambda_handler(event, context):
             logger.info("Successfully deleted message from sqs.")
 
         if run_environment != "development":
-            logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
+            logger.info(aws_functions.delete_data(bucket_name, in_file_name, location))
             logger.info("Successfully deleted input data.")
 
         logger.info(aws_functions.send_sns_message(checkpoint, sns_topic_arn,

@@ -21,6 +21,7 @@ mock_event = {
   "RuntimeVariables": {
     "in_file_name": "calculate_means_out.json",
     "incoming_message_group_id": "imputation-calculate-means-out",
+    "location": "Here",
     'out_file_name': 'Test',
     'outgoing_message_group_id': 'mock_message',
     "movement_type": "movement_calculation_b",
