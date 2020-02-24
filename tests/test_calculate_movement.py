@@ -34,6 +34,7 @@ mock_event = {
                 "imputation_movement": "Test",
                 "skip_imputation": "not_apply_out.json"
             },
+            "location": "Here",
             "incoming_message_group": {
                 "imputation_movement": "bananas"
             }
@@ -53,6 +54,7 @@ mock_event_b = {
             "current_period": 201809,
             "period_column": "period",
             "previous_period": "201806",
+            "location": "Here",
             "in_file_name": {
                 "imputation_movement": "Test",
                 "skip_imputation": "not_apply_out.json"
@@ -80,6 +82,7 @@ mock_wrangles_event = {
                        "Q606_other_gravel",
                        "Q607_constructional_fill"],
     "in_file_name": "Test",
+    "location": "Here",
     'out_file_name': 'Test',
     "out_file_name_skip": "not_apply_out.json",
     "incoming_message_group_id": "bananas",

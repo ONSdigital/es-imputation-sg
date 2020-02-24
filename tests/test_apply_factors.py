@@ -42,6 +42,7 @@ mock_wrangles_event = {
 
             "incoming_message_group_id": "Sheep",
             "in_file_name": "Test",
+            "location": "Here",
             "outgoing_message_group_id": "apply_factors_out",
             "out_file_name": "Test",
             "factors_parameters":

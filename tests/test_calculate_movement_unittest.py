@@ -49,6 +49,7 @@ mock_wrangles_event = {
     "in_file_name": "Test",
     "out_file_name_skip": "not_apply_out.json",
     "incoming_message_group_id": "bananas",
+    "location": "Here",
     'out_file_name': 'Test',
     'outgoing_message_group_id': 'output_something_something',
     'outgoing_message_group_id_skip': 'output_something_something',

@@ -70,6 +70,7 @@ def lambda_handler(event, context):
         current_data = event['RuntimeVariables']['current_data']
         in_file_name = event['RuntimeVariables']['in_file_name']
         incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        location = event['RuntimeVariables']['location']
         movement_type = event['RuntimeVariables']["movement_type"]
         out_file_name = event['RuntimeVariables']['out_file_name']
         out_file_name_skip = event['RuntimeVariables']['out_file_name_skip']
@@ -88,7 +89,7 @@ def lambda_handler(event, context):
         data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
                                                             in_file_name,
                                                             incoming_message_group_id,
-                                                            run_id)
+                                                            location)
 
         previous_period = general_functions.calculate_adjacent_periods(period,
                                                                        periodicity)
@@ -100,10 +101,10 @@ def lambda_handler(event, context):
         logger.info("Split input data")
         # Save previous period data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, previous_data,
-                                 previous_period_data.to_json(orient='records'), run_id)
+                                 previous_period_data.to_json(orient='records'), location)
         # Save raw data to s3 for apply to pick up later
         aws_functions.save_to_s3(bucket_name, current_data,
-                                 data.to_json(orient='records'), run_id)
+                                 data.to_json(orient='records'), location)
         logger.info("Successfully retrieved data")
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
@@ -163,7 +164,7 @@ def lambda_handler(event, context):
             imputation_run_type = "Calculate Movement."
             aws_functions.save_data(bucket_name, out_file_name,
                                     json_response["data"], sqs_queue_url,
-                                    outgoing_message_group_id, run_id)
+                                    outgoing_message_group_id, location)
 
             logger.info("Successfully sent the data to s3")
 
@@ -178,7 +179,7 @@ def lambda_handler(event, context):
                 data.to_json(orient="records"),
                 sqs_queue_url,
                 outgoing_message_group_id_skip,
-                run_id
+                location
             )
 
             logger.info("Successfully sent the unchanged data to s3")

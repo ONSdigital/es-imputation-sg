@@ -26,6 +26,7 @@ mock_event = {
     "queue_url": "Earl",
     'incoming_message_group_id': 'mock_group',
     "in_file_name": "Test",
+    "location": "Here",
     'outgoing_message_group_id': 'mock_sqs_message_name',
     "out_file_name": "Test",
     "questions_list": ["Q601_asphalting_sand",

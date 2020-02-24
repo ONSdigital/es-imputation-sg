@@ -49,6 +49,7 @@ mock_wrangles_event = {
                        'Q607_constructional_fill'],
     "in_file_name": "calculate_movement_out.json",
     "incoming_message_group_id": "imputation-calculate-movement-out",
+    "location": "Here",
     "outgoing_message_group_id": "mock_message",
     "out_file_name": "Test",
   }

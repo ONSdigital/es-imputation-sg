@@ -71,6 +71,7 @@ def lambda_handler(event, context):
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
         in_file_name = event['RuntimeVariables']['in_file_name']
         incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        location = event['RuntimeVariables']['location']
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         previous_data = event['RuntimeVariables']['previous_data']
@@ -84,20 +85,20 @@ def lambda_handler(event, context):
 
         # Get data from module that preceded imputation
         input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
-                                                          run_id)
+                                                          location)
         # Split out non responder data from input
         non_responder_dataframe = input_data[input_data[response_type] == 1]
         logger.info("Successfully retrieved raw-input data from s3")
 
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
-            sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, run_id)
+            sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, location)
         logger.info("Successfully retrieved factors data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
                                                                 previous_data,
-                                                                run_id)
+                                                                location)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data[response_type] == 2]
@@ -221,7 +222,7 @@ def lambda_handler(event, context):
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 message, sqs_queue_url,
-                                outgoing_message_group_id, run_id)
+                                outgoing_message_group_id, location)
         logger.info("Successfully sent data to s3.")
 
         if receipt_handler:
@@ -229,9 +230,9 @@ def lambda_handler(event, context):
             logger.info("Successfully deleted message from sqs.")
 
         if run_environment != "development":
-            logger.info(aws_functions.delete_data(bucket_name, current_data, run_id))
-            logger.info(aws_functions.delete_data(bucket_name, previous_data, run_id))
-            logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
+            logger.info(aws_functions.delete_data(bucket_name, current_data, location))
+            logger.info(aws_functions.delete_data(bucket_name, previous_data, location))
+            logger.info(aws_functions.delete_data(bucket_name, in_file_name, location))
             logger.info("Successfully deleted input data.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn,

@@ -29,6 +29,7 @@ mock_event = {
     "period_column": "period",
     "incoming_message_group_id": "I am GROOP",
     "in_file_name": "Test",
+    "location": "Here",
     "outgoing_message_group_id": "mock_message",
     "out_file_name": "Test",
     "factors_parameters":
