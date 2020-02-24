@@ -229,6 +229,8 @@ def lambda_handler(event, context):
             logger.info("Successfully deleted message from sqs.")
 
         if run_environment != "development":
+            logger.info(aws_functions.delete_data(bucket_name, current_data, run_id))
+            logger.info(aws_functions.delete_data(bucket_name, previous_data, run_id))
             logger.info(aws_functions.delete_data(bucket_name, in_file_name, run_id))
             logger.info("Successfully deleted input data.")
 
