@@ -410,7 +410,7 @@ class TestApplyFactors(unittest.TestCase):
                 apply_factors_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "Could not find" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
