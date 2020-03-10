@@ -22,8 +22,7 @@ provider:
 
 custom:
   accountId: ${env:aws_account_id}
-  currentEnvironment: ${ssm:/aws/reference/secretsmanager/results-aws-environment~true}
-  environmentType: ${self:custom.currentEnvironment.environment-type}
+  environmentType: ${env:environment_type}
 
 functions:
   deploy-add-regionless-wrangler:
