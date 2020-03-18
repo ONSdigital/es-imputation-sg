@@ -35,6 +35,7 @@ mock_event = {
             "regional_mean": "third_imputation_factor"
         }
     },
+    'sns_topic_arn': 'mock_arn',
     "in_file_name": "calculate_movement_out.json",
     "incoming_message_group_id": "imputation-calculate-movement-out",
     "location": "Here",
@@ -54,7 +55,6 @@ class TestApplyFactors(unittest.TestCase):
             'os.environ',
             {
                 'sqs_queue_url': '213456',
-                'sns_topic_arn': 'mock_arn',
                 'checkpoint': '0',
                 'method_name': 'mock_method_name',
                 'bucket_name': 'mock_bucket',

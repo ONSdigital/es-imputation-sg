@@ -52,7 +52,8 @@ mock_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"]
+                       "Q607_constructional_fill"],
+    "sns_topic_arn": "mock_arn"
   }
 }
 
@@ -81,7 +82,6 @@ class TestWranglerAndMethod(unittest.TestCase):
         cls.mock_os_wrangler_patcher = mock.patch.dict(
             "os.environ",
             {
-                "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
                 "method_name": "mock_method",
                 "period_column": "mock_period",
@@ -94,7 +94,6 @@ class TestWranglerAndMethod(unittest.TestCase):
         cls.mock_os_method_patcher = mock.patch.dict(
             "os.environ",
             {
-                "sns_topic_arn": "mock_arn",
                 "checkpoint": "mock_checkpoint",
                 "run_environment": "development",
                 "period": "mock_period"
@@ -206,7 +205,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                         "third_threshold": 9,
                         "regional_mean": "third_imputation_factors"
                     }
-                }
+                },
+                "sns_topic_arn": "mock_arn"
             }, context_object
         )
 
@@ -234,16 +234,18 @@ class TestWranglerAndMethod(unittest.TestCase):
             json_content = json.loads(file.read())
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            {"data_json": json_content, "questions_list": ["Commons_prod",
-                                                           "Commons_Dels",
-                                                           "Commons_C-stock"],
-                                        "distinct_values": ["strata", "region"],
-                                        "factors_parameters": {
-                                            "RuntimeVariables": {
-                                                "factors_type": "factors_calculation_b",
-                                                "survey_column": "survey",
-                                                "threshold": 7,
-                                            }}
+            {"data_json": json_content, 
+                "questions_list": ["Commons_prod",
+                                    "Commons_Dels",
+                                    "Commons_C-stock"],
+                "distinct_values": ["strata", "region"],
+                "factors_parameters": {
+                    "RuntimeVariables": {
+                        "factors_type": "factors_calculation_b",
+                        "survey_column": "survey",
+                        "threshold": 7,
+                    }},
+                "sns_topic_arn": "mock_arn"
              }, context_object
         )
 

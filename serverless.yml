@@ -46,7 +46,6 @@ functions:
       checkpoint: 3
       method_name: es-add-regionless-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-add-regionless-method:
     name: es-add-regionless-method
@@ -86,7 +85,6 @@ functions:
       reference: responder_id
       response_type: response_type
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       strata_column: strata
 
   deploy-apply-factors-method:
@@ -124,7 +122,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-atypicals-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-atypicals-method:
     name: es-imputation-atypicals-method
@@ -161,7 +158,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-calculate-factors-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-calculate-factors-method:
     name: es-imputation-calculate-factors-method
@@ -198,7 +194,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-calculate-means-method:
     name: es-imputation-calculate-means-method
@@ -235,7 +230,6 @@ functions:
       method_name: es-imputation-calculate-movement-method
       reference: responder_id
       response_type: response_type
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-calculate-movement-method:
     name: es-imputation-calculate-movement-method
@@ -273,7 +267,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-iqrs-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
   deploy-iqrs-method:
     name: es-imputation-iqrs-method
@@ -310,7 +303,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
 
 plugins:
   - serverless-latest-layer-version

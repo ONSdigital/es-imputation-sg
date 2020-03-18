@@ -54,7 +54,8 @@ mock_wrangles_event = {
     'outgoing_message_group_id': 'output_something_something',
     'outgoing_message_group_id_skip': 'output_something_something',
     'previous_data': 'file_to_get_from_s3.json',
-    'current_data': ''
+    'current_data': '',
+    'sns_topic_arn': 'arn:aws:sns:eu-west-2:8:some-topic'
   }
 }
 
@@ -69,7 +70,6 @@ class TestClass(unittest.TestCase):
         cls.mock_boto_wrangler = cls.mock_boto_wrangler_patcher.start()
 
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
-            'sns_topic_arn': 'arn:aws:sns:eu-west-2:014669633018:some-topic',
             'bucket_name': 'some-bucket-name',
             'checkpoint': '3',
             'method_name': 'method_name_here',

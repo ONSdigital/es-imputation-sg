@@ -35,7 +35,8 @@ mock_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"]
+                       "Q607_constructional_fill"],
+    'sns_topic_arn': 'mock_arn'
   }
 
 }
@@ -49,7 +50,6 @@ class TestWranglerAndMethod():
         cls.mock_os_patcher = mock.patch.dict('os.environ', {
             'bucket_name': 'mock_bucket',
             'questions_list': "why?",
-            'sns_topic_arn': 'mock_arn',
             'checkpoint': 'mock_checkpoint',
             'method_name': 'mock_method',
             'input_data': 'mock_data',
