@@ -234,10 +234,12 @@ class TestWranglerAndMethod(unittest.TestCase):
             json_content = json.loads(file.read())
 
         output_file = calculate_imputation_factors_method.lambda_handler(
-            {"data_json": json_content, 
-                "questions_list": ["Commons_prod",
-                                    "Commons_Dels",
-                                    "Commons_C-stock"],
+            {
+                "data_json": json_content,
+                "questions_list": [
+                    "Commons_prod",
+                    "Commons_Dels",
+                    "Commons_C-stock"],
                 "distinct_values": ["strata", "region"],
                 "factors_parameters": {
                     "RuntimeVariables": {
