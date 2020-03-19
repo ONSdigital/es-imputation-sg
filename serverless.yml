@@ -3,7 +3,7 @@ service: es-imputation-sg
 provider:
   name: aws
   deploymentBucket:
-    name: com.serverless.${self:provider.region}.results.ons.deploys
+    name: spp-results-sandbox-serverless
   role: arn:aws:iam::${self:custom.accountId}:role/lambda_invoke_lambda
   vpc:
     securityGroupIds:
@@ -21,10 +21,8 @@ provider:
     lambda: true
 
 custom:
-  accounts: ${ssm:/aws/reference/secretsmanager/results-aws-accounts~true}
-  accountId: ${self:custom.accounts.account-id}
-  currentEnvironment: ${ssm:/aws/reference/secretsmanager/results-aws-environment~true}
-  environmentType: ${self:custom.currentEnvironment.environment-type}
+  accountId: ${env:aws_account_id}
+  environmentType: ${env:environment_type}
 
 functions:
   deploy-add-regionless-wrangler:
@@ -42,7 +40,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-add-regionless-method
       run_environment: ${self:custom.environmentType}
@@ -78,7 +76,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-apply-factors-method
       period: 201809
@@ -99,6 +97,7 @@ functions:
       individually: true
     layers:
       - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -118,7 +117,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-atypicals-method
       run_environment: ${self:custom.environmentType}
@@ -154,7 +153,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-calculate-factors-method
       run_environment: ${self:custom.environmentType}
@@ -190,7 +189,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
@@ -225,7 +224,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-calculate-movement-method
       reference: responder_id
@@ -263,7 +262,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-iqrs-method
       run_environment: ${self:custom.environmentType}
@@ -299,7 +298,7 @@ functions:
     tags:
       app: results
     environment:
-      bucket_name: results-s3-bucket
+      bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
