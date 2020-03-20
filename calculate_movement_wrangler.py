@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     method_name = fields.Str(required=True)
     reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
-    sns_topic_arn = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -64,7 +63,6 @@ def lambda_handler(event, context):
         method_name = config['method_name']
         reference = config['reference']
         response_type = config['response_type']
-        sns_topic_arn = config['sns_topic_arn']
 
         # Runtime Variables
         current_data = event['RuntimeVariables']['current_data']
@@ -82,6 +80,7 @@ def lambda_handler(event, context):
         periodicity = event['RuntimeVariables']['periodicity']
         previous_data = event['RuntimeVariables']['previous_data']
         questions_list = event['RuntimeVariables']['questions_list']
+        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         logger.info("Retrieved configuration variables.")

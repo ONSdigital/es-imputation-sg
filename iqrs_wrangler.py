@@ -19,7 +19,6 @@ class InputSchema(Schema):
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
-    sns_topic_arn = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -58,7 +57,6 @@ def lambda_handler(event, context):
         checkpoint = config['checkpoint']
         method_name = config['method_name']
         run_environment = config['run_environment']
-        sns_topic_arn = config['sns_topic_arn']
 
         # Runtime Variables
         distinct_values = event['RuntimeVariables']["distinct_values"]
@@ -68,6 +66,7 @@ def lambda_handler(event, context):
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         questions_list = event['RuntimeVariables']['questions_list']
+        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
 
         logger.info("Retrieved configuration variables.")

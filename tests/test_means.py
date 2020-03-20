@@ -52,6 +52,7 @@ mock_wrangles_event = {
     "location": "Here",
     "outgoing_message_group_id": "mock_message",
     "out_file_name": "Test",
+    "sns_topic_arn": "mock_arn"
   }
 }
 
@@ -72,7 +73,6 @@ class TestMeans(unittest.TestCase):
                 "current_period": "mock_period",
                 "previous_period": "mock_prev_period",
                 "run_environment": "development",
-                "sns_topic_arn": "mock_arn",
                 "bucket_name": "Mike"
 
             },

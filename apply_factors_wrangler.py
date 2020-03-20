@@ -22,7 +22,6 @@ class EnvironSchema(Schema):
     reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
     run_environment = fields.Str(required=True)
-    sns_topic_arn = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -63,7 +62,6 @@ def lambda_handler(event, context):
         reference = config['reference']
         response_type = config['response_type']
         run_environment = config['run_environment']
-        sns_topic_arn = config["sns_topic_arn"]
 
         # Runtime Variables
         current_data = event['RuntimeVariables']['current_data']
@@ -78,6 +76,7 @@ def lambda_handler(event, context):
         questions_list = event['RuntimeVariables']['questions_list']
         region_column = factors_parameters["RuntimeVariables"]['region_column']
         regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
+        sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
 

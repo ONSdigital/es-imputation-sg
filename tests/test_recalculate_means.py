@@ -49,7 +49,8 @@ mock_wrangles_event = {
     "incoming_message_group_id": "test",
     "location": "Here",
     "out_file_name": "Test",
-    'outgoing_message_group_id': 'mock_message'
+    'outgoing_message_group_id': 'mock_message',
+    'sns_topic_arn': 'mock_arn'
   }
 }
 
@@ -72,7 +73,6 @@ class TestRecalculateMeans(unittest.TestCase):
                 'checkpoint': 'mock_checkpoint',
                 'error_handler_arn': 'mock_arn',
                 'method_name': 'mock_method',
-                'sns_topic_arn': 'mock_arn',
                 "run_environment": "development",
                 "bucket_name": "Mike"
             }

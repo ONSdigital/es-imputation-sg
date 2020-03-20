@@ -45,6 +45,7 @@ mock_wrangles_event = {
             "location": "Here",
             "outgoing_message_group_id": "apply_factors_out",
             "out_file_name": "Test",
+            "sns_topic_arn": "mike",
             "factors_parameters":
                 {
                     "RuntimeVariables":
@@ -75,7 +76,6 @@ class TestApplyFactors(unittest.TestCase):
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
             {
-                "sns_topic_arn": "mike",
                 "bucket_name": "mike",
                 "checkpoint": "3",
                 "method_name": "apply_factors_method",
