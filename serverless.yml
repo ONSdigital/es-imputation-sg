@@ -80,7 +80,6 @@ functions:
       checkpoint: 3
       method_name: es-imputation-apply-factors-method
       period: 201809
-      reference: responder_id
       response_type: response_type
       run_environment: ${self:custom.environmentType}
       strata_column: strata
@@ -227,7 +226,6 @@ functions:
       bucket_name: spp-results-sandbox
       checkpoint: 3
       method_name: es-imputation-calculate-movement-method
-      reference: responder_id
       response_type: response_type
 
   deploy-calculate-movement-method:

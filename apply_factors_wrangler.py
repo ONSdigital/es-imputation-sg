@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
-    reference = fields.Str(required=True)
     response_type = fields.Str(required=True)
     run_environment = fields.Str(required=True)
 
@@ -59,7 +58,6 @@ def lambda_handler(event, context):
         bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        reference = config['reference']
         response_type = config['response_type']
         run_environment = config['run_environment']
 
@@ -74,6 +72,7 @@ def lambda_handler(event, context):
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         previous_data = event['RuntimeVariables']['previous_data']
         questions_list = event['RuntimeVariables']['questions_list']
+        reference = event['RuntimeVariables']['unique_identifier'][0]
         region_column = factors_parameters["RuntimeVariables"]['region_column']
         regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
         sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]

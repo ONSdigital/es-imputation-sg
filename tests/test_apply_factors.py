@@ -45,6 +45,7 @@ mock_wrangles_event = {
             "location": "Here",
             "outgoing_message_group_id": "apply_factors_out",
             "out_file_name": "Test",
+            "unique_identifier": ["responder_id"],
             "sns_topic_arn": "mike",
             "factors_parameters":
                 {
