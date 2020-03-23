@@ -90,7 +90,8 @@ mock_wrangles_event = {
     'outgoing_message_group_id_skip': 'output_something_something',
     'previous_data': 'file_to_get_from_s3.json',
     'current_data': '',
-    'sns_topic_arn': 'arn:aws:sns:eu-west-2:8:some-topic'
+    'sns_topic_arn': 'arn:aws:sns:eu-west-2:8:some-topic',
+    "unique_identifier": ["responder_id"]
   }
 }
 
