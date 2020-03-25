@@ -26,7 +26,9 @@ mock_event = {
                        "Q604_bituminous_gravel",
                        "Q605_concreting_gravel",
                        "Q606_other_gravel",
-                       "Q607_constructional_fill"]
+                       "Q607_constructional_fill"],
+    "RuntimeVariables": {
+                        "run_id": "runid"}
 }
 
 mock_wrangles_event = {
@@ -174,7 +176,7 @@ class TestClass(unittest.TestCase):
                 calculate_movement_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
                 )
-            assert "Incomplete Lambda response" in exc_info.exception.error_message
+            assert "IncompleteReadError" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
@@ -200,7 +202,7 @@ class TestClass(unittest.TestCase):
                 calculate_movement_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
                 )
-        assert "Bad data" in exc_info.exception.error_message
+        assert "AttributeError" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.aws_functions.send_sns_message')
     @mock.patch('calculate_movement_wrangler.aws_functions.save_data')
@@ -226,7 +228,7 @@ class TestClass(unittest.TestCase):
             calculate_movement_wrangler.lambda_handler(
                 mock_wrangles_event, context_object
             )
-        assert "Key Error" in exc_info.exception.error_message
+        assert "KeyError" in exc_info.exception.error_message
 
     @mock.patch('calculate_movement_wrangler.' +
                 'aws_functions.send_sns_message')

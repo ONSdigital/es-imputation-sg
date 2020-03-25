@@ -3,8 +3,7 @@ import logging
 import os
 
 import boto3
-from botocore.exceptions import ClientError, IncompleteReadError
-from es_aws_functions import aws_functions, exception_classes
+from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
@@ -31,7 +30,6 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Recalculate Means - Wrangler."
     error_message = ""
-    log_message = ""
     logger = logging.getLogger("RecalcMeans")
     logger.setLevel(10)
     # Define run_id outside of try block
@@ -93,7 +91,8 @@ def lambda_handler(event, context):
         payload = {
             "json_data": json.loads(data_json),
             "distinct_values": distinct_values,
-            "questions_list": questions_list
+            "questions_list": questions_list,
+            "RuntimeVariables": {"run_id": run_id}
         }
 
         returned_data = lambda_client.invoke(
@@ -125,84 +124,14 @@ def lambda_handler(event, context):
                                        'Imputation - Recalculate Means.')
         logger.info("Successfully sent message to sns.")
 
-    except AttributeError as e:
-        error_message = (
-            "Bad data encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except ValueError as e:
-        error_message = (
-            "Parameter validation error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except ClientError as e:
-        error_message = (
-            "AWS Error ("
-            + str(e.response["Error"]["Code"])
-            + ") "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except KeyError as e:
-        error_message = (
-            "Key Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except IncompleteReadError as e:
-        error_message = (
-            "Incomplete Lambda response encountered in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except exception_classes.MethodFailure as e:
-        error_message = e.error_message
-        log_message = "Error in " + method_name + "." \
-                      + " | Run_id: " + str(run_id)
     except Exception as e:
-        error_message = (
-            "General Error in "
-            + current_module
-            + " ("
-            + str(type(e))
-            + ") |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-            + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context)
     finally:
         if (len(error_message)) > 0:
-            logger.error(log_message)
+            logger.error(error_message)
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
+
     return {"success": True, "checkpoint": checkpoint}

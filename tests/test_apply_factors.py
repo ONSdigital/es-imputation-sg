@@ -145,7 +145,7 @@ class TestApplyFactors(unittest.TestCase):
                     apply_factors_wrangler.lambda_handler(
                         mock_wrangles_event, context_object
                     )
-                assert "General Error in" in exc_info.exception.error_message
+                assert "'Exception'" in exc_info.exception.error_message
 
     @mock_sqs
     def test_catch_method_exception(self):
@@ -169,7 +169,8 @@ class TestApplyFactors(unittest.TestCase):
                                        "Q607_constructional_fill"],
                     "sum_columns": [{"column_name": "Q608_total", "data": {
                         "Q603_concreting_sand": "+",
-                        "Q602_building_soft_sand": "+"}}]
+                        "Q602_building_soft_sand": "+"}}],
+                    "RuntimeVariables": {"run_id": "run_id"}
                 }
                 response = lambda_method_function.lambda_handler(
                     mock_event, context_object
@@ -311,7 +312,8 @@ class TestApplyFactors(unittest.TestCase):
                 "questions_list": ["Q601_asphalting_sand", "Q602_building_soft_sand",
                                    "Q603_concreting_sand", "Q604_bituminous_gravel",
                                    "Q605_concreting_gravel", "Q606_other_gravel",
-                                   "Q607_constructional_fill"]
+                                   "Q607_constructional_fill"],
+                "RuntimeVariables": {"run_id": "run_id"}
             }
             response = lambda_method_function.lambda_handler(
                 mock_event, context_object
@@ -320,24 +322,7 @@ class TestApplyFactors(unittest.TestCase):
             outputdf = pd.read_json(response["data"])
 
             valuetotest = outputdf["Q608_total"].to_list()[0]
-            assert valuetotest == 48293
-
-    @mock_sqs
-    def test_attribute_error_method(self):
-        methodinput = {"potatoes": "seotatop"}
-        with mock.patch.dict(
-            apply_factors_wrangler.os.environ,
-            {"sqs_queue_url": "Itsa Me! Queueio", "generic_var": "Itsa me, vario"},
-        ):
-            mock_event = {
-                "json_data": json.dumps(methodinput),
-                "sum_columns": [{"column_name": "test", "data": {
-                    "Q601_asphalting_sand": "+", "Q602_building_soft_sand": "+"}}]
-            }
-            response = lambda_method_function.lambda_handler(
-                mock_event, context_object
-            )
-            assert response["error"].__contains__("""Input Error""")
+        assert valuetotest == 48293
 
     @mock_sqs
     def test_key_error_method(self):
@@ -350,7 +335,7 @@ class TestApplyFactors(unittest.TestCase):
             response = lambda_method_function.lambda_handler(
                 methodinput, context_object
             )
-            assert response["error"].__contains__("""Key Error""")
+            assert "KeyError" in response["error"]
 
     @mock_sqs
     def test_type_error_method(self):
@@ -359,7 +344,11 @@ class TestApplyFactors(unittest.TestCase):
         methodinput["imputation_factor_Q601_asphalting_sand"] = "MIIIKE!"
         mock_event = {
             "json_data": methodinput.to_json(orient="records"),
-            "distinct_values": ["strata", "region"]
+            "distinct_values": ["strata", "region"],
+            "sum_columns": [{"column_name": "test",
+                             "data": {"Q601_asphalting_sand": "+",
+                                      "Q602_building_soft_sand": "+"}}],
+            "RuntimeVariables": {"run_id": "run_id"}
         }
         with mock.patch.dict(
             apply_factors_wrangler.os.environ,
@@ -368,7 +357,7 @@ class TestApplyFactors(unittest.TestCase):
             response = lambda_method_function.lambda_handler(
                 json.dumps(mock_event), context_object
             )
-            assert response["error"].__contains__("""Bad Data type""")
+            assert response["error"].__contains__("""TypeError""")
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
@@ -459,7 +448,7 @@ class TestApplyFactors(unittest.TestCase):
                             apply_factors_wrangler.lambda_handler(
                                 mock_wrangles_event, context_object
                             )
-                        assert "Incomplete Lambda response" \
+                        assert "IncompleteReadError" \
                                in exc_info.exception.error_message
 
     @mock_sqs
@@ -494,7 +483,7 @@ class TestApplyFactors(unittest.TestCase):
                         mock_wrangles_event, context_object
                     )
 
-                assert "Key Error" in exc_info.exception.error_message
+                assert "KeyError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -524,7 +513,7 @@ class TestApplyFactors(unittest.TestCase):
                     apply_factors_wrangler.lambda_handler(
                         mock_wrangles_event, context_object
                     )
-                assert "Bad data" in exc_info.exception.error_message
+                assert "TypeError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3

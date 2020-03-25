@@ -29,7 +29,8 @@ mock_event = {
                        'Q604_bituminous_gravel',
                        'Q605_concreting_gravel',
                        'Q606_other_gravel',
-                       'Q607_constructional_fill']
+                       'Q607_constructional_fill'],
+    "RuntimeVariables": {"run_id": "run_id"}
 }
 
 mock_wrangles_event = {
@@ -159,7 +160,7 @@ class TestMeans(unittest.TestCase):
                     context_object
                 )
 
-            assert "General Error" in exc_info.exception.error_message
+            assert "'Exception'" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         with mock.patch("calculate_means_method.pd.DataFrame") as mocked:
@@ -171,7 +172,7 @@ class TestMeans(unittest.TestCase):
 
             assert "success" in response
             assert response["success"] is False
-            assert """General exception""" in response["error"]
+            assert "'Exception'" in response["error"]
 
     @mock_sqs
     @mock_lambda
@@ -186,12 +187,12 @@ class TestMeans(unittest.TestCase):
                      mock_event,
                      context_object,
                 )
-            assert "Key Error" in exc_info.exception.error_message
+            assert "KeyError" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         # pass none value to trigger key index error
         response = calculate_means_method.lambda_handler({"mike": "mike"}, context_object)
-        assert """Key Error""" in response["error"]
+        assert "KeyError" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -219,7 +220,7 @@ class TestMeans(unittest.TestCase):
                 calculate_means_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -241,7 +242,7 @@ class TestMeans(unittest.TestCase):
                             mock_wrangles_event,
                             context_object,
                         )
-                    assert "Bad data" in exc_info.exception.error_message
+                    assert "AttributeError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -264,7 +265,7 @@ class TestMeans(unittest.TestCase):
                                 mock_wrangles_event,
                                 context_object,
                             )
-                        assert "Incomplete Lambda response" \
+                        assert "IncompleteReadError" \
                                in exc_info.exception.error_message
 
     @mock_sqs

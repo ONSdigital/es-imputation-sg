@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from es_aws_functions import general_functions
 
 import imputation_functions as imp_func
 
@@ -15,11 +16,14 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Atypicals - Method."
     error_message = ""
-    log_message = ""
     logger = logging.getLogger("Atypicals")
+    run_id = 0
     try:
 
         logger.info("Starting " + current_module)
+        # Retrieve run_id before input validation
+        # Because it is used in exception handling
+        run_id = event['RuntimeVariables']['run_id']
 
         input_data = pd.DataFrame(event['json_data'])
         questions_list = event['questions_list']
@@ -44,35 +48,16 @@ def lambda_handler(event, context):
 
         final_output = {"data": json_out}
 
-    except KeyError as e:
-        error_message = (
-            "Key Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
-        error_message = (
-            "General Error in "
-            + current_module
-            + " ("
-            + str(type(e))
-            + ") |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context)
     finally:
         if (len(error_message)) > 0:
-            logger.error(log_message)
+            logger.error(error_message)
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output["success"] = True
+    final_output['success'] = True
     return final_output
 
 

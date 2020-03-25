@@ -103,7 +103,8 @@ class TestApplyFactors(unittest.TestCase):
             event = {
                 "json_data": json_content,
                 "regionless_code": 14,
-                "region_column": "region"
+                "region_column": "region",
+                "RuntimeVariables": {"run_id": "run_id"}
             }
 
             output = add_regionless_method.lambda_handler(
@@ -132,7 +133,7 @@ class TestApplyFactors(unittest.TestCase):
                     mock_event,
                     context_object
                 )
-            assert "General Error" in exc_info.exception.error_message
+            assert "'Exception'" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         input_file = "tests/fixtures/add_regionless_input.json"
@@ -143,7 +144,8 @@ class TestApplyFactors(unittest.TestCase):
                 event = {
                     "json_data": json_content,
                     "regionless_code": 14,
-                    "region_column": "region"
+                    "region_column": "region",
+                    "RuntimeVariables": {"run_id": "run_id"}
                 }
 
                 response = add_regionless_method.lambda_handler(
@@ -153,7 +155,7 @@ class TestApplyFactors(unittest.TestCase):
 
                 assert "success" in response
                 assert response["success"] is False
-                assert """General exception""" in response["error"]
+                assert "'Exception'" in response["error"]
 
     @mock_sqs
     @mock_lambda
@@ -169,7 +171,7 @@ class TestApplyFactors(unittest.TestCase):
                         mock_event,
                         context_object,
                     )
-            assert "Key Error" in exc_info.exception.error_message
+            assert "KeyError" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         with open("tests/fixtures/add_regionless_input.json", "r") as file:
@@ -181,7 +183,7 @@ class TestApplyFactors(unittest.TestCase):
                 event, context_object
             )
 
-            assert """Key Error in""" in response["error"]
+            assert "KeyError" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -209,7 +211,7 @@ class TestApplyFactors(unittest.TestCase):
                 add_regionless_wrangler.lambda_handler(
                     mock_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -231,7 +233,7 @@ class TestApplyFactors(unittest.TestCase):
                             mock_event,
                             context_object,
                         )
-                    assert "Bad data" in exc_info.exception.error_message
+                    assert "AttributeError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -255,7 +257,7 @@ class TestApplyFactors(unittest.TestCase):
                                 mock_event,
                                 context_object,
                             )
-                        assert "Incomplete Lambda response" in \
+                        assert "IncompleteReadError" in \
                                exc_info.exception.error_message
 
     @mock_sqs
