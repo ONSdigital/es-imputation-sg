@@ -206,7 +206,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                         "regional_mean": "third_imputation_factors"
                     }
                 },
-                "sns_topic_arn": "mock_arn"
+                "sns_topic_arn": "mock_arn",
+                "RuntimeVariables": {"run_id": "run_id"}
             }, context_object
         )
 
@@ -247,7 +248,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                         "survey_column": "survey",
                         "threshold": 7,
                     }},
-                "sns_topic_arn": "mock_arn"
+                "sns_topic_arn": "mock_arn",
+                "RuntimeVariables": {"run_id": "run_id"}
              }, context_object
         )
 
@@ -286,7 +288,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                                 "Q604_bituminous_gravel",
                                 "Q605_concreting_gravel",
                                 "Q606_other_gravel",
-                                "Q607_constructional_fill"]
+                                "Q607_constructional_fill"],
+                "RuntimeVariables": {"run_id": "run_id"}
              }, context_object
         )
         assert not response["success"]
@@ -312,7 +315,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                 '{"movement_Q601_asphalting_sand":0.857614899}]'
             )
             response = calculate_imputation_factors_method.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666},
+                {"RuntimeVariables": {"checkpoint": 666,
+                                      "run_id": "runid"},
                  "data_json": json_data_content,
                  "distinct_values": ["strata", "region"],
                  "questions_list": ["Q601_asphalting_sand",
@@ -362,7 +366,8 @@ class TestWranglerAndMethod(unittest.TestCase):
                                           "queue_url": "Earl"}},
                     context_object
                 )
-            assert "Parameter validation error" in exc_info.exception.error_message
+            assert "Error validating environment params" in \
+                   exc_info.exception.error_message
 
     def test_method_key_error_exception(self):
         """
@@ -384,12 +389,13 @@ class TestWranglerAndMethod(unittest.TestCase):
                                                            "Q604_bituminous_gravel",
                                                            "Q605_concreting_gravel",
                                                            "Q606_other_gravel",
-                                                           "Q607_constructional_fill"]
+                                                           "Q607_constructional_fill"],
+                "RuntimeVariables": {"run_id": "run_id"}
              }, context_object
         )
 
         assert not output_file["success"]
-        assert "Key Error" in output_file["error"]
+        assert "KeyError" in output_file["error"]
 
     @mock_sns
     @mock_sqs
@@ -439,7 +445,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                             calculate_imputation_factors_wrangler.lambda_handler(
                                 mock_event, context_object
                             )
-                        assert "Incomplete Lambda response" in \
+                        assert "IncompleteReadError" in \
                                exc_info.exception.error_message
 
     @mock_sns
@@ -454,7 +460,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                 calculate_imputation_factors_wrangler.lambda_handler(
                     mock_event, context_object
                 )
-            assert "Key Error" in exc_info.exception.error_message
+            assert "KeyError" in exc_info.exception.error_message
 
     def test_wrangler_client_error(self):
         with mock.patch.dict(
@@ -471,7 +477,7 @@ class TestWranglerAndMethod(unittest.TestCase):
                     calculate_imputation_factors_wrangler.lambda_handler(
                         mock_event, context_object
                     )
-                assert "AWS Error" in exc_info.exception.error_message
+                assert "ClientError" in exc_info.exception.error_message
 
     @mock_sns
     @mock_sqs

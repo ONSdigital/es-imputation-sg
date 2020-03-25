@@ -37,6 +37,9 @@ mock_event = {
             "location": "Here",
             "incoming_message_group": {
                 "imputation_movement": "bananas"
+            },
+            "RuntimeVariables": {
+                "run_id": "run_id"
             }
 }
 
@@ -61,6 +64,9 @@ mock_event_b = {
             },
             "incoming_message_group": {
                 "imputation_movement": "bananas"
+            },
+            "RuntimeVariables": {
+                "run_id": "run_id"
             }
 }
 
@@ -156,7 +162,7 @@ class TestStringMethods(unittest.TestCase):
                         self, exception_classes.LambdaFailure) as exc_info:
                     calculate_movement_wrangler.lambda_handler(
                         mock_wrangles_event, context_object)
-                assert "General Error" in exc_info.exception.error_message
+                assert "'Exception'" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -206,7 +212,8 @@ class TestStringMethods(unittest.TestCase):
                     self, exception_classes.LambdaFailure) as exc_info:
                 calculate_movement_wrangler.lambda_handler(mock_wrangles_event,
                                                            context_object)
-            assert "Parameter validation error" in exc_info.exception.error_message
+            assert "Error validating environment params" in \
+                   exc_info.exception.error_message
 
     @mock_sqs
     @mock_s3
@@ -234,7 +241,7 @@ class TestStringMethods(unittest.TestCase):
                 calculate_movement_wrangler.lambda_handler(
                     mock_wrangles_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "ClientError" in exc_info.exception.error_message
 
     def test_method_key_error_exception(self):
         output_file = calculate_movement_method.lambda_handler(
@@ -242,4 +249,4 @@ class TestStringMethods(unittest.TestCase):
         )
 
         assert not output_file["success"]
-        assert "Key Error" in output_file["error"]
+        assert "KeyError" in output_file["error"]

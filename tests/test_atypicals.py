@@ -113,7 +113,8 @@ class TestClass():
                                    "Q604_bituminous_gravel",
                                    "Q605_concreting_gravel",
                                    "Q606_other_gravel",
-                                   "Q607_constructional_fill"]
+                                   "Q607_constructional_fill"],
+                "RuntimeVariables": {"run_id": "run_id"}
             }
 
             output = atypicals_method.lambda_handler(
@@ -152,7 +153,7 @@ class TestClass():
                     context_object
                 )
 
-            assert "General Error" in exc_info.exception.error_message
+            assert "'Exception'" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         input_file = "tests/fixtures/atypical_input.json"
@@ -168,7 +169,8 @@ class TestClass():
                                        "Q604_bituminous_gravel",
                                        "Q605_concreting_gravel",
                                        "Q606_other_gravel",
-                                       "Q607_constructional_fill"]
+                                       "Q607_constructional_fill"],
+                    "RuntimeVariables": {"run_id": "run_id"}
                 }
 
                 response = atypicals_method.lambda_handler(
@@ -178,7 +180,7 @@ class TestClass():
 
                 assert "success" in response
                 assert response["success"] is False
-                assert """General exception""" in response["error"]
+                assert "'Exception'" in response["error"]
 
     @mock_sqs
     @mock_lambda
@@ -195,7 +197,7 @@ class TestClass():
                         context_object,
                     )
 
-            assert "Key Error" in exc_info.exception.error_message
+            assert "KeyError" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         with open("tests/fixtures/atypical_input.json", "r") as file:
@@ -208,13 +210,14 @@ class TestClass():
                                        "Q604_bituminous_gravel",
                                        "Q605_concreting_gravel",
                                        "Q606_other_gravel",
-                                       "Q607_constructional_fill"]
+                                       "Q607_constructional_fill"],
+                    "RuntimeVariables": {"run_id": "run_id"}
                      }
             response = atypicals_method.lambda_handler(
                 event, context_object
             )
 
-            assert """Key Error in""" in response["error"]
+            assert "KeyError" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -242,7 +245,7 @@ class TestClass():
                 atypicals_wrangler.lambda_handler(
                     mock_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -263,7 +266,7 @@ class TestClass():
                             mock_event,
                             context_object,
                         )
-                    assert "Bad data" in exc_info.exception.error_message
+                    assert "AttributeError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -285,7 +288,7 @@ class TestClass():
                                 mock_event,
                                 context_object,
                             )
-                        assert "Incomplete Lambda response" \
+                        assert "IncompleteReadError" \
                                in exc_info.exception.error_message
 
     @mock_sqs

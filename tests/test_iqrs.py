@@ -118,7 +118,8 @@ class TestWranglerAndMethod():
                                    "Q605_concreting_gravel",
                                    "Q606_other_gravel",
                                    "Q607_constructional_fill"],
-                "distinct_values": ["region", "strata"]
+                "distinct_values": ["region", "strata"],
+                "RuntimeVariables": {"run_id": "runid"}
             }
 
             output = iqrs_method.lambda_handler(event, context_object)
@@ -147,7 +148,7 @@ class TestWranglerAndMethod():
                     mock_event,
                     context_object
                 )
-            assert "General Error" in exc_info.exception.error_message
+            assert "'Exception'" in exc_info.exception.error_message
 
     def test_method_general_exception(self):
         input_file = "tests/fixtures/Iqrs_with_columns.json"
@@ -161,7 +162,8 @@ class TestWranglerAndMethod():
                                    "Q605_concreting_gravel",
                                    "Q606_other_gravel",
                                    "Q607_constructional_fill"],
-                "distinct_values": "region, strata"
+                "distinct_values": "region, strata",
+                "RuntimeVariables": {"run_id": "runid"}
             }
             with mock.patch("iqrs_method.pd.DataFrame") as mocked:
                 mocked.side_effect = Exception("General exception")
@@ -172,7 +174,7 @@ class TestWranglerAndMethod():
 
                 assert "success" in response
                 assert response["success"] is False
-                assert """General exception""" in response["error"]
+                assert "'Exception'" in response["error"]
 
     @mock_sqs
     @mock_lambda
@@ -189,7 +191,7 @@ class TestWranglerAndMethod():
                         context_object,
                     )
 
-            assert "Key Error" in exc_info.exception.error_message
+            assert "KeyError" in exc_info.exception.error_message
 
     def test_method_key_error(self):
         with open("tests/fixtures/Iqrs_with_columns.json", "r") as file:
@@ -202,13 +204,14 @@ class TestWranglerAndMethod():
                                    "Q605_concreting_gravel",
                                    "Q606_other_gravel",
                                    "Q607_constructional_fill"],
-                "distinct_values": "'region', 'strata'"
+                "distinct_values": "'region', 'strata'",
+                "RuntimeVariables": {"run_id": "runid"}
             }
 
             response = iqrs_method.lambda_handler(
                 json_content, context_object
             )
-            assert """Key Error in""" in response["error"]
+            assert """KeyError""" in response["error"]
 
     def test_marshmallow_raises_wrangler_exception(self):
         """
@@ -237,7 +240,7 @@ class TestWranglerAndMethod():
                 iqrs_wrangler.lambda_handler(
                     mock_event, context_object
                 )
-            assert "AWS Error" in exc_info.exception.error_message
+            assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -258,7 +261,7 @@ class TestWranglerAndMethod():
                             mock_event,
                             context_object,
                         )
-                    assert "Bad data" in exc_info.exception.error_message
+                    assert "AttributeError" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -280,7 +283,7 @@ class TestWranglerAndMethod():
                                 mock_event,
                                 context_object,
                             )
-                        assert "Incomplete Lambda response" in \
+                        assert "IncompleteReadError" in \
                                exc_info.exception.error_message
 
     @mock_sqs

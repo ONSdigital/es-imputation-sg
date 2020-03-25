@@ -136,7 +136,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 self, exception_classes.LambdaFailure) as exc_info:
             recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                       context_object)
-        assert "AWS Error" in exc_info.exception.error_message
+        assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
@@ -165,7 +165,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 self, exception_classes.LambdaFailure) as exc_info:
             recalculate_means_wrangler.lambda_handler(
                 mock_wrangles_event, context_object)
-        assert "AWS Error" in exc_info.exception.error_message
+        assert "ClientError" in exc_info.exception.error_message
 
     @mock_sqs
     def test_attribute_error(self):
@@ -183,7 +183,7 @@ class TestRecalculateMeans(unittest.TestCase):
                         self, exception_classes.LambdaFailure) as exc_info:
                     recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                               context_object)
-                assert "Bad data" in exc_info.exception.error_message
+                assert "AttributeError" in exc_info.exception.error_message
 
     @mock_sqs
     def test_key_error(self):
@@ -200,7 +200,7 @@ class TestRecalculateMeans(unittest.TestCase):
                 recalculate_means_wrangler.lambda_handler(mock_wrangles_event,
                                                           context_object)
 
-        assert "Key Error" in exc_info.exception.error_message
+        assert "KeyError" in exc_info.exception.error_message
 
     @mock_sqs
     def test_general_exception(self):
@@ -215,9 +215,9 @@ class TestRecalculateMeans(unittest.TestCase):
                 with unittest.TestCase.assertRaises(
                         self, exception_classes.LambdaFailure) as exc_info:
                     recalculate_means_wrangler.lambda_handler(
-                        "", context_object
+                        mock_wrangles_event, context_object
                     )
-                assert "General Error in" in exc_info.exception.error_message
+                assert "'Exception'" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -242,7 +242,7 @@ class TestRecalculateMeans(unittest.TestCase):
                                 mock_wrangles_event,
                                 context_object,
                             )
-                        assert "Incomplete Lambda response" \
+                        assert "IncompleteReadError" \
                                in exc_info.exception.error_message
 
     @mock_sqs
