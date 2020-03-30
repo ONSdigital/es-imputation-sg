@@ -42,6 +42,85 @@ questions_list = [
     "Q607_constructional_fill"
   ]
 
+method_apply_runtime_variables = {
+    "RuntimeVariables": {
+        "json_data": None,
+        "questions_list": questions_list,
+        "run_id": "bob",
+        "sum_columns": [
+            {
+              "column_name": "Q608_total",
+              "data": {
+                "Q601_asphalting_sand": "+",
+                "Q602_building_soft_sand": "+",
+                "Q603_concreting_sand": "+",
+                "Q604_bituminous_gravel": "+",
+                "Q605_concreting_gravel": "+",
+                "Q606_other_gravel": "+",
+                "Q607_constructional_fill": "+"
+              }
+            }
+          ]
+    }
+}
+
+method_atypicals_runtime_variables = {
+    "RuntimeVariables": {
+        "json_data": None,
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+method_factors_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "factors_parameters": "test_param",
+        "json_data": None,
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+method_iqrs_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "json_data": None,
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+method_means_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "json_data": None,
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+method_movement_runtime_variables = {
+    "RuntimeVariables": {
+        "current_data": "test_wrangler_movement_current_data_output",
+        "json_data": None,
+        "movement_type": "movement_calculation_a",
+        "period_column": "period",
+        "previous_data": "test_wrangler_movement_previous_data_output",
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+method_regionless_runtime_variables = {
+    "RuntimeVariables": {
+        "json_data": None,
+        "region_column": "region",
+        "regionless_code": 14,
+        "run_id": "bob"
+    }
+}
+
 wrangler_apply_runtime_variables = {
     "RuntimeVariables": {
         "current_data": "test_wrangler_movement_prepared_current_data_output",
@@ -77,7 +156,6 @@ wrangler_apply_runtime_variables = {
             }
           ],
         "unique_identifier": ["responder_id"]
-
     }
 }
 
@@ -162,7 +240,6 @@ wrangler_movement_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "unique_identifier": ["responder_id"]
-
     }
 }
 
@@ -203,6 +280,7 @@ wrangler_regionless_runtime_variables = {
 ##########################################################################################
 #                                     Generic                                            #
 ##########################################################################################
+
 
 @pytest.mark.parametrize(
     "which_lambda,which_runtime_variables,which_environment_variables,"
