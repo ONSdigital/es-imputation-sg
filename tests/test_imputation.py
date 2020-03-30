@@ -27,7 +27,7 @@ import recalculate_means_wrangler as lambda_recalc_wrangler_function
 generic_environment_variables = {
     "bucket_name": "test_bucket",
     "checkpoint": "999",
-    "method_name": "add_regionless_method",
+    "method_name": "test_method",
     "response_type": "response_type",
     "run_environment": "temporary"
 }
@@ -44,7 +44,7 @@ questions_list = [
 
 wrangler_apply_runtime_variables = {
     "RuntimeVariables": {
-        "current_data": "test_wrangler_movement_prepared_current_data",
+        "current_data": "test_wrangler_movement_prepared_current_data_output",
         "distinct_values": ["region", "strata"],
         "factors_parameters": {
             "RuntimeVariables": {
@@ -52,12 +52,12 @@ wrangler_apply_runtime_variables = {
                 "regionless_code": 14
             }
         },
-        "incoming_message_group_id": "test_group",
         "in_file_name": "test_wrangler_apply_input",
+        "incoming_message_group_id": "test_group",
         "location": "Here",
-        "out_file_name": "test_wrangler_apply_output.json",
+        "out_file_name": "test_wrangler_apply_output.",
         "outgoing_message_group_id": "test_id",
-        "previous_data": "test_wrangler_movement_prepared_previous_data",
+        "previous_data": "test_wrangler_movement_prepared_previous_data_output",
         "questions_list": questions_list,
         "queue_url": "Earl",
         "run_id": "bob",
@@ -83,10 +83,10 @@ wrangler_apply_runtime_variables = {
 
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
-        "incoming_message_group_id": "test_group",
         "in_file_name": "test_wrangler_atypicals_input",
+        "incoming_message_group_id": "test_group",
         "location": "Here",
-        "out_file_name": "test_wrangler_atypicals_output.json",
+        "out_file_name": "test_wrangler_atypicals_output",
         "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
         "queue_url": "Earl",
@@ -99,16 +99,85 @@ wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "factors_parameters": "test_param",
-        "incoming_message_group_id": "test_group",
         "in_file_name": "test_wrangler_factors_input",
+        "incoming_message_group_id": "test_group",
         "location": "Here",
-        "out_file_name": "test_wrangler_factors_output.json",
+        "out_file_name": "test_wrangler_factors_output",
         "outgoing_message_group_id": "test_id",
         "period_column": "period",
         "questions_list": questions_list,
         "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
+    }
+}
+
+wrangler_iqrs_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "in_file_name": "test_wrangler_iqrs_input",
+        "incoming_message_group_id": "test_group",
+        "location": "Here",
+        "out_file_name": "test_wrangler_iqrs_output",
+        "outgoing_message_group_id": "test_id",
+        "questions_list": questions_list,
+        "queue_url": "Earl",
+        "run_id": "bob",
+        "sns_topic_arn": "fake_sns_arn",
+    }
+}
+
+wrangler_means_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "in_file_name": "test_wrangler_means_input",
+        "incoming_message_group_id": "test_group",
+        "location": "Here",
+        "out_file_name": "test_wrangler_means_output",
+        "outgoing_message_group_id": "test_id",
+        "questions_list": questions_list,
+        "queue_url": "Earl",
+        "run_id": "bob",
+        "sns_topic_arn": "fake_sns_arn",
+    }
+}
+
+wrangler_movement_runtime_variables = {
+    "RuntimeVariables": {
+        "current_data": "test_wrangler_movement_current_data_output",
+        "in_file_name": "test_wrangler_movement_input",
+        "incoming_message_group_id": "test_group",
+        "location": "Here",
+        "movement_type": "movement_calculation_a",
+        "out_file_name": "test_wrangler_movement_output",
+        "out_file_name_skip": "test_wrangler_movement_skip_output",
+        "outgoing_message_group_id": "test_id",
+        "outgoing_message_group_id_skip": "test_id",
+        "period": "201809",
+        "period_column": "period",
+        "periodicity": "03",
+        "previous_data": "test_wrangler_movement_previous_data_output",
+        "questions_list": questions_list,
+        "queue_url": "Earl",
+        "run_id": "bob",
+        "sns_topic_arn": "fake_sns_arn",
+        "unique_identifier": ["responder_id"]
+
+    }
+}
+
+wrangler_recalc_runtime_variables = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "in_file_name": "test_wrangler_recalc_input",
+        "incoming_message_group_id": "test_group",
+        "location": "Here",
+        "out_file_name": "test_wrangler_recalc_output",
+        "outgoing_message_group_id": "test_id",
+        "questions_list": questions_list,
+        "queue_url": "Earl",
+        "run_id": "bob",
+        "sns_topic_arn": "fake_sns_arn",
     }
 }
 
@@ -120,10 +189,10 @@ wrangler_regionless_runtime_variables = {
                 "regionless_code": 14
             }
         },
-        "incoming_message_group_id": "test_group",
         "in_file_name": "test_wrangler_regionless_input",
+        "incoming_message_group_id": "test_group",
         "location": "Here",
-        "out_file_name": "test_wrangler_regionless_output.json",
+        "out_file_name": "test_wrangler_regionless_output",
         "outgoing_message_group_id": "test_id",
         "queue_url": "Earl",
         "run_id": "bob",
@@ -154,7 +223,7 @@ wrangler_regionless_runtime_variables = {
         (lambda_means_wrangler_function, wrangler_means_runtime_variables,
          generic_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert),
-        (lambda_movement_wrangler_function, wrangler_movements_runtime_variables,
+        (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
          generic_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert),
         (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
