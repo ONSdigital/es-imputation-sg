@@ -319,45 +319,101 @@ def test_client_error(which_lambda, which_runtime_variables,
                                       expected_message, assertion)
 
 
-@pytest.mark.parametrize(
-    "which_lambda,which_runtime_variables,which_environment_variables,mockable_function,"
-    "expected_message,assertion",
-    [
-        (lambda_method_function, method_runtime_variables,
-         method_environment_variables, "strata_period_method.EnvironSchema",
-         "'Exception'", test_generic_library.method_assert),
-        (lambda_wrangler_function, wrangler_runtime_variables,
-         wrangler_environment_variables, "strata_period_wrangler.EnvironSchema",
-         "'Exception", test_generic_library.wrangler_assert)
-    ])
-def test_general_error(which_lambda, which_runtime_variables,
-                       which_environment_variables, mockable_function,
-                       expected_message, assertion):
-    test_generic_library.general_error(which_lambda, which_runtime_variables,
-                                       which_environment_variables, mockable_function,
-                                       expected_message, assertion)
+# Imputation Is A Special Snowflake And Not Everything Has A EnvironSchema.
+# @pytest.mark.parametrize(
+#     "which_lambda,which_runtime_variables,which_environment_variables,mockable_function,"
+#     "expected_message,assertion",
+#     [
+#         (lambda_method_function, method_runtime_variables,
+#          method_environment_variables, "strata_period_method.EnvironSchema",
+#          "'Exception'", test_generic_library.method_assert),
+#         (lambda_wrangler_function, wrangler_runtime_variables,
+#          wrangler_environment_variables, "strata_period_wrangler.EnvironSchema",
+#          "'Exception", test_generic_library.wrangler_assert)
+#     ])
+# def test_general_error(which_lambda, which_runtime_variables,
+#                        which_environment_variables, mockable_function,
+#                        expected_message, assertion):
+#     test_generic_library.general_error(which_lambda, which_runtime_variables,
+#                                        which_environment_variables, mockable_function,
+#                                        expected_message, assertion)
 
 
-@mock_s3
-@mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
-            side_effect=test_generic_library.replacement_get_dataframe)
-def test_incomplete_read_error(mock_s3_get):
-    file_list = ["test_wrangler_input.json"]
-
-    test_generic_library.incomplete_read_error(lambda_wrangler_function,
-                                               wrangler_runtime_variables,
-                                               wrangler_environment_variables,
-                                               file_list,
-                                               "strata_period_wrangler",
-                                               "IncompleteReadError")
+# Needs Files Prepared.
+# @mock_s3
+# @pytest.mark.parametrize(
+#     "which_lambda,which_environment_variables,file_list,lambda_name,expected_message",
+#     [
+#         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "add_regionless_wrangler", "IncompleteReadError"),
+#         (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "apply_factors_wrangler", "IncompleteReadError"),
+#         (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "atypicals_wrangler", "IncompleteReadError"),
+#         (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "calculate_imputation_factors_wrangler", "IncompleteReadError"),
+#         (lambda_means_wrangler_function, wrangler_means_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "calculate_means_wrangler", "IncompleteReadError"),
+#         (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "calculate_movement_wrangler", "IncompleteReadError"),
+#         (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "iqrs_wrangler", "IncompleteReadError"),
+#         (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
+#          generic_environment_variables, ["test_wrangler_input.json"],
+#          "recalculate_means_wrangler", "IncompleteReadError")
+#     ])
+# def test_incomplete_read_error(which_lambda, which_runtime_variables,
+#                                which_environment_variables, file_list,
+#                                lambda_name, expected_message):
+#     with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+#             side_effect=test_generic_library.replacement_get_dataframe)
+#         test_generic_library.incomplete_read_error(which_lambda,
+#                                                    which_runtime_variables,
+#                                                    which_environment_variables,
+#                                                    file_list,
+#                                                    lambda_name,
+#                                                    expected_message)
 
 
 @pytest.mark.parametrize(
     "which_lambda,which_environment_variables,expected_message,assertion",
     [
-        (lambda_method_function, method_environment_variables,
+        (lambda_regionless_method_function, False,
          "KeyError", test_generic_library.method_assert),
-        (lambda_wrangler_function, wrangler_environment_variables,
+        (lambda_regionless_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_apply_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_apply_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_atypicals_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_atypicals_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_factors_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_factors_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_means_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_means_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_movement_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_movement_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_iqrs_method_function, False,
+         "KeyError", test_generic_library.method_assert),
+        (lambda_iqrs_wrangler_function, generic_environment_variables,
+         "KeyError", test_generic_library.wrangler_assert),
+        (lambda_recalc_wrangler_function, generic_environment_variables,
          "KeyError", test_generic_library.wrangler_assert)
     ])
 def test_key_error(which_lambda, which_environment_variables,
@@ -366,27 +422,43 @@ def test_key_error(which_lambda, which_environment_variables,
                                    expected_message, assertion)
 
 
-@mock_s3
-@mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
-            side_effect=test_generic_library.replacement_get_dataframe)
-def test_method_error(mock_s3_get):
-    file_list = ["test_wrangler_input.json"]
+# Do Incomplete Read First.
+# @mock_s3
+# @mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
+#             side_effect=test_generic_library.replacement_get_dataframe)
+# def test_method_error(mock_s3_get):
+#     file_list = ["test_wrangler_input.json"]
+#
+#     test_generic_library.wrangler_method_error(lambda_wrangler_function,
+#                                                wrangler_runtime_variables,
+#                                                wrangler_environment_variables,
+#                                                file_list,
+#                                                "strata_period_wrangler")
 
-    test_generic_library.wrangler_method_error(lambda_wrangler_function,
-                                               wrangler_runtime_variables,
-                                               wrangler_environment_variables,
-                                               file_list,
-                                               "strata_period_wrangler")
 
-
+##########################################################################################
+#    The Methods Have No Validation. When Add More Marshmallow Add Methods Into Tests.   #
+##########################################################################################
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion",
-    [(lambda_method_function,
-      "Error validating environment param",
-      test_generic_library.method_assert),
-     (lambda_wrangler_function,
-      "Error validating environment param",
-      test_generic_library.wrangler_assert)])
+    [
+        (lambda_regionless_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_apply_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_atypicals_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_factors_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_means_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_movement_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_iqrs_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert),
+        (lambda_recalc_wrangler_function, "Error validating environment param",
+         test_generic_library.wrangler_assert)
+    ])
 def test_value_error(which_lambda, expected_message, assertion):
     test_generic_library.value_error(
         which_lambda, expected_message, assertion)
