@@ -23,9 +23,9 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # Get envrionment variables
-        json_data = event["json_data"]
-        regionless_code = event["regionless_code"]
-        region_column = event["region_column"]
+        json_data = event['RuntimeVariables']["json_data"]
+        regionless_code = event['RuntimeVariables']["regionless_code"]
+        region_column = event['RuntimeVariables']["region_column"]
 
         # Get 2 copies of the data
         original_dataframe = pd.DataFrame(json_data)

@@ -85,10 +85,14 @@ def lambda_handler(event, context):
 
         logger.info("Dataframe converted to JSON")
 
-        payload = {"data": json.loads(data_json),
-                   "distinct_values": distinct_values,
-                   "questions_list": questions_list,
-                   "RuntimeVariables": {"run_id": run_id}}
+        payload = {
+            "RuntimeVariables": {
+                "data": json.loads(data_json),
+                "distinct_values": distinct_values,
+                "questions_list": questions_list,
+                "run_id": run_id
+            }
+        }
 
         wrangled_data = lambda_client.invoke(
             FunctionName=method_name,

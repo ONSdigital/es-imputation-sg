@@ -25,9 +25,9 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # Environment variables
-        questions_list = event['questions_list']
-        distinct_values = event["distinct_values"]
-        input_data = pd.DataFrame(event["data"])
+        questions_list = event['RuntimeVariables']['questions_list']
+        distinct_values = event['RuntimeVariables']["distinct_values"]
+        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
         movement_columns = produce_columns("movement_", questions_list)
         iqrs_columns = produce_columns("iqrs_", questions_list)
         logger.info("Successfully retrieved data from event.")

@@ -26,9 +26,9 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # Environment variables
-        json_data = event["json_data"]
-        distinct_values = event["distinct_values"]
-        questions_list = event["questions_list"]
+        json_data = event['RuntimeVariables']["json_data"]
+        distinct_values = event['RuntimeVariables']["distinct_values"]
+        questions_list = event['RuntimeVariables']["questions_list"]
 
         movement_columns = imp_func.produce_columns("movement_", questions_list)
 

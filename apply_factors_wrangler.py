@@ -172,11 +172,13 @@ def lambda_handler(event, context):
             logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
-            "json_data": json.loads(
-                non_responders_with_factors.to_json(orient="records")),
-            "questions_list": questions_list,
-            "sum_columns": sum_columns,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(
+                    non_responders_with_factors.to_json(orient="records")),
+                "questions_list": questions_list,
+                "sum_columns": sum_columns,
+                "run_id": run_id
+            }
         }
 
         # Non responder data should now contain all previous values

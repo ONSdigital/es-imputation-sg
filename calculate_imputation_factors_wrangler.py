@@ -91,11 +91,13 @@ def lambda_handler(event, context):
         logger.info("Successfully wrangled data from sqs")
 
         payload = {
-            "data_json": json.loads(data.to_json(orient="records")),
-            "questions_list": questions_list,
-            "distinct_values": distinct_values,
-            "factors_parameters": factors_parameters,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "data_json": json.loads(data.to_json(orient="records")),
+                "questions_list": questions_list,
+                "distinct_values": distinct_values,
+                "factors_parameters": factors_parameters,
+                "run_id": run_id
+            }
         }
 
         # invoke the method to calculate the factors

@@ -85,9 +85,11 @@ def lambda_handler(event, context):
         data_json = data.to_json(orient='records')
 
         payload = {
-            "json_data": json.loads(data_json),
-            "questions_list": questions_list,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(data_json),
+                "questions_list": questions_list,
+                "run_id": run_id
+            }
         }
 
         logger.info("Dataframe converted to JSON")

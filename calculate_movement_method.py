@@ -30,12 +30,12 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # Declare event vars
-        movement_type = event["movement_type"]
-        json_data = event["json_data"]
-        questions_list = event["questions_list"]
-        current_period = event['current_period']
-        period_column = event['period_column']
-        previous_period = event['previous_period']
+        movement_type = event['RuntimeVariables']["movement_type"]
+        json_data = event['RuntimeVariables']["json_data"]
+        questions_list = event['RuntimeVariables']["questions_list"]
+        current_period = event['RuntimeVariables']['current_period']
+        period_column = event['RuntimeVariables']['period_column']
+        previous_period = event['RuntimeVariables']['previous_period']
 
         # Get relative calculation function
         calculation = getattr(imp_func, movement_type)

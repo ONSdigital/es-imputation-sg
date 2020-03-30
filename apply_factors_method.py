@@ -21,11 +21,11 @@ def lambda_handler(event, context):
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
-        json_data = event["json_data"]
-        sum_columns = event["sum_columns"]
+        json_data = event['RuntimeVariables']["json_data"]
+        sum_columns = event['RuntimeVariables']["sum_columns"]
         working_dataframe = pd.DataFrame(json_data)
 
-        questions_list = event["questions_list"]
+        questions_list = event['RuntimeVariables']["questions_list"]
 
         for question in questions_list:
             # Loop through each question value, impute based on factor and previous value
