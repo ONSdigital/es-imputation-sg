@@ -1,10 +1,11 @@
+import copy
 import json
 from unittest import mock
 
 import pandas as pd
 import pytest
 from es_aws_functions import test_generic_library
-from moto import mock_s3
+from moto import mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import add_regionless_method as lambda_regionless_method_function
@@ -527,6 +528,51 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
     produced_data = pd.DataFrame(json.loads(output["data"]))
 
     assert output["success"]
+    assert_frame_equal(produced_data, prepared_data)
+
+
+@mock_s3
+@mock_sqs
+@mock.patch('calculate_movement_wrangler.aws_functions.save_data',
+            side_effect=test_generic_library.replacement_save_data)
+@mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe',
+            side_effect=test_generic_library.replacement_get_dataframe)
+def test_wrangler_skip(mock_put_s3, mock_get_s3):
+    """
+    Runs the calculate_strata function that is called by the method.
+    :param mock_put_s3: A replacement function for saving to s3 which saves locally.
+    :param mock_get_s3: A replacement function for loading from local s3.
+    :return Test Pass/Fail
+    """
+    bucket_name = generic_environment_variables["bucket_name"]
+    client = test_generic_library.create_bucket(bucket_name)
+
+    wrangler_movement_skip_runtime_variables = copy.deepcopy(
+        wrangler_movement_runtime_variables)
+
+    wrangler_movement_skip_runtime_variables["RuntimeVariables"]["in_file_name"] =\
+        "test_wrangler_movement_skip_input"
+    file_list = ["test_wrangler_movement_skip_input.json"]
+    test_generic_library.upload_files(client, bucket_name, file_list)
+
+    with open("tests/fixtures/test_wrangler_movement_skip_prepared_output.json",
+              "r") as file_1:
+        test_data_prepared = file_1.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_prepared))
+
+    with mock.patch.dict(lambda_movement_wrangler_function.os.environ,
+                         generic_environment_variables):
+
+        output = lambda_movement_wrangler_function.lambda_handler(
+            wrangler_movement_skip_runtime_variables, test_generic_library.context_object
+        )
+
+    with open("tests/fixtures/" + wrangler_movement_skip_runtime_variables[
+            "RuntimeVariables"]["out_file_name_skip"], "r") as file_3:
+        test_data_produced = file_3.read()
+    produced_data = pd.DataFrame(json.loads(test_data_produced))
+
+    assert output
     assert_frame_equal(produced_data, prepared_data)
 
 

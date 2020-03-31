@@ -187,6 +187,7 @@ def lambda_handler(event, context):
             logger.info("Successfully sent the unchanged data to s3")
 
             if receipt_handler:
+                print(receipt_handler)
                 sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
             aws_functions.send_sns_message(checkpoint, sns_topic_arn,
