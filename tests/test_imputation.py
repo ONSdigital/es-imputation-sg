@@ -499,6 +499,9 @@ def test_value_error(which_lambda, expected_message, assertion):
 @pytest.mark.parametrize(
     "which_lambda,which_runtime_variables,input_data,prepared_data",
     [
+        (lambda_regionless_method_function, method_regionless_runtime_variables,
+         "tests/fixtures/test_method_regionless_input.json",
+         "tests/fixtures/test_method_regionless_prepared_output.json"),
         (lambda_means_method_function, method_means_runtime_variables,
          "tests/fixtures/test_method_means_input.json",
          "tests/fixtures/test_method_means_prepared_output.json"),
@@ -587,6 +590,11 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
     "which_lambda,which_environment_variables,which_runtime_variables," +
     "lambda_name,file_list,method_data,prepared_data",
     [
+        (lambda_regionless_wrangler_function, generic_environment_variables,
+         wrangler_regionless_runtime_variables, "add_regionless_wrangler",
+         ["test_wrangler_regionless_input.json"],
+         "tests/fixtures/test_wrangler_regionless_input.json",
+         "tests/fixtures/test_wrangler_regionless_prepared_output.json"),
         (lambda_means_wrangler_function, generic_environment_variables,
          wrangler_means_runtime_variables, "calculate_means_wrangler",
          ["test_wrangler_means_input.json"],
