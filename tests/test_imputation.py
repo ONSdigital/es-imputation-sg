@@ -507,7 +507,10 @@ def test_value_error(which_lambda, expected_message, assertion):
          "tests/fixtures/test_method_means_prepared_output.json"),
         (lambda_movement_method_function, method_movement_runtime_variables,
          "tests/fixtures/test_method_movement_input.json",
-         "tests/fixtures/test_method_movement_prepared_output.json")
+         "tests/fixtures/test_method_movement_prepared_output.json"),
+        (lambda_iqrs_method_function, method_iqrs_runtime_variables,
+         "tests/fixtures/test_method_iqrs_input.json",
+         "tests/fixtures/test_method_iqrs_prepared_output.json")
 
     ])
 def test_method_success(which_lambda, which_runtime_variables, input_data, prepared_data):
@@ -523,7 +526,7 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
 
     with open(prepared_data, "r") as file_1:
         file_data = file_1.read()
-    prepared_data = pd.DataFrame(json.loads(file_data))
+    prepared_data = pd.DataFrame(json.loads(file_data), dtype=float)
 
     with open(input_data, "r") as file_2:
         test_data = file_2.read()
@@ -532,7 +535,7 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
     output = which_lambda.lambda_handler(
         which_runtime_variables, test_generic_library.context_object)
 
-    produced_data = pd.DataFrame(json.loads(output["data"]))
+    produced_data = pd.DataFrame(json.loads(output["data"]), dtype=float)
 
     assert output["success"]
     assert_frame_equal(produced_data, prepared_data)
@@ -604,7 +607,12 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          wrangler_movement_runtime_variables, "calculate_movement_wrangler",
          ["test_wrangler_movement_input.json"],
          "tests/fixtures/test_method_movement_prepared_output.json",
-         "tests/fixtures/test_wrangler_movement_prepared_output.json")
+         "tests/fixtures/test_wrangler_movement_prepared_output.json"),
+        (lambda_iqrs_wrangler_function, generic_environment_variables,
+         wrangler_iqrs_runtime_variables, "iqrs_wrangler",
+         ["test_wrangler_iqrs_input.json"],
+         "tests/fixtures/test_method_iqrs_prepared_output.json",
+         "tests/fixtures/test_wrangler_iqrs_prepared_output.json")
     ])
 def test_wrangler_success(mock_put_s3, which_lambda, which_environment_variables,
                           which_runtime_variables, lambda_name,
