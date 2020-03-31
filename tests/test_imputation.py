@@ -102,11 +102,11 @@ method_means_runtime_variables = {
 
 method_movement_runtime_variables = {
     "RuntimeVariables": {
-        "current_data": "test_wrangler_movement_current_data_output.json",
+        "current_period": 201809,
         "json_data": None,
         "movement_type": "movement_calculation_a",
         "period_column": "period",
-        "previous_data": "test_wrangler_movement_previous_data_output.json",
+        "previous_period": 201806,
         "questions_list": questions_list,
         "run_id": "bob"
     }
@@ -468,39 +468,40 @@ def test_value_error(which_lambda, expected_message, assertion):
 ##########################################################################################
 
 
-# @mock_s3
-# @pytest.mark.parametrize(
-#     "which_lambda,which_runtime_variables,input_data,prepared_data",
-#     [
-#         (lambda_regionless_method_function, method_regionless_runtime_variables,
-#          "tests/fixtures/test_method_regionless_input.json",
-#          "tests/fixtures/test_method_regionless_prepared_output.json")
-#     ])
-# def test_method_success(which_lambda, which_runtime_variables, input_data, prepared_data):
-#     """
-#     Runs the method function.
-#     :param which_lambda: Main function.
-#     :param which_runtime_variables: RuntimeVariables. - Dict.
-#     :param input_data: File name/location of the data to be passed in. - String.
-#     :param prepared_data: File name/location of the data
-#                           to be used for comparison. - String.
-#     :return Test Pass/Fail
-#     """
-#     with open(prepared_data, "r") as file_1:
-#         file_data = file_1.read()
-#     prepared_data = pd.DataFrame(json.loads(file_data))
-#
-#     with open(input_data, "r") as file_2:
-#         test_data = file_2.read()
-#     which_runtime_variables["RuntimeVariables"]["json_data"] = test_data
-#
-#     output = which_lambda.lambda_handler(
-#         which_runtime_variables, test_generic_library.context_object)
-#
-#     produced_data = pd.DataFrame(json.loads(output["data"]))
-#
-#     assert output["success"]
-#     assert_frame_equal(produced_data, prepared_data)
+@mock_s3
+@pytest.mark.parametrize(
+    "which_lambda,which_runtime_variables,input_data,prepared_data",
+    [
+        (lambda_movement_method_function, method_movement_runtime_variables,
+         "tests/fixtures/test_method_movement_input.json",
+         "tests/fixtures/test_method_movement_prepared_output.json")
+    ])
+def test_method_success(which_lambda, which_runtime_variables, input_data, prepared_data):
+    """
+    Runs the method function.
+    :param which_lambda: Main function.
+    :param which_runtime_variables: RuntimeVariables. - Dict.
+    :param input_data: File name/location of the data to be passed in. - String.
+    :param prepared_data: File name/location of the data
+                          to be used for comparison. - String.
+    :return Test Pass/Fail
+    """
+
+    with open(prepared_data, "r") as file_1:
+        file_data = file_1.read()
+    prepared_data = pd.DataFrame(json.loads(file_data))
+
+    with open(input_data, "r") as file_2:
+        test_data = file_2.read()
+    which_runtime_variables["RuntimeVariables"]["json_data"] = test_data
+
+    output = which_lambda.lambda_handler(
+        which_runtime_variables, test_generic_library.context_object)
+
+    produced_data = pd.DataFrame(json.loads(output["data"]))
+
+    assert output["success"]
+    assert_frame_equal(produced_data, prepared_data)
 
 
 @mock_s3
