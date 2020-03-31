@@ -277,6 +277,32 @@ wrangler_regionless_runtime_variables = {
     }
 }
 
+
+def movement_splitter(which_runtime_variables):
+    with open("tests/fixtures/" +
+              which_runtime_variables["RuntimeVariables"]["current_data"],
+              "r") as file_4:
+        test_current_produced = file_4.read()
+    produced_current_data = pd.DataFrame(json.loads(test_current_produced))
+    with open("tests/fixtures/test_wrangler_movement_current_data_prepared_output.json",
+              "r") as file_5:
+        test_current_prepared = file_5.read()
+    prepared_current_data = pd.DataFrame(json.loads(test_current_prepared))
+
+    assert_frame_equal(produced_current_data, prepared_current_data)
+
+    with open("tests/fixtures/" +
+              which_runtime_variables["RuntimeVariables"]["previous_data"],
+              "r") as file_6:
+        test_previous_produced = file_6.read()
+    produced_previous_data = pd.DataFrame(json.loads(test_previous_produced))
+    with open("tests/fixtures/test_wrangler_movement_previous_data_prepared_output.json",
+              "r") as file_7:
+        test_previous_prepared = file_7.read()
+    prepared_previous_data = pd.DataFrame(json.loads(test_previous_prepared))
+
+    assert_frame_equal(produced_previous_data, prepared_previous_data)
+
 ##########################################################################################
 #                                     Generic                                            #
 ##########################################################################################
@@ -573,6 +599,9 @@ def test_wrangler_success(mock_put_s3, which_lambda, which_environment_variables
               "r") as file_3:
         test_data_produced = file_3.read()
     produced_data = pd.DataFrame(json.loads(test_data_produced))
+
+    if lambda_name == "calculate_movement_wrangler":
+        movement_splitter(which_runtime_variables)
 
     assert output
     assert_frame_equal(produced_data, prepared_data)
