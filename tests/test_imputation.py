@@ -499,9 +499,13 @@ def test_value_error(which_lambda, expected_message, assertion):
 @pytest.mark.parametrize(
     "which_lambda,which_runtime_variables,input_data,prepared_data",
     [
+        (lambda_means_method_function, method_means_runtime_variables,
+         "tests/fixtures/test_method_means_input.json",
+         "tests/fixtures/test_method_means_prepared_output.json"),
         (lambda_movement_method_function, method_movement_runtime_variables,
          "tests/fixtures/test_method_movement_input.json",
          "tests/fixtures/test_method_movement_prepared_output.json")
+
     ])
 def test_method_success(which_lambda, which_runtime_variables, input_data, prepared_data):
     """
@@ -520,7 +524,7 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
 
     with open(input_data, "r") as file_2:
         test_data = file_2.read()
-    which_runtime_variables["RuntimeVariables"]["json_data"] = test_data
+    which_runtime_variables["RuntimeVariables"]["json_data"] = json.loads(test_data)
 
     output = which_lambda.lambda_handler(
         which_runtime_variables, test_generic_library.context_object)
@@ -583,6 +587,11 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
     "which_lambda,which_environment_variables,which_runtime_variables," +
     "lambda_name,file_list,method_data,prepared_data",
     [
+        (lambda_means_wrangler_function, generic_environment_variables,
+         wrangler_means_runtime_variables, "calculate_means_wrangler",
+         ["test_wrangler_means_input.json"],
+         "tests/fixtures/test_method_means_prepared_output.json",
+         "tests/fixtures/test_wrangler_means_prepared_output.json"),
         (lambda_movement_wrangler_function, generic_environment_variables,
          wrangler_movement_runtime_variables, "calculate_movement_wrangler",
          ["test_wrangler_movement_input.json"],
