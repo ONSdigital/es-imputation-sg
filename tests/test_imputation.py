@@ -5,7 +5,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 from es_aws_functions import test_generic_library
-from moto import mock_s3, mock_sqs
+from moto import mock_s3
 from pandas.util.testing import assert_frame_equal
 
 import add_regionless_method as lambda_regionless_method_function
@@ -532,7 +532,6 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
 
 
 @mock_s3
-@mock_sqs
 @mock.patch('calculate_movement_wrangler.aws_functions.save_data',
             side_effect=test_generic_library.replacement_save_data)
 @mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe',
@@ -562,10 +561,11 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
 
     with mock.patch.dict(lambda_movement_wrangler_function.os.environ,
                          generic_environment_variables):
-
-        output = lambda_movement_wrangler_function.lambda_handler(
-            wrangler_movement_skip_runtime_variables, test_generic_library.context_object
-        )
+        with mock.patch("calculate_movement_wrangler.boto3.client") as mock_client:
+            output = lambda_movement_wrangler_function.lambda_handler(
+                wrangler_movement_skip_runtime_variables,
+                test_generic_library.context_object
+            )
 
     with open("tests/fixtures/" + wrangler_movement_skip_runtime_variables[
             "RuntimeVariables"]["out_file_name_skip"], "r") as file_3:
