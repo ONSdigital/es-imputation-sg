@@ -599,3 +599,53 @@ def test_value_error(which_lambda, expected_message, assertion):
 #
 #     assert output
 #     assert_frame_equal(produced_data, prepared_data)
+
+def test_factors_calculation_a():
+    assert True
+
+
+def test_factors_calculation_b():
+    assert True
+
+
+@pytest.mark.parametrize(
+    "which_current,which_previous,answer",
+    [
+        (100, 10, 9),
+        (6, 5, 0.2)
+    ])
+def test_movement_calculation_a(which_current, which_previous, answer):
+    output = lambda_imputation_function.movement_calculation_a(
+        which_current, which_previous)
+    assert output == answer
+
+
+@pytest.mark.parametrize(
+    "which_current,which_previous,answer",
+    [
+        (100, 10, 10),
+        (6, 5, 1.2)
+    ])
+def test_movement_calculation_b(which_current, which_previous, answer):
+    output = lambda_imputation_function.movement_calculation_b(
+        which_current, which_previous)
+    assert output == answer
+
+
+@pytest.mark.parametrize(
+    "which_prefix,which_columns,which_additional,which_suffix,answer",
+    [
+        ("A_", ["One", "Two"], [], "",
+         ['A_One', 'A_Two']),
+        ("B_", ["One", "Two"], [], "_X",
+         ['B_One_X', 'B_Two_X']),
+        ("C_", ["One", "Two"], ["Three", "Four"], "",
+         ['C_One', 'C_Two', 'Three', 'Four']),
+        ("D_", ["One", "Two"], ["Three", "Four"], "_Z",
+         ['D_One_Z', 'D_Two_Z', 'Three', 'Four'])
+    ])
+def test_produce_columns(which_prefix, which_columns, which_additional, which_suffix,
+                         answer):
+    output = lambda_imputation_function.produce_columns(which_prefix, which_columns,
+                                                        which_additional, which_suffix)
+    assert output == answer
