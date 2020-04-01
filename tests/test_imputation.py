@@ -360,24 +360,42 @@ def test_client_error(which_lambda, which_runtime_variables,
                                       expected_message, assertion)
 
 
-# Imputation Is A Special Snowflake And Not Everything Has A EnvironSchema.
-# @pytest.mark.parametrize(
-#     "which_lambda,which_runtime_variables,which_environment_variables,mockable_function,"
-#     "expected_message,assertion",
-#     [
-#         (lambda_method_function, method_runtime_variables,
-#          method_environment_variables, "strata_period_method.EnvironSchema",
-#          "'Exception'", test_generic_library.method_assert),
-#         (lambda_wrangler_function, wrangler_runtime_variables,
-#          wrangler_environment_variables, "strata_period_wrangler.EnvironSchema",
-#          "'Exception", test_generic_library.wrangler_assert)
-#     ])
-# def test_general_error(which_lambda, which_runtime_variables,
-#                        which_environment_variables, mockable_function,
-#                        expected_message, assertion):
-#     test_generic_library.general_error(which_lambda, which_runtime_variables,
-#                                        which_environment_variables, mockable_function,
-#                                        expected_message, assertion)
+@pytest.mark.parametrize(
+    "which_lambda,which_runtime_variables,which_environment_variables,mockable_function,"
+    "expected_message,assertion",
+    [
+        (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
+         generic_environment_variables, "add_regionless_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+         generic_environment_variables, "apply_factors_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
+         generic_environment_variables, "atypicals_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
+         generic_environment_variables,
+         "calculate_imputation_factors_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_means_wrangler_function, wrangler_means_runtime_variables,
+         generic_environment_variables, "calculate_means_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
+         generic_environment_variables, "calculate_movement_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
+         generic_environment_variables, "iqrs_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert),
+        (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
+         generic_environment_variables, "recalculate_means_wrangler.EnvironSchema",
+         "Exception", test_generic_library.wrangler_assert)
+    ])
+def test_general_error(which_lambda, which_runtime_variables,
+                       which_environment_variables, mockable_function,
+                       expected_message, assertion):
+    test_generic_library.general_error(which_lambda, which_runtime_variables,
+                                       which_environment_variables, mockable_function,
+                                       expected_message, assertion)
 
 
 @mock_s3
