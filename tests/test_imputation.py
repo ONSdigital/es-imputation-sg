@@ -778,6 +778,26 @@ def test_factors_calculation_b():
     assert True
 
 
+def test_cal_iqrs():
+    assert True
+
+
+def test_iqr_sum():
+    assert True
+
+
+def test_do_check():
+    assert True
+
+
+def test_sum_data_columns():
+    assert True
+
+
+def test_calc_atypicals():
+    assert True
+
+
 @pytest.mark.parametrize(
     "which_current,which_previous,answer",
     [
