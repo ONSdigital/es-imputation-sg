@@ -380,47 +380,50 @@ def test_client_error(which_lambda, which_runtime_variables,
 #                                        expected_message, assertion)
 
 
-# Needs Files Prepared.
-# @mock_s3
-# @pytest.mark.parametrize(
-#     "which_lambda,which_environment_variables,file_list,lambda_name,expected_message",
-#     [
-#         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "add_regionless_wrangler", "IncompleteReadError"),
-#         (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "apply_factors_wrangler", "IncompleteReadError"),
-#         (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "atypicals_wrangler", "IncompleteReadError"),
-#         (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "calculate_imputation_factors_wrangler", "IncompleteReadError"),
-#         (lambda_means_wrangler_function, wrangler_means_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "calculate_means_wrangler", "IncompleteReadError"),
-#         (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "calculate_movement_wrangler", "IncompleteReadError"),
-#         (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "iqrs_wrangler", "IncompleteReadError"),
-#         (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
-#          generic_environment_variables, ["test_wrangler_input.json"],
-#          "recalculate_means_wrangler", "IncompleteReadError")
-#     ])
-# def test_incomplete_read_error(which_lambda, which_runtime_variables,
-#                                which_environment_variables, file_list,
-#                                lambda_name, expected_message):
-#     with mock.patch(lambda_name + '.aws_functions.get_dataframe',
-#             side_effect=test_generic_library.replacement_get_dataframe)
-#         test_generic_library.incomplete_read_error(which_lambda,
-#                                                    which_runtime_variables,
-#                                                    which_environment_variables,
-#                                                    file_list,
-#                                                    lambda_name,
-#                                                    expected_message)
+@mock_s3
+@pytest.mark.parametrize(
+    "which_lambda,which_runtime_variables,which_environment_variables," +
+    "file_list,lambda_name,expected_message",
+    [
+        (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
+         generic_environment_variables, ["test_wrangler_regionless_input.json"],
+         "add_regionless_wrangler", "IncompleteReadError"),
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+         generic_environment_variables,
+         ["test_wrangler_apply_input.json",
+          "test_wrangler_movement_current_data_prepared_output.json",
+          "test_wrangler_movement_previous_data_prepared_output.json"],
+         "apply_factors_wrangler", "IncompleteReadError"),
+        (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
+         generic_environment_variables, ["test_wrangler_atypicals_input.json"],
+         "atypicals_wrangler", "IncompleteReadError"),
+        (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
+         generic_environment_variables, ["test_wrangler_factors_input.json"],
+         "calculate_imputation_factors_wrangler", "IncompleteReadError"),
+        (lambda_means_wrangler_function, wrangler_means_runtime_variables,
+         generic_environment_variables, ["test_wrangler_means_input.json"],
+         "calculate_means_wrangler", "IncompleteReadError"),
+        (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
+         generic_environment_variables, ["test_wrangler_movement_input.json"],
+         "calculate_movement_wrangler", "IncompleteReadError"),
+        (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
+         generic_environment_variables, ["test_wrangler_iqrs_input.json"],
+         "iqrs_wrangler", "IncompleteReadError"),
+        (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
+         generic_environment_variables, ["test_wrangler_recalc_input.json"],
+         "recalculate_means_wrangler", "IncompleteReadError")
+    ])
+def test_incomplete_read_error(which_lambda, which_runtime_variables,
+                               which_environment_variables, file_list,
+                               lambda_name, expected_message):
+    with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+                    side_effect=test_generic_library.replacement_get_dataframe):
+        test_generic_library.incomplete_read_error(which_lambda,
+                                                   which_runtime_variables,
+                                                   which_environment_variables,
+                                                   file_list,
+                                                   lambda_name,
+                                                   expected_message)
 
 
 @pytest.mark.parametrize(
