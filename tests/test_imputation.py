@@ -466,18 +466,49 @@ def test_key_error(which_lambda, which_environment_variables,
                                    expected_message, assertion)
 
 
-# Do Incomplete Read First.
-# @mock_s3
-# @mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
-#             side_effect=test_generic_library.replacement_get_dataframe)
-# def test_method_error(mock_s3_get):
-#     file_list = ["test_wrangler_input.json"]
-#
-#     test_generic_library.wrangler_method_error(lambda_wrangler_function,
-#                                                wrangler_runtime_variables,
-#                                                wrangler_environment_variables,
-#                                                file_list,
-#                                                "strata_period_wrangler")
+@mock_s3
+@pytest.mark.parametrize(
+    "which_lambda,which_runtime_variables,which_environment_variables," +
+    "file_list,lambda_name",
+    [
+        (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
+         generic_environment_variables, ["test_wrangler_regionless_input.json"],
+         "add_regionless_wrangler"),
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+         generic_environment_variables,
+         ["test_wrangler_apply_input.json",
+          "test_wrangler_movement_current_data_prepared_output.json",
+          "test_wrangler_movement_previous_data_prepared_output.json"],
+         "apply_factors_wrangler"),
+        (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
+         generic_environment_variables, ["test_wrangler_atypicals_input.json"],
+         "atypicals_wrangler"),
+        (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
+         generic_environment_variables, ["test_wrangler_factors_input.json"],
+         "calculate_imputation_factors_wrangler"),
+        (lambda_means_wrangler_function, wrangler_means_runtime_variables,
+         generic_environment_variables, ["test_wrangler_means_input.json"],
+         "calculate_means_wrangler"),
+        (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
+         generic_environment_variables, ["test_wrangler_movement_input.json"],
+         "calculate_movement_wrangler"),
+        (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
+         generic_environment_variables, ["test_wrangler_iqrs_input.json"],
+         "iqrs_wrangler"),
+        (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
+         generic_environment_variables, ["test_wrangler_recalc_input.json"],
+         "recalculate_means_wrangler")
+    ])
+def test_method_error(which_lambda, which_runtime_variables, which_environment_variables,
+                      file_list, lambda_name):
+
+    with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+                    side_effect=test_generic_library.replacement_get_dataframe):
+        test_generic_library.wrangler_method_error(which_lambda,
+                                                   which_runtime_variables,
+                                                   which_environment_variables,
+                                                   file_list,
+                                                   lambda_name)
 
 
 ##########################################################################################
