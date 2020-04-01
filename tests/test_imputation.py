@@ -620,7 +620,12 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          wrangler_iqrs_runtime_variables, "iqrs_wrangler",
          ["test_wrangler_iqrs_input.json"],
          "tests/fixtures/test_method_iqrs_prepared_output.json",
-         "tests/fixtures/test_wrangler_iqrs_prepared_output.json")
+         "tests/fixtures/test_wrangler_iqrs_prepared_output.json"),
+        (lambda_recalc_wrangler_function, generic_environment_variables,
+         wrangler_recalc_runtime_variables, "recalculate_means_wrangler",
+         ["test_wrangler_recalc_input.json"],
+         "tests/fixtures/test_method_recalc_prepared_output.json",
+         "tests/fixtures/test_wrangler_recalc_prepared_output.json")
     ])
 def test_wrangler_success(mock_put_s3, which_lambda, which_environment_variables,
                           which_runtime_variables, lambda_name,

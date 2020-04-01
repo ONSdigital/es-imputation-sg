@@ -1,0 +1,14 @@
+
+        (lambda_means_method_function, method_means_runtime_variables,
+         "tests/fixtures/test_method_recalc_input.json",
+         "tests/fixtures/test_method_recalc_prepared_output.json")
+
+Should We Be Trying To Test That The Data Prepared In The Wrangler Is Suitable For The Method?
+
+Bonus Functions
+Apply  Both
+Atypic Method
+Imputation Functions File
+IQRS   Method
+
+In Aggregation Splitter Has A PR As It Calls Regionless.
