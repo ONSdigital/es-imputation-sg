@@ -138,7 +138,7 @@ method_regionless_runtime_variables = {
 
 wrangler_apply_runtime_variables = {
     "RuntimeVariables": {
-        "current_data": "test_wrangler_movement_prepared_current_data_output.json",
+        "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region", "strata"],
         "factors_parameters": {
             "RuntimeVariables": {
@@ -151,7 +151,7 @@ wrangler_apply_runtime_variables = {
         "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
         "outgoing_message_group_id": "test_id",
-        "previous_data": "test_wrangler_movement_prepared_previous_data_output.json",
+        "previous_data": "test_wrangler_movement_previous_data_prepared_output",
         "questions_list": questions_list,
         "queue_url": "Earl",
         "run_id": "bob",
@@ -516,6 +516,9 @@ def test_value_error(which_lambda, expected_message, assertion):
         (lambda_regionless_method_function, method_regionless_runtime_variables,
          "tests/fixtures/test_method_regionless_input.json",
          "tests/fixtures/test_method_regionless_prepared_output.json"),
+        (lambda_apply_method_function, method_apply_runtime_variables,
+         "tests/fixtures/test_method_apply_input.json",
+         "tests/fixtures/test_method_apply_prepared_output.json"),
         (lambda_atypicals_method_function, method_atypicals_runtime_variables,
          "tests/fixtures/test_method_atypicals_input.json",
          "tests/fixtures/test_method_atypicals_prepared_output.json"),
@@ -618,6 +621,13 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          ["test_wrangler_regionless_input.json"],
          "tests/fixtures/test_wrangler_regionless_input.json",
          "tests/fixtures/test_wrangler_regionless_prepared_output.json"),
+        (lambda_apply_wrangler_function, generic_environment_variables,
+         wrangler_apply_runtime_variables, "apply_factors_wrangler",
+         ["test_wrangler_apply_input.json",
+          "test_wrangler_movement_current_data_prepared_output.json",
+          "test_wrangler_movement_previous_data_prepared_output.json"],
+         "tests/fixtures/test_method_apply_prepared_output.json",
+         "tests/fixtures/test_wrangler_apply_prepared_output.json"),
         (lambda_atypicals_wrangler_function, generic_environment_variables,
          wrangler_atypicals_runtime_variables, "atypicals_wrangler",
          ["test_wrangler_atypicals_input.json"],
