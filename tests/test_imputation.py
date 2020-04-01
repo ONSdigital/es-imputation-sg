@@ -76,7 +76,21 @@ method_atypicals_runtime_variables = {
 method_factors_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
-        "factors_parameters": "test_param",
+        "factors_parameters": {
+            "RuntimeVariables": {
+                "factors_type": "factors_calculation_a",
+                "first_imputation_factor": 0,
+                "first_threshold": 3,
+                "percentage_movement": True,
+                "region_column": "region",
+                "regional_mean": "third_imputation_factors",
+                "regionless_code": 14,
+                "second_imputation_factor": 1,
+                "second_threshold": 3,
+                "survey_column": "survey",
+                "third_threshold": 5
+            }
+        },
         "json_data": None,
         "questions_list": questions_list,
         "run_id": "bob"
@@ -505,6 +519,9 @@ def test_value_error(which_lambda, expected_message, assertion):
         (lambda_atypicals_method_function, method_atypicals_runtime_variables,
          "tests/fixtures/test_method_atypicals_input.json",
          "tests/fixtures/test_method_atypicals_prepared_output.json"),
+        (lambda_factors_method_function, method_factors_runtime_variables,
+         "tests/fixtures/test_method_factors_input.json",
+         "tests/fixtures/test_method_factors_prepared_output.json"),
         (lambda_means_method_function, method_means_runtime_variables,
          "tests/fixtures/test_method_means_input.json",
          "tests/fixtures/test_method_means_prepared_output.json"),
@@ -606,6 +623,11 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          ["test_wrangler_atypicals_input.json"],
          "tests/fixtures/test_method_atypicals_prepared_output.json",
          "tests/fixtures/test_wrangler_atypicals_prepared_output.json"),
+        (lambda_factors_wrangler_function, generic_environment_variables,
+         wrangler_factors_runtime_variables, "calculate_imputation_factors_wrangler",
+         ["test_wrangler_factors_input.json"],
+         "tests/fixtures/test_method_factors_prepared_output.json",
+         "tests/fixtures/test_wrangler_factors_prepared_output.json"),
         (lambda_means_wrangler_function, generic_environment_variables,
          wrangler_means_runtime_variables, "calculate_means_wrangler",
          ["test_wrangler_means_input.json"],
