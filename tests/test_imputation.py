@@ -44,8 +44,8 @@ imputation_functions = {
             {
                 "imputation_factor_question_1": 55,
                 "region": 1,
-                "strata_a": "A",
-                "strata_b": "B",
+                "strata_A": "A",
+                "strata_B": "B",
                 "survey": "066"
             }
         ]
@@ -828,10 +828,10 @@ def test_wrangler_success(mock_put_s3, which_lambda, which_environment_variables
          "tests/fixtures/test_imputation_functions_factors_a_region_prepared_output.json",
          False),
         ("tests/fixtures/test_imputation_functions_factors_a_input.json",
-         "tests/fixtures/test_imputation_functions_factors_a_single_prepared_output.json",
+         "tests/fixtures/test_imputation_functions_factors_a_prepared_output.json",
          False),
         ("tests/fixtures/test_imputation_functions_factors_a_input.json",
-         "tests/fixtures/test_imputation_functions_factors_a_multi_prepared_output.json",
+         "tests/fixtures/test_imputation_functions_factors_a_prepared_output.json",
          True)
     ])
 def test_factors_calculation_a(input_file, output_file, parameters):
@@ -853,11 +853,6 @@ def test_factors_calculation_a(input_file, output_file, parameters):
     produced_data = produced_data.apply(
         lambda x: lambda_imputation_function.factors_calculation_a(
             x, question_list, imputation_functions), axis=1)
-
-    data = produced_data.to_json(orient="records")
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(data)
-        f.close()
 
     with open(output_file, "r") as file_2:
         test_data_out = file_2.read()
