@@ -82,7 +82,7 @@ method_apply_runtime_variables = {
                 "Q604_bituminous_gravel": "+",
                 "Q605_concreting_gravel": "+",
                 "Q606_other_gravel": "+",
-                "Q607_constructional_fill": "+"
+                "Q607_constructional_fill": "-"
               }
             }
           ]
@@ -190,7 +190,7 @@ wrangler_apply_runtime_variables = {
                 "Q604_bituminous_gravel": "+",
                 "Q605_concreting_gravel": "+",
                 "Q606_other_gravel": "+",
-                "Q607_constructional_fill": "+"
+                "Q607_constructional_fill": "-"
               }
             }
           ],
