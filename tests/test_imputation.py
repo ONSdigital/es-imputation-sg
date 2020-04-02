@@ -891,7 +891,7 @@ def test_factors_calculation_b():
 def test_calc_iqrs():
     with open("tests/fixtures/test_calc_iqrs_input.json", "r") as file_1:
         test_data_in = file_1.read()
-    input_data = pd.DataFrame(json.loads(test_data_in))
+    input_data = pd.DataFrame(json.loads(test_data_in), dtype=float)
 
     q_list = method_iqrs_runtime_variables['RuntimeVariables']['questions_list']
     distinct_values = method_iqrs_runtime_variables['RuntimeVariables']["distinct_values"]
@@ -909,21 +909,55 @@ def test_calc_iqrs():
     with open("tests/fixtures/test_calc_iqrs_prepared_output.json",
               "r") as file_2:
         test_data_out = file_2.read()
-    prepared_data = pd.DataFrame(json.loads(test_data_out))
+    prepared_data = pd.DataFrame(json.loads(test_data_out), dtype=float)
 
     assert_frame_equal(produced_data, prepared_data)
 
 
-def test_iqr_sum():
-    assert True
+@pytest.mark.parametrize(
+    "input_file,quest,prepared_data",
+    [
+        ("tests/fixtures/test_iqr_sum_even_input.json",
+         "movement_Q602_building_soft_sand",
+         3.2758616305999997),
+        ("tests/fixtures/test_iqr_sum_odd_input.json",
+         "movement_Q605_concreting_gravel",
+         0.9185712496)
+    ])
+def test_iqr_sum(input_file, quest, prepared_data):
+    with open(input_file, "r") as file_1:
+        test_data_in = file_1.read()
+    input_data = pd.DataFrame(json.loads(test_data_in))
+
+    produced_data = lambda_iqrs_method_function.iqr_sum(input_data, quest)
+
+    assert produced_data == prepared_data
 
 
 def test_do_check():
     assert True
 
 
-def test_sum_data_columns():
-    assert True
+@pytest.mark.parametrize(
+    "columns,prepared_data",
+    [
+        ([{"column_name": "D", "data": {"A": "+", "B": "+", "C": "+"}}], 9),
+        ([{"column_name": "D", "data": {"A": "+", "B": "+", "C": "-"}}], 1)
+    ])
+def test_sum_data_columns(columns, prepared_data):
+
+    working_dataframe = pd.DataFrame(
+        [
+            {"A": 2, "B": 3, "C": 4, "D": 0}
+        ]
+    )
+
+    working_dataframe = working_dataframe.apply(
+        lambda x: lambda_apply_method_function.sum_data_columns(x, columns), axis=1)
+
+    produced_data = working_dataframe[columns[0]["column_name"]][0]
+
+    assert produced_data == prepared_data
 
 
 def test_calc_atypicals():
