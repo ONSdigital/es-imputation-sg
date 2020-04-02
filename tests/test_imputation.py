@@ -33,6 +33,20 @@ generic_environment_variables = {
     "run_environment": "temporary"
 }
 
+imputation_functions = {
+    "first_threshold": 2,
+    "second_threshold": 2,
+    "third_threshold": 2,
+    "first_imputation_factor": 5,
+    "second_imputation_factor": 10,
+    "third_imputation_factors": 15,
+    "region_column": "region",
+    "regionless_code": 14,
+    "survey_column": "survey",
+    "percentage_movement": True,
+    "distinct_values": ["region"]
+}
+
 questions_list = [
     "Q601_asphalting_sand",
     "Q602_building_soft_sand",
@@ -797,37 +811,54 @@ def test_wrangler_success(mock_put_s3, which_lambda, which_environment_variables
     assert_frame_equal(produced_data, prepared_data)
 
 
-def test_factors_calculation_a():
-#     """
-#     Runs the calculate_strata function that is called by the method.
-#     :param None
-#     :return Test Pass/Fail
-#     """
-#     with open("tests/fixtures/test_method_input.json", "r") as file_1:
-#         file_data = file_1.read()
-#     input_data = pd.DataFrame(json.loads(file_data))
-#
-#     produced_data = input_data.apply(
-#         lambda_method_function.calculate_strata,
-#         strata_column="strata",
-#         value_column="Q608_total",
-#         survey_column="survey",
-#         region_column="region",
-#         axis=1,
-#     )
-#     produced_data = produced_data.sort_index(axis=1)
-#
-#     with open("tests/fixtures/test_method_prepared_output.json", "r") as file_2:
-#         file_data = file_2.read()
-#     prepared_data = pd.DataFrame(json.loads(file_data))
-#
-#     assert_frame_equal(produced_data, prepared_data)
-    assert True
+@pytest.mark.parametrize(
+    "input_file,output_file,parameters",
+    [
+        ("tests/fixtures/test_imputation_functions_factors_a_region_input.json",
+         "tests/fixtures/test_imputation_functions_factors_a_region_prepared_output.json",
+         False),
+        ("tests/fixtures/test_imputation_functions_factors_a_input.json",
+         "tests/fixtures/test_imputation_functions_factors_a_single_prepared_output.json",
+         False),
+        ("tests/fixtures/test_imputation_functions_factors_a_input.json",
+         "tests/fixtures/test_imputation_functions_factors_a_multi_prepared_output.json",
+         True)
+    ])
+def test_factors_calculation_a(input_file, output_file, parameters):
+    """
+    Runs the factors_calculation_a function.
+    :param input_file
+    :param output_file
+    :param parameters
+    :return Test Pass/Fail
+    """
+    question_list = ["question_1"]
+    if parameters:
+        imputation_functions["distinct_values"] = ["region", "strata_A", "strata_B"]
+
+    with open(input_file, "r") as file_1:
+        test_data_in = file_1.read()
+    produced_data = pd.DataFrame(json.loads(test_data_in))
+
+    produced_data = produced_data.apply(
+        lambda x: lambda_imputation_function.factors_calculation_a(
+            x, question_list, imputation_functions), axis=1)
+
+    data = produced_data.to_json(orient="records")
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(data)
+        f.close()
+
+    with open(output_file, "r") as file_2:
+        test_data_out = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_out))
+
+    assert_frame_equal(produced_data, prepared_data)
 
 
 def test_factors_calculation_b():
     """
-    Runs the strata_mismatch_detector function that is called by the wrangler.
+    Runs the factors_calculation_b function.
     :param None
     :return Test Pass/Fail
     """

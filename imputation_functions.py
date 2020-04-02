@@ -41,7 +41,8 @@ def factors_calculation_a(row, questions, parameters):
         - third_threshold: One of three thresholds to compare the question count to.
         - first_imputation_factor: One of three factors to be assigned to the question.
         - second_imputation_factor: One of three factors to be assigned to the question.
-        - third_imputation_factor: One of three factors to be assigned to the question.
+        - third_imputation_factors: A Dataframe containing factors
+        to be assigned to the questions.
         - region_column: The name of the column that holds region.
         - regionless_code: The value used as 'all GB' in the 'region_column'
         - survey_column: Column name of the dataframe containing the survey code.
