@@ -826,30 +826,26 @@ def test_factors_calculation_a():
 
 
 def test_factors_calculation_b():
-#     Runs the strata_mismatch_detector function that is called by the wrangler.
-#     :param None
-#     :return Test Pass/Fail
-#     """
-#     with open("tests/fixtures/test_method_output.json", "r") as file_1:
-#         test_data_in = file_1.read()
-#     method_data = pd.DataFrame(json.loads(test_data_in))
-#
-#     produced_data, anomalies = lambda_wrangler_function.strata_mismatch_detector(
-#         method_data,
-#         "201809", "period",
-#         "responder_id", "strata",
-#         "good_strata",
-#         "current_period",
-#         "previous_period",
-#         "current_strata",
-#         "previous_strata")
-#
-#     with open("tests/fixtures/test_wrangler_prepared_output.json", "r") as file_2:
-#         test_data_out = file_2.read()
-#     prepared_data = pd.DataFrame(json.loads(test_data_out))
-#
-#     assert_frame_equal(produced_data, prepared_data)
-    assert True
+    """
+    Runs the strata_mismatch_detector function that is called by the wrangler.
+    :param None
+    :return Test Pass/Fail
+    """
+    with open("tests/fixtures/test_imputation_functions_factors_b_input.json", "r")\
+            as file_1:
+        test_data_in = file_1.read()
+    produced_data = pd.DataFrame(json.loads(test_data_in))
+
+    produced_data = produced_data.apply(
+        lambda x: lambda_imputation_function.factors_calculation_b(
+            x, ["question_1"], {"threshold": 2}), axis=1)
+
+    with open("tests/fixtures/test_imputation_functions_factors_b_prepared_output.json",
+              "r") as file_2:
+        test_data_out = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_out))
+
+    assert_frame_equal(produced_data, prepared_data)
 
 
 def test_cal_iqrs():
