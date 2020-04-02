@@ -976,7 +976,38 @@ def test_sum_data_columns(columns, prepared_data):
 
 
 def test_calc_atypicals():
-    assert True
+
+    with open("tests/fixtures/test_calc_atypicals_input.json", "r") as file_1:
+        test_data_in = file_1.read()
+    input_data = pd.DataFrame(json.loads(test_data_in))
+
+    quest_list = method_atypicals_runtime_variables[
+        'RuntimeVariables']['questions_list']
+
+    # Produce columns
+    atypical_columns = lambda_imputation_function.produce_columns("atyp_", quest_list)
+    movement_columns = lambda_imputation_function.produce_columns("movement_", quest_list)
+    iqrs_columns = lambda_imputation_function.produce_columns("iqrs_", quest_list)
+    mean_columns = lambda_imputation_function.produce_columns("mean_", quest_list)
+
+    out_data = lambda_atypicals_method_function.calc_atypicals(
+        input_data,
+        atypical_columns,
+        movement_columns,
+        iqrs_columns,
+        mean_columns
+    )
+
+    # This is for Int, Float mismatch correction.
+    json_data = out_data.to_json(orient="records")
+    produced_data = pd.DataFrame(json.loads(json_data), dtype=float)
+
+    with open("tests/fixtures/test_calc_atypicals_prepared_output.json",
+              "r") as file_2:
+        test_data_out = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_out), dtype=float)
+
+    assert_frame_equal(produced_data, prepared_data)
 
 
 @pytest.mark.parametrize(

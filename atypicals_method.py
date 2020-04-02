@@ -28,10 +28,10 @@ def lambda_handler(event, context):
         input_data = pd.DataFrame(event['RuntimeVariables']['json_data'])
         questions_list = event['RuntimeVariables']['questions_list']
         # Produce columns
-        atypical_columns = imp_func.produce_columns("atyp_", questions_list, [])
-        movement_columns = imp_func.produce_columns("movement_", questions_list, [])
-        iqrs_columns = imp_func.produce_columns("iqrs_", questions_list, [])
-        mean_columns = imp_func.produce_columns("mean_", questions_list, [])
+        atypical_columns = imp_func.produce_columns("atyp_", questions_list)
+        movement_columns = imp_func.produce_columns("movement_", questions_list)
+        iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
+        mean_columns = imp_func.produce_columns("mean_", questions_list)
 
         logger.info("Successfully retrieved data from event.")
 
