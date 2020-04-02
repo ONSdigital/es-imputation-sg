@@ -39,7 +39,17 @@ imputation_functions = {
     "third_threshold": 2,
     "first_imputation_factor": 5,
     "second_imputation_factor": 10,
-    "third_imputation_factors": 15,
+    "third_imputation_factors": pd.DataFrame(
+        [
+            {
+                "imputation_factor_question_1": 55,
+                "region": 1,
+                "strata_a": "A",
+                "strata_b": "B",
+                "survey": "066"
+            }
+        ]
+    ),
     "region_column": "region",
     "regionless_code": 14,
     "survey_column": "survey",

@@ -1,0 +1,22 @@
+[
+    {
+        "imputation_factor_question_1": 55,
+        "mean_question_1": 3,
+        "movement_question_1_count": 1,
+        "question_1": 605,
+        "region": 1,
+        "strata_A": "A",
+        "strata_B": "B",
+        "survey": "066"
+    },
+    {
+        "imputation_factor_question_1": 4,
+        "mean_question_1": 3,
+        "movement_question_1_count": 2,
+        "question_1": 606,
+        "region": 2,
+        "strata_A": "A",
+        "strata_B": "B",
+        "survey": "066"
+    }
+]
