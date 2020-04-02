@@ -888,8 +888,30 @@ def test_factors_calculation_b():
     assert_frame_equal(produced_data, prepared_data)
 
 
-def test_cal_iqrs():
-    assert True
+def test_calc_iqrs():
+    with open("tests/fixtures/test_calc_iqrs_input.json", "r") as file_1:
+        test_data_in = file_1.read()
+    input_data = pd.DataFrame(json.loads(test_data_in))
+
+    q_list = method_iqrs_runtime_variables['RuntimeVariables']['questions_list']
+    distinct_values = method_iqrs_runtime_variables['RuntimeVariables']["distinct_values"]
+
+    movement_columns = lambda_imputation_function.produce_columns("movement_",
+                                                                  q_list)
+    iqrs_columns = lambda_imputation_function.produce_columns("iqrs_", q_list)
+
+    produced_data = lambda_iqrs_method_function.calc_iqrs(
+        input_data,
+        movement_columns,
+        iqrs_columns,
+        distinct_values
+    )
+    with open("tests/fixtures/test_calc_iqrs_prepared_output.json",
+              "r") as file_2:
+        test_data_out = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_out))
+
+    assert_frame_equal(produced_data, prepared_data)
 
 
 def test_iqr_sum():
