@@ -848,15 +848,19 @@ def test_factors_calculation_a(input_file, output_file, parameters):
 
     with open(input_file, "r") as file_1:
         test_data_in = file_1.read()
-    produced_data = pd.DataFrame(json.loads(test_data_in))
+    input_data = pd.DataFrame(json.loads(test_data_in))
 
-    produced_data = produced_data.apply(
+    input_data = input_data.apply(
         lambda x: lambda_imputation_function.factors_calculation_a(
             x, question_list, imputation_functions), axis=1)
 
+    # This is for Int, Float mismatch correction.
+    json_data = input_data.to_json(orient="records")
+    produced_data = pd.DataFrame(json.loads(json_data), dtype=float)
+
     with open(output_file, "r") as file_2:
         test_data_out = file_2.read()
-    prepared_data = pd.DataFrame(json.loads(test_data_out))
+    prepared_data = pd.DataFrame(json.loads(test_data_out), dtype=float)
 
     assert_frame_equal(produced_data, prepared_data)
 
