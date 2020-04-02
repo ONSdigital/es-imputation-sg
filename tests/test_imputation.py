@@ -692,7 +692,7 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
 
     with mock.patch.dict(lambda_movement_wrangler_function.os.environ,
                          generic_environment_variables):
-        with mock.patch("calculate_movement_wrangler.boto3.client") as mock_client:
+        with mock.patch("calculate_movement_wrangler.boto3.client") as mock_client:  # noqa: F841 E501
             output = lambda_movement_wrangler_function.lambda_handler(
                 wrangler_movement_skip_runtime_variables,
                 test_generic_library.context_object
