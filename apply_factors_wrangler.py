@@ -79,17 +79,18 @@ def lambda_handler(event, context):
 
         logger.info("Retrieved configuration variables.")
 
-        # Get data from module that preceded imputation
-        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
-                                                          location)
-        # Split out non responder data from input
-        non_responder_dataframe = input_data[input_data[response_type] == 1]
-        logger.info("Successfully retrieved raw-input data from s3")
-
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, location)
         logger.info("Successfully retrieved factors data from s3")
+
+        # Get data from module that preceded imputation
+        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
+                                                          location)
+
+        # Split out non responder data from input
+        non_responder_dataframe = input_data[input_data[response_type] == 1]
+        logger.info("Successfully retrieved raw-input data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
@@ -150,7 +151,7 @@ def lambda_handler(event, context):
                                     distinct_values)
                 ][factors_dataframe[region_column] == regionless_code]
 
-            if merge_values is not None:
+            if len(merge_values) != 0:
                 # Basic merge where we have values to merge on.
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,
@@ -172,11 +173,13 @@ def lambda_handler(event, context):
             logger.info("Successfully merged missing rows with non_responders")
 
         payload = {
-            "json_data": json.loads(
-                non_responders_with_factors.to_json(orient="records")),
-            "questions_list": questions_list,
-            "sum_columns": sum_columns,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(
+                    non_responders_with_factors.to_json(orient="records")),
+                "questions_list": questions_list,
+                "sum_columns": sum_columns,
+                "run_id": run_id
+            }
         }
 
         # Non responder data should now contain all previous values

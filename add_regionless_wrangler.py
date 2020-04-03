@@ -80,11 +80,13 @@ def lambda_handler(event, context):
         logger.info("Successfully retrieved input data from s3")
 
         payload = {
-            "json_data": json.loads(
-                input_data.to_json(orient="records")),
-            "regionless_code": regionless_code,
-            "region_column": region_column,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(
+                    input_data.to_json(orient="records")),
+                "regionless_code": regionless_code,
+                "region_column": region_column,
+                "run_id": run_id
+            }
         }
 
         # Pass the data for processing (adding of the regionless region)

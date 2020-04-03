@@ -1,0 +1,42 @@
+[
+    {
+        "imputation_factor_question_1": 6,
+        "mean_question_1": 3,
+        "movement_question_1_count": 1,
+        "question_1": 600,
+        "region": 14,
+        "survey": "066"
+    },
+    {
+        "imputation_factor_question_1": 4,
+        "mean_question_1": 3,
+        "movement_question_1_count": 2,
+        "question_1": 601,
+        "region": 14,
+        "survey": "066"
+    },
+    {
+        "imputation_factor_question_1": 11,
+        "mean_question_1": 3,
+        "movement_question_1_count": 1,
+        "question_1": 602,
+        "region": 14,
+        "survey": "076"
+    },
+    {
+        "imputation_factor_question_1": 4,
+        "mean_question_1": 3,
+        "movement_question_1_count": 2,
+        "question_1": 603,
+        "region": 14,
+        "survey": "076"
+    },
+    {
+        "imputation_factor_question_1": 1,
+        "mean_question_1": 3,
+        "movement_question_1_count": 1,
+        "question_1": 604,
+        "region": 14,
+        "survey": "086"
+    }
+]

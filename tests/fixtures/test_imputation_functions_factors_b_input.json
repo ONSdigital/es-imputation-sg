@@ -1,0 +1,14 @@
+[
+    {
+        "question_1": 600,
+        "movement_question_1_count": 1,
+        "imputation_factor_question_1": 99,
+        "mean_question_1": 2
+    },
+    {
+        "question_1": 601,
+        "movement_question_1_count": 2,
+        "imputation_factor_question_1": 99,
+        "mean_question_1": 2
+    }
+]

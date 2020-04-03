@@ -139,13 +139,15 @@ def lambda_handler(event, context):
             json_ordered_data = merged_data.to_json(orient='records')
 
             json_payload = {
-                "json_data": json_ordered_data,
-                "movement_type": movement_type,
-                "questions_list": questions_list,
-                "current_period": period,
-                "period_column": period_column,
-                "previous_period": previous_period,
-                "RuntimeVariables": {"run_id": run_id}
+                "RuntimeVariables": {
+                    "json_data": json.loads(json_ordered_data),
+                    "movement_type": movement_type,
+                    "questions_list": questions_list,
+                    "current_period": period,
+                    "period_column": period_column,
+                    "previous_period": previous_period,
+                    "run_id": run_id
+                }
             }
 
             logger.info("Successfully created movement columns on the data")

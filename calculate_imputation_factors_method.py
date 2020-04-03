@@ -25,10 +25,11 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # set up variables
-        factors_parameters = event["factors_parameters"]["RuntimeVariables"]
-        questions_list = event["questions_list"]
-        distinct_values = event["distinct_values"]
-        df = pd.DataFrame(event["data_json"])
+        factors_parameters = event['RuntimeVariables'][
+            "factors_parameters"]["RuntimeVariables"]
+        questions_list = event['RuntimeVariables']["questions_list"]
+        distinct_values = event['RuntimeVariables']["distinct_values"]
+        df = pd.DataFrame(event['RuntimeVariables']["json_data"])
         survey_column = factors_parameters['survey_column']
         # Get relative calculation function
         calculation = getattr(imp_func, factors_parameters["factors_type"])

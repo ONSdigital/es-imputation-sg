@@ -50,8 +50,8 @@ def lambda_handler(event, context):
 
         logger.info("Validated params")
 
-        sqs = boto3.client("sqs")
-        lambda_client = boto3.client("lambda")
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Environment variables
         bucket_name = config['bucket_name']
@@ -91,11 +91,13 @@ def lambda_handler(event, context):
         logger.info("Successfully wrangled data from sqs")
 
         payload = {
-            "data_json": json.loads(data.to_json(orient="records")),
-            "questions_list": questions_list,
-            "distinct_values": distinct_values,
-            "factors_parameters": factors_parameters,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(data.to_json(orient="records")),
+                "questions_list": questions_list,
+                "distinct_values": distinct_values,
+                "factors_parameters": factors_parameters,
+                "run_id": run_id
+            }
         }
 
         # invoke the method to calculate the factors

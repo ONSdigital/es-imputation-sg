@@ -9,7 +9,7 @@ from marshmallow import Schema, fields
 import imputation_functions as imp_func
 
 
-class InputSchema(Schema):
+class EnvironSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         # Environment Variables.
         sqs = boto3.client('sqs', region_name="eu-west-2")
         lambda_client = boto3.client('lambda', region_name="eu-west-2")
-        config, errors = InputSchema().load(os.environ)
+        config, errors = EnvironSchema().load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
         logger.info("Validated params")
@@ -85,9 +85,11 @@ def lambda_handler(event, context):
         data_json = data.to_json(orient='records')
 
         payload = {
-            "json_data": json.loads(data_json),
-            "questions_list": questions_list,
-            "RuntimeVariables": {"run_id": run_id}
+            "RuntimeVariables": {
+                "json_data": json.loads(data_json),
+                "questions_list": questions_list,
+                "run_id": run_id
+            }
         }
 
         logger.info("Dataframe converted to JSON")
