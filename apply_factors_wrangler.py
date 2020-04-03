@@ -79,17 +79,18 @@ def lambda_handler(event, context):
 
         logger.info("Retrieved configuration variables.")
 
-        # Get data from module that preceded imputation
-        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
-                                                          location)
-        # Split out non responder data from input
-        non_responder_dataframe = input_data[input_data[response_type] == 1]
-        logger.info("Successfully retrieved raw-input data from s3")
-
         # Get factors data from calculate_factors
         factors_dataframe, receipt_handler = aws_functions.get_dataframe(
             sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, location)
         logger.info("Successfully retrieved factors data from s3")
+
+        # Get data from module that preceded imputation
+        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
+                                                          location)
+
+        # Split out non responder data from input
+        non_responder_dataframe = input_data[input_data[response_type] == 1]
+        logger.info("Successfully retrieved raw-input data from s3")
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
