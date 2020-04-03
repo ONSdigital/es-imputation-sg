@@ -150,7 +150,7 @@ def lambda_handler(event, context):
                                     distinct_values)
                 ][factors_dataframe[region_column] == regionless_code]
 
-            if merge_values is not None:
+            if len(merge_values) != 0:
                 # Basic merge where we have values to merge on.
                 dropped_rows_with_factors = \
                     pd.merge(dropped_rows, regionless_factors,

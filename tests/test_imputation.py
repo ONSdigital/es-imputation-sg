@@ -160,7 +160,7 @@ method_regionless_runtime_variables = {
     }
 }
 
-wrangler_apply_runtime_variables = {
+wrangler_apply_runtime_variables_1 = {
     "RuntimeVariables": {
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region", "strata"],
@@ -170,7 +170,45 @@ wrangler_apply_runtime_variables = {
                 "regionless_code": 14
             }
         },
-        "in_file_name": "test_wrangler_apply_input",
+        "in_file_name": "test_wrangler_apply_input_1",
+        "incoming_message_group_id": "test_group",
+        "location": "",
+        "out_file_name": "test_wrangler_apply_output.json",
+        "outgoing_message_group_id": "test_id1",
+        "previous_data": "test_wrangler_movement_previous_data_prepared_output",
+        "questions_list": questions_list,
+        "queue_url": "Earl",
+        "run_id": "bob",
+        "sns_topic_arn": "fake_sns_arn",
+        "sum_columns": [
+            {
+              "column_name": "Q608_total",
+              "data": {
+                "Q601_asphalting_sand": "+",
+                "Q602_building_soft_sand": "+",
+                "Q603_concreting_sand": "+",
+                "Q604_bituminous_gravel": "+",
+                "Q605_concreting_gravel": "+",
+                "Q606_other_gravel": "+",
+                "Q607_constructional_fill": "-"
+              }
+            }
+          ],
+        "unique_identifier": ["responder_id"]
+    }
+}
+
+wrangler_apply_runtime_variables_2 = {
+    "RuntimeVariables": {
+        "current_data": "test_wrangler_movement_current_data_prepared_output",
+        "distinct_values": ["region"],
+        "factors_parameters": {
+            "RuntimeVariables": {
+                "region_column": "region",
+                "regionless_code": 14
+            }
+        },
+        "in_file_name": "test_wrangler_apply_input_2",
         "incoming_message_group_id": "test_group",
         "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
@@ -354,7 +392,7 @@ def movement_splitter(which_runtime_variables):
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
          generic_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert),
         (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
@@ -391,7 +429,7 @@ def test_client_error(which_lambda, which_runtime_variables,
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, "add_regionless_wrangler.EnvironSchema",
          "Exception", test_generic_library.wrangler_assert),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
          generic_environment_variables, "apply_factors_wrangler.EnvironSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
@@ -452,9 +490,9 @@ def test_general_error(which_lambda, which_runtime_variables,
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, ["test_wrangler_regionless_input.json"],
          "add_regionless_wrangler", "IncompleteReadError"),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
          generic_environment_variables,
-         ["test_wrangler_apply_input.json",
+         ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
          "apply_factors_wrangler", "IncompleteReadError"),
@@ -538,9 +576,9 @@ def test_key_error(which_lambda, which_environment_variables,
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, ["test_wrangler_regionless_input.json"],
          "add_regionless_wrangler"),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables,
+        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
          generic_environment_variables,
-         ["test_wrangler_apply_input.json",
+         ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
          "apply_factors_wrangler"),
@@ -707,6 +745,14 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
     assert_frame_equal(produced_data, prepared_data)
 
 
+##########################################################################################
+# The Wrangler Success Has Two Lots Of Apply Tests To Check That All Code Runs. When The #
+# Tech Debt To Have Separate Tests For Checking That The Input Sent To The Method Works  #
+# The Second Apply Test Will Be Copied Over With The Rest Of The Tests And Can Then Be   #
+# Removed From The Original.                                                             #
+# E.g. 2 Tests Checking Wrangler Input To Method    Input.                               #
+#      1 Test  Checking Method  Output To Wrangler Output.                               #
+##########################################################################################
 @mock_s3
 @mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3',
             side_effect=test_generic_library.replacement_save_to_s3)
@@ -720,8 +766,15 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          "tests/fixtures/test_wrangler_regionless_input.json",
          "tests/fixtures/test_wrangler_regionless_prepared_output.json"),
         (lambda_apply_wrangler_function, generic_environment_variables,
-         wrangler_apply_runtime_variables, "apply_factors_wrangler",
-         ["test_wrangler_apply_input.json",
+         wrangler_apply_runtime_variables_1, "apply_factors_wrangler",
+         ["test_wrangler_apply_input_1.json",
+          "test_wrangler_movement_current_data_prepared_output.json",
+          "test_wrangler_movement_previous_data_prepared_output.json"],
+         "tests/fixtures/test_method_apply_prepared_output.json",
+         "tests/fixtures/test_wrangler_apply_prepared_output.json"),
+        (lambda_apply_wrangler_function, generic_environment_variables,
+         wrangler_apply_runtime_variables_2, "apply_factors_wrangler",
+         ["test_wrangler_apply_input_2.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
          "tests/fixtures/test_method_apply_prepared_output.json",
