@@ -3,8 +3,8 @@ service: es-imputation-sg
 provider:
   name: aws
   deploymentBucket:
-    name: spp-results-sandbox-serverless
-  role: arn:aws:iam::${self:custom.accountId}:role/lambda_invoke_lambda
+    name: spp-results-${self:custom.environment}-serverless
+  role: arn:aws:iam::#{AWS::AccountId}:role/lambda_invoke_lambda
   vpc:
     securityGroupIds:
       - ${file(../json_outputs/security_groups_output.json):SecurityGroups.0.GroupId}
@@ -21,7 +21,7 @@ provider:
     lambda: true
 
 custom:
-  accountId: ${env:aws_account_id}
+  environment: ${env:ENVIRONMENT}
   environmentType: ${env:environment_type}
 
 functions:
@@ -35,12 +35,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-add-regionless-method
       run_environment: ${self:custom.environmentType}
@@ -55,8 +55,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -72,12 +72,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-apply-factors-method
       response_type: response_type
@@ -94,8 +94,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -110,12 +110,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-atypicals-method
       run_environment: ${self:custom.environmentType}
@@ -131,8 +131,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -147,12 +147,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-calculate-factors-method
       run_environment: ${self:custom.environmentType}
@@ -168,8 +168,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -184,12 +184,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
@@ -205,8 +205,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -220,12 +220,12 @@ functions:
       exclude:
         - ./**
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-calculate-movement-method
       response_type: response_type
@@ -241,8 +241,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -257,12 +257,12 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-iqrs-method
       run_environment: ${self:custom.environmentType}
@@ -278,8 +278,8 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
 
@@ -294,15 +294,16 @@ functions:
         - ./**
       individually: true
     layers:
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:es_python_layer:latest
-      - arn:aws:lambda:eu-west-2:${self:custom.accountId}:layer:dev-es-common-functions:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:es_python_layer:latest
+      - arn:aws:lambda:eu-west-2:#{AWS::AccountId}:layer:dev-es-common-functions:latest
     tags:
       app: results
     environment:
-      bucket_name: spp-results-sandbox
+      bucket_name: spp-results-${self:custom.environment}
       checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
 
 plugins:
   - serverless-latest-layer-version
+  - serverless-pseudo-parameters
