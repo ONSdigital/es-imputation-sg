@@ -4,7 +4,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from es_aws_functions import test_generic_library
+from es_aws_functions import test_generic_library, exception_classes
 from moto import mock_s3
 from pandas.util.testing import assert_frame_equal
 
@@ -750,61 +750,61 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
             side_effect=test_generic_library.replacement_save_to_s3)
 @pytest.mark.parametrize(
     "which_lambda,which_environment_variables,which_runtime_variables," +
-    "lambda_name,file_list,method_data,prepared_data",
+    "lambda_name,file_list,method_data,which_method_variables",
     [
         (lambda_regionless_wrangler_function, generic_environment_variables,
          wrangler_regionless_runtime_variables, "add_regionless_wrangler",
          ["test_wrangler_regionless_input.json"],
          "tests/fixtures/test_wrangler_regionless_input.json",
-         "tests/fixtures/test_wrangler_regionless_prepared_output.json"),
+         method_regionless_runtime_variables),
         (lambda_apply_wrangler_function, generic_environment_variables,
          wrangler_apply_runtime_variables_1, "apply_factors_wrangler",
          ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
          "tests/fixtures/test_method_apply_prepared_output.json",
-         "tests/fixtures/test_wrangler_apply_prepared_output.json"),
+         method_apply_runtime_variables),
         (lambda_apply_wrangler_function, generic_environment_variables,
          wrangler_apply_runtime_variables_2, "apply_factors_wrangler",
          ["test_wrangler_apply_input_2.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
          "tests/fixtures/test_method_apply_prepared_output.json",
-         "tests/fixtures/test_wrangler_apply_prepared_output.json"),
+         method_apply_runtime_variables),
         (lambda_atypicals_wrangler_function, generic_environment_variables,
          wrangler_atypicals_runtime_variables, "atypicals_wrangler",
          ["test_wrangler_atypicals_input.json"],
          "tests/fixtures/test_method_atypicals_prepared_output.json",
-         "tests/fixtures/test_wrangler_atypicals_prepared_output.json"),
+         method_atypicals_runtime_variables),
         (lambda_factors_wrangler_function, generic_environment_variables,
          wrangler_factors_runtime_variables, "calculate_imputation_factors_wrangler",
          ["test_wrangler_factors_input.json"],
          "tests/fixtures/test_method_factors_prepared_output.json",
-         "tests/fixtures/test_wrangler_factors_prepared_output.json"),
+         method_factors_runtime_variables),
         (lambda_means_wrangler_function, generic_environment_variables,
          wrangler_means_runtime_variables, "calculate_means_wrangler",
          ["test_wrangler_means_input.json"],
          "tests/fixtures/test_method_means_prepared_output.json",
-         "tests/fixtures/test_wrangler_means_prepared_output.json"),
+         method_means_runtime_variables),
         (lambda_movement_wrangler_function, generic_environment_variables,
          wrangler_movement_runtime_variables, "calculate_movement_wrangler",
          ["test_wrangler_movement_input.json"],
          "tests/fixtures/test_method_movement_prepared_output.json",
-         "tests/fixtures/test_wrangler_movement_prepared_output.json"),
+         method_movement_runtime_variables),
         (lambda_iqrs_wrangler_function, generic_environment_variables,
          wrangler_iqrs_runtime_variables, "iqrs_wrangler",
          ["test_wrangler_iqrs_input.json"],
          "tests/fixtures/test_method_iqrs_prepared_output.json",
-         "tests/fixtures/test_wrangler_iqrs_prepared_output.json"),
+         method_iqrs_runtime_variables),
         (lambda_recalc_wrangler_function, generic_environment_variables,
          wrangler_recalc_runtime_variables, "recalculate_means_wrangler",
          ["test_wrangler_recalc_input.json"],
          "tests/fixtures/test_method_recalc_prepared_output.json",
-         "tests/fixtures/test_wrangler_recalc_prepared_output.json")
+         method_means_runtime_variables)
     ])
 def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_variables,
                                  which_runtime_variables, lambda_name,
-                                 file_list, method_data, prepared_data):
+                                 file_list, method_data, which_method_variables):
     """
     Runs the wrangler function.
     :param mock_put_s3: A replacement function for saving to s3 which saves locally.
@@ -815,8 +815,7 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
     :param file_list: Files to be added to the fake S3. - List(String).
     :param method_data: File name/location of the data
                         to be passed out by the method. - String.
-    :param prepared_data: File name/location of the data
-                          to be used for comparison. - String.
+    :param which_method_variables: Variables to compare against. - Dict.
     :return Test Pass/Fail
     """
     bucket_name = which_environment_variables["bucket_name"]
@@ -824,43 +823,45 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
 
     test_generic_library.upload_files(client, bucket_name, file_list)
 
-    with open(prepared_data, "r") as file_1:
-        test_data_prepared = file_1.read()
-    prepared_data = pd.DataFrame(json.loads(test_data_prepared))
-
-    with open(method_data, "r") as file_2:
-        test_data_out = file_2.read()
-
     with mock.patch.dict(which_lambda.os.environ,
                          which_environment_variables):
-        with mock.patch(lambda_name + '.aws_functions.save_data',
-                        side_effect=test_generic_library.replacement_save_data):
-            with mock.patch(lambda_name + '.aws_functions.get_dataframe',
-                            side_effect=test_generic_library.replacement_get_dataframe):
+        with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+                        side_effect=test_generic_library.replacement_get_dataframe):
 
-                with mock.patch(lambda_name + ".boto3.client") as mock_client:
-                    mock_client_object = mock.Mock()
-                    mock_client.return_value = mock_client_object
+            with mock.patch(lambda_name + ".boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
 
-                    mock_client_object.invoke.return_value.get.return_value.read \
-                        .return_value.decode.return_value = json.dumps({
-                         "data": test_data_out,
-                         "success": True,
-                         "anomalies": []
-                        })
+                # Rather than mock the get/decode we tell the code that when the invoke is
+                # called pass the variables to this replacement function instead.
+                mock_client_object.invoke.side_effect = \
+                    test_generic_library.replacement_invoke
 
+                # This stops the Error caused by the replacement function from stopping
+                # the test.
+                with pytest.raises(exception_classes.LambdaFailure):
                     output = which_lambda.lambda_handler(
                         which_runtime_variables, test_generic_library.context_object
                     )
 
-    with open("tests/fixtures/" +
-              which_runtime_variables["RuntimeVariables"]["out_file_name"],
-              "r") as file_3:
-        test_data_produced = file_3.read()
+    with open(method_data, "r") as file_1:
+        test_data_prepared = file_1.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_prepared))
+
+    with open("tests/fixtures/test_wrangler_to_method_input.json", "r") as file_2:
+        test_data_produced = file_2.read()
     produced_data = pd.DataFrame(json.loads(test_data_produced))
 
-    if lambda_name == "calculate_movement_wrangler":
-        movement_splitter(which_runtime_variables)
+    # Compares the data.
+    assert_frame_equal(produced_data, prepared_data)
+
+    with open("tests/fixtures/test_wrangler_to_method_runtime.json", "r") as file_3:
+        test_dict_prepared = file_3.read()
+    produced_dict = json.loads(test_dict_prepared)
+
+    # Ensures data is not in the RuntimeVariables and then compares.
+    which_method_variables["RuntimeVariables"]["data"] = None
+    assert produced_dict == which_method_variables["RuntimeVariables"]
 
     assert output
     assert_frame_equal(produced_data, prepared_data)
