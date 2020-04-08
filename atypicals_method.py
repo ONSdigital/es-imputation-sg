@@ -25,7 +25,7 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
 
-        input_data = pd.DataFrame(event['RuntimeVariables']['json_data'])
+        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
         questions_list = event['RuntimeVariables']['questions_list']
         # Produce columns
         atypical_columns = imp_func.produce_columns("atyp_", questions_list)

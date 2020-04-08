@@ -90,7 +90,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
-                "json_data": json.loads(data_json),
+                "data": json.loads(data_json),
                 "distinct_values": distinct_values,
                 "questions_list": questions_list,
                 "run_id": run_id

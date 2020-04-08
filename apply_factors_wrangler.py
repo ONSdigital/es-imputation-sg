@@ -174,7 +174,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
-                "json_data": json.loads(
+                "data": json.loads(
                     non_responders_with_factors.to_json(orient="records")),
                 "questions_list": questions_list,
                 "sum_columns": sum_columns,
