@@ -25,6 +25,22 @@ import iqrs_method as lambda_iqrs_method_function
 import iqrs_wrangler as lambda_iqrs_wrangler_function
 import recalculate_means_wrangler as lambda_recalc_wrangler_function
 
+factors_parameters = {
+    "RuntimeVariables": {
+        "factors_type": "factors_calculation_a",
+        "first_imputation_factor": 0,
+        "first_threshold": 3,
+        "percentage_movement": True,
+        "region_column": "region",
+        "regional_mean": "third_imputation_factors",
+        "regionless_code": 14,
+        "second_imputation_factor": 1,
+        "second_threshold": 3,
+        "survey_column": "survey",
+        "third_threshold": 5
+    }
+}
+
 generic_environment_variables = {
     "bucket_name": "test_bucket",
     "checkpoint": "999",
@@ -100,21 +116,7 @@ method_atypicals_runtime_variables = {
 method_factors_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
-        "factors_parameters": {
-            "RuntimeVariables": {
-                "factors_type": "factors_calculation_a",
-                "first_imputation_factor": 0,
-                "first_threshold": 3,
-                "percentage_movement": True,
-                "region_column": "region",
-                "regional_mean": "third_imputation_factors",
-                "regionless_code": 14,
-                "second_imputation_factor": 1,
-                "second_threshold": 3,
-                "survey_column": "survey",
-                "third_threshold": 5
-            }
-        },
+        "factors_parameters": factors_parameters,
         "data": None,
         "questions_list": questions_list,
         "run_id": "bob"
@@ -141,11 +143,11 @@ method_means_runtime_variables = {
 
 method_movement_runtime_variables = {
     "RuntimeVariables": {
-        "current_period": 201809,
+        "current_period": "201809",
         "data": None,
         "movement_type": "movement_calculation_a",
         "period_column": "period",
-        "previous_period": 201806,
+        "previous_period": "201806",
         "questions_list": questions_list,
         "run_id": "bob"
     }
@@ -253,7 +255,7 @@ wrangler_atypicals_runtime_variables = {
 wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
-        "factors_parameters": "test_param",
+        "factors_parameters": copy.deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
         "incoming_message_group_id": "test_group",
         "location": "",
@@ -762,44 +764,44 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
          ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
-         "tests/fixtures/test_method_apply_prepared_output.json",
+         "tests/fixtures/test_method_apply_input.json",
          method_apply_runtime_variables),
         (lambda_apply_wrangler_function, generic_environment_variables,
          wrangler_apply_runtime_variables_2, "apply_factors_wrangler",
          ["test_wrangler_apply_input_2.json",
           "test_wrangler_movement_current_data_prepared_output.json",
           "test_wrangler_movement_previous_data_prepared_output.json"],
-         "tests/fixtures/test_method_apply_prepared_output.json",
+         "tests/fixtures/test_method_apply_input.json",
          method_apply_runtime_variables),
         (lambda_atypicals_wrangler_function, generic_environment_variables,
          wrangler_atypicals_runtime_variables, "atypicals_wrangler",
          ["test_wrangler_atypicals_input.json"],
-         "tests/fixtures/test_method_atypicals_prepared_output.json",
+         "tests/fixtures/test_method_atypicals_input.json",
          method_atypicals_runtime_variables),
         (lambda_factors_wrangler_function, generic_environment_variables,
          wrangler_factors_runtime_variables, "calculate_imputation_factors_wrangler",
          ["test_wrangler_factors_input.json"],
-         "tests/fixtures/test_method_factors_prepared_output.json",
+         "tests/fixtures/test_method_factors_input.json",
          method_factors_runtime_variables),
         (lambda_means_wrangler_function, generic_environment_variables,
          wrangler_means_runtime_variables, "calculate_means_wrangler",
          ["test_wrangler_means_input.json"],
-         "tests/fixtures/test_method_means_prepared_output.json",
+         "tests/fixtures/test_method_means_input.json",
          method_means_runtime_variables),
         (lambda_movement_wrangler_function, generic_environment_variables,
          wrangler_movement_runtime_variables, "calculate_movement_wrangler",
          ["test_wrangler_movement_input.json"],
-         "tests/fixtures/test_method_movement_prepared_output.json",
+         "tests/fixtures/test_method_movement_input.json",
          method_movement_runtime_variables),
         (lambda_iqrs_wrangler_function, generic_environment_variables,
          wrangler_iqrs_runtime_variables, "iqrs_wrangler",
          ["test_wrangler_iqrs_input.json"],
-         "tests/fixtures/test_method_iqrs_prepared_output.json",
+         "tests/fixtures/test_method_iqrs_input.json",
          method_iqrs_runtime_variables),
         (lambda_recalc_wrangler_function, generic_environment_variables,
          wrangler_recalc_runtime_variables, "recalculate_means_wrangler",
          ["test_wrangler_recalc_input.json"],
-         "tests/fixtures/test_method_recalc_prepared_output.json",
+         "tests/fixtures/test_method_recalc_input.json",
          method_means_runtime_variables)
     ])
 def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_variables,
@@ -835,22 +837,22 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
                 # Rather than mock the get/decode we tell the code that when the invoke is
                 # called pass the variables to this replacement function instead.
                 mock_client_object.invoke.side_effect = \
-                    test_generic_library.replacement_invoke
+                    lambda_imputation_function.replacement_invoke
 
                 # This stops the Error caused by the replacement function from stopping
                 # the test.
                 with pytest.raises(exception_classes.LambdaFailure):
-                    output = which_lambda.lambda_handler(
+                    which_lambda.lambda_handler(
                         which_runtime_variables, test_generic_library.context_object
                     )
 
     with open(method_data, "r") as file_1:
         test_data_prepared = file_1.read()
-    prepared_data = pd.DataFrame(json.loads(test_data_prepared))
+    prepared_data = pd.DataFrame(json.loads(test_data_prepared), dtype=float)
 
     with open("tests/fixtures/test_wrangler_to_method_input.json", "r") as file_2:
         test_data_produced = file_2.read()
-    produced_data = pd.DataFrame(json.loads(test_data_produced))
+    produced_data = pd.DataFrame(json.loads(test_data_produced), dtype=float)
 
     # Compares the data.
     assert_frame_equal(produced_data, prepared_data)
@@ -862,9 +864,6 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
     # Ensures data is not in the RuntimeVariables and then compares.
     which_method_variables["RuntimeVariables"]["data"] = None
     assert produced_dict == which_method_variables["RuntimeVariables"]
-
-    assert output
-    assert_frame_equal(produced_data, prepared_data)
 
 
 @mock_s3
