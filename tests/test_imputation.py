@@ -1,5 +1,5 @@
-import copy
 import json
+from copy import deepcopy
 from unittest import mock
 
 import pandas as pd
@@ -255,7 +255,7 @@ wrangler_atypicals_runtime_variables = {
 wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
-        "factors_parameters": copy.deepcopy(factors_parameters),
+        "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
         "incoming_message_group_id": "test_group",
         "location": "",
@@ -492,7 +492,7 @@ def test_general_error(which_lambda, which_runtime_variables,
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, ["test_wrangler_regionless_input.json"],
          "add_regionless_wrangler", "IncompleteReadError"),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
+        (lambda_apply_wrangler_function, deepcopy(wrangler_apply_runtime_variables_1),
          generic_environment_variables,
          ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
@@ -578,7 +578,7 @@ def test_key_error(which_lambda, which_environment_variables,
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
          generic_environment_variables, ["test_wrangler_regionless_input.json"],
          "add_regionless_wrangler"),
-        (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
+        (lambda_apply_wrangler_function, deepcopy(wrangler_apply_runtime_variables_1),
          generic_environment_variables,
          ["test_wrangler_apply_input_1.json",
           "test_wrangler_movement_current_data_prepared_output.json",
@@ -660,7 +660,7 @@ def test_value_error(which_lambda, expected_message, assertion):
         (lambda_atypicals_method_function, method_atypicals_runtime_variables,
          "tests/fixtures/test_method_atypicals_input.json",
          "tests/fixtures/test_method_atypicals_prepared_output.json"),
-        (lambda_factors_method_function, method_factors_runtime_variables,
+        (lambda_factors_method_function, deepcopy(method_factors_runtime_variables),
          "tests/fixtures/test_method_factors_input.json",
          "tests/fixtures/test_method_factors_prepared_output.json"),
         (lambda_means_method_function, method_means_runtime_variables,
@@ -717,7 +717,7 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
     bucket_name = generic_environment_variables["bucket_name"]
     client = test_generic_library.create_bucket(bucket_name)
 
-    wrangler_movement_skip_runtime_variables = copy.deepcopy(
+    wrangler_movement_skip_runtime_variables = deepcopy(
         wrangler_movement_runtime_variables)
 
     wrangler_movement_skip_runtime_variables["RuntimeVariables"]["in_file_name"] =\
@@ -837,7 +837,7 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
                 # Rather than mock the get/decode we tell the code that when the invoke is
                 # called pass the variables to this replacement function instead.
                 mock_client_object.invoke.side_effect = \
-                    lambda_imputation_function.replacement_invoke
+                    test_generic_library.replacement_invoke
 
                 # This stops the Error caused by the replacement function from stopping
                 # the test.
