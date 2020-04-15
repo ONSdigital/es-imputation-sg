@@ -30,7 +30,7 @@ def lambda_handler(event, context):
         run_id = event['RuntimeVariables']['run_id']
         # Declare event vars
         movement_type = event['RuntimeVariables']["movement_type"]
-        json_data = event['RuntimeVariables']["json_data"]
+        json_data = event['RuntimeVariables']["data"]
         questions_list = event['RuntimeVariables']["questions_list"]
         current_period = event['RuntimeVariables']['current_period']
         period_column = event['RuntimeVariables']['period_column']

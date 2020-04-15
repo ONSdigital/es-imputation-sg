@@ -140,7 +140,7 @@ def lambda_handler(event, context):
 
             json_payload = {
                 "RuntimeVariables": {
-                    "json_data": json.loads(json_ordered_data),
+                    "data": json.loads(json_ordered_data),
                     "movement_type": movement_type,
                     "questions_list": questions_list,
                     "current_period": period,

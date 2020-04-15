@@ -26,7 +26,7 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
         # Environment variables
-        json_data = event['RuntimeVariables']["json_data"]
+        json_data = event['RuntimeVariables']["data"]
         distinct_values = event['RuntimeVariables']["distinct_values"]
         questions_list = event['RuntimeVariables']["questions_list"]
 

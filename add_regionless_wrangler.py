@@ -81,7 +81,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
-                "json_data": json.loads(
+                "data": json.loads(
                     input_data.to_json(orient="records")),
                 "regionless_code": regionless_code,
                 "region_column": region_column,

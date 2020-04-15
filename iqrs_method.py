@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         # Environment variables
         questions_list = event['RuntimeVariables']['questions_list']
         distinct_values = event['RuntimeVariables']["distinct_values"]
-        input_data = pd.DataFrame(event['RuntimeVariables']["json_data"])
+        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
         movement_columns = produce_columns("movement_", questions_list)
         iqrs_columns = produce_columns("iqrs_", questions_list)
         logger.info("Successfully retrieved data from event.")

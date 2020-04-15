@@ -21,7 +21,7 @@ def lambda_handler(event, context):
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event['RuntimeVariables']['run_id']
-        json_data = event['RuntimeVariables']["json_data"]
+        json_data = event['RuntimeVariables']["data"]
         sum_columns = event['RuntimeVariables']["sum_columns"]
         working_dataframe = pd.DataFrame(json_data)
 
