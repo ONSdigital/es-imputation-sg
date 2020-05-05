@@ -65,14 +65,14 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
-        in_file_name = event["RuntimeVariables"]["in_file_name"]
-        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
-        location = event["RuntimeVariables"]["location"]
-        out_file_name = event["RuntimeVariables"]["out_file_name"]
-        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
-        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
+        in_file_name = runtime_variables["in_file_name"]
+        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
+        location = runtime_variables["location"]
+        out_file_name = runtime_variables["out_file_name"]
+        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
+        questions_list = runtime_variables["questions_list"]
+        sns_topic_arn = runtime_variables["sns_topic_arn"]
+        sqs_queue_url = runtime_variables["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 

@@ -34,9 +34,9 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        json_data = event["RuntimeVariables"]["data"]
-        distinct_values = event["RuntimeVariables"]["distinct_values"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
+        json_data = runtime_variables["data"]
+        distinct_values = runtime_variables["distinct_values"]
+        questions_list = runtime_variables["questions_list"]
 
         logger.info("Retrieved configuration variables.")
 

@@ -38,12 +38,12 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        movement_type = event["RuntimeVariables"]["movement_type"]
-        json_data = event["RuntimeVariables"]["data"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        current_period = event["RuntimeVariables"]["current_period"]
-        period_column = event["RuntimeVariables"]["period_column"]
-        previous_period = event["RuntimeVariables"]["previous_period"]
+        movement_type = runtime_variables["movement_type"]
+        json_data = runtime_variables["data"]
+        questions_list = runtime_variables["questions_list"]
+        current_period = runtime_variables["current_period"]
+        period_column = runtime_variables["period_column"]
+        previous_period = runtime_variables["previous_period"]
 
         logger.info("Retrieved configuration variables.")
 

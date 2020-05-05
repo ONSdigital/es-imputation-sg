@@ -33,9 +33,9 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        distinct_values = event["RuntimeVariables"]["distinct_values"]
-        input_data = pd.DataFrame(event["RuntimeVariables"]["data"])
+        questions_list = runtime_variables["questions_list"]
+        distinct_values = runtime_variables["distinct_values"]
+        input_data = pd.DataFrame(runtime_variables["data"])
         movement_columns = produce_columns("movement_", questions_list)
         iqrs_columns = produce_columns("iqrs_", questions_list)
 

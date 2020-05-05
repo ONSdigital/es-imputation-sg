@@ -30,9 +30,9 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        json_data = event["RuntimeVariables"]["data"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        sum_columns = event["RuntimeVariables"]["sum_columns"]
+        json_data = runtime_variables["data"]
+        questions_list = runtime_variables["questions_list"]
+        sum_columns = runtime_variables["sum_columns"]
 
         logger.info("Retrieved configuration variables.")
 

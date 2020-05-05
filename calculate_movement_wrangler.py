@@ -67,24 +67,24 @@ def lambda_handler(event, context):
         response_type = environment_variables["response_type"]
 
         # Runtime Variables
-        current_data = event["RuntimeVariables"]["current_data"]
-        in_file_name = event["RuntimeVariables"]["in_file_name"]
-        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
-        location = event["RuntimeVariables"]["location"]
-        movement_type = event["RuntimeVariables"]["movement_type"]
-        out_file_name = event["RuntimeVariables"]["out_file_name"]
-        out_file_name_skip = event["RuntimeVariables"]["out_file_name_skip"]
-        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
-        outgoing_message_group_id_skip = event["RuntimeVariables"][
+        current_data = runtime_variables["current_data"]
+        in_file_name = runtime_variables["in_file_name"]
+        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
+        location = runtime_variables["location"]
+        movement_type = runtime_variables["movement_type"]
+        out_file_name = runtime_variables["out_file_name"]
+        out_file_name_skip = runtime_variables["out_file_name_skip"]
+        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
+        outgoing_message_group_id_skip = runtime_variables[
             "outgoing_message_group_id_skip"]
-        period = event["RuntimeVariables"]["period"]
-        period_column = event["RuntimeVariables"]["period_column"]
-        periodicity = event["RuntimeVariables"]["periodicity"]
-        previous_data = event["RuntimeVariables"]["previous_data"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        reference = event["RuntimeVariables"]["unique_identifier"][0]
-        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
-        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
+        period = runtime_variables["period"]
+        period_column = runtime_variables["period_column"]
+        periodicity = runtime_variables["periodicity"]
+        previous_data = runtime_variables["previous_data"]
+        questions_list = runtime_variables["questions_list"]
+        reference = runtime_variables["unique_identifier"][0]
+        sns_topic_arn = runtime_variables["sns_topic_arn"]
+        sqs_queue_url = runtime_variables["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 

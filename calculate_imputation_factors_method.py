@@ -33,11 +33,11 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        factors_parameters = event["RuntimeVariables"][
+        factors_parameters = runtime_variables[
             "factors_parameters"]["RuntimeVariables"]
-        questions_list = event["RuntimeVariables"]["questions_list"]
-        distinct_values = event["RuntimeVariables"]["distinct_values"]
-        df = pd.DataFrame(event["RuntimeVariables"]["data"])
+        questions_list = runtime_variables["questions_list"]
+        distinct_values = runtime_variables["distinct_values"]
+        df = pd.DataFrame(runtime_variables["data"])
         survey_column = factors_parameters["survey_column"]
 
         logger.info("Retrieved configuration variables.")
