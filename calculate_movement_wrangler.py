@@ -48,17 +48,23 @@ def lambda_handler(event, context):
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
         logger.info("Setting-up environment configs")
 
-        schema = EnvironmentSchema()
-        config, errors = schema.load(os.environ)
+        environment_variables, errors = EnvironmentSchema().load(os.environ)
         if errors:
+            logger.error(f"Error validating environment params: {errors}")
             raise ValueError(f"Error validating environment params: {errors}")
-        logger.info("Validated params")
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
 
         # Environment Variables
-        bucket_name = config["bucket_name"]
-        checkpoint = config["checkpoint"]
-        method_name = config["method_name"]
-        response_type = config["response_type"]
+        bucket_name = environment_variables["bucket_name"]
+        checkpoint = environment_variables["checkpoint"]
+        method_name = environment_variables["method_name"]
+        response_type = environment_variables["response_type"]
 
         # Runtime Variables
         current_data = event["RuntimeVariables"]["current_data"]

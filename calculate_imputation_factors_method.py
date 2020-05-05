@@ -24,13 +24,24 @@ def lambda_handler(event, context):
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
-        # set up variables
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"]) # Factors Parameters Class? Or In Wrangler?
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
         factors_parameters = event["RuntimeVariables"][
             "factors_parameters"]["RuntimeVariables"]
         questions_list = event["RuntimeVariables"]["questions_list"]
         distinct_values = event["RuntimeVariables"]["distinct_values"]
         df = pd.DataFrame(event["RuntimeVariables"]["data"])
         survey_column = factors_parameters["survey_column"]
+
+        logger.info("Retrieved configuration variables.")
+
         # Get relative calculation function
         calculation = getattr(imp_func, factors_parameters["factors_type"])
 

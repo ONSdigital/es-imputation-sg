@@ -25,14 +25,22 @@ def lambda_handler(event, context):
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
-        # Environment variables
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
         json_data = event["RuntimeVariables"]["data"]
         distinct_values = event["RuntimeVariables"]["distinct_values"]
         questions_list = event["RuntimeVariables"]["questions_list"]
 
-        movement_columns = imp_func.produce_columns("movement_", questions_list)
+        logger.info("Retrieved configuration variables.")
 
-        logger.info("Validated params.")
+        movement_columns = imp_func.produce_columns("movement_", questions_list)
 
         df = pd.DataFrame(json_data)
 

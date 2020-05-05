@@ -38,18 +38,23 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        schema = EnvironmentSchema()
-        config, errors = schema.load(os.environ)
+        environment_variables, errors = EnvironmentSchema().load(os.environ)
         if errors:
+            logger.error(f"Error validating environment params: {errors}")
             raise ValueError(f"Error validating environment params: {errors}")
 
-        logger.info("Validated params")
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
 
         # Environment Variables
-        bucket_name = config["bucket_name"]
-        checkpoint = config["checkpoint"]
-        method_name = config["method_name"]
-        run_environment = config["run_environment"]
+        bucket_name = environment_variables["bucket_name"]
+        checkpoint = environment_variables["checkpoint"]
+        method_name = environment_variables["method_name"]
+        run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]

@@ -25,15 +25,24 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
         input_data = pd.DataFrame(event["RuntimeVariables"]["data"])
         questions_list = event["RuntimeVariables"]["questions_list"]
+
+        logger.info("Retrieved configuration variables.")
+
         # Produce columns
         atypical_columns = imp_func.produce_columns("atyp_", questions_list)
         movement_columns = imp_func.produce_columns("movement_", questions_list)
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
         mean_columns = imp_func.produce_columns("mean_", questions_list)
-
-        logger.info("Successfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,

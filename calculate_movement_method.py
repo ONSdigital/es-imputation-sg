@@ -6,6 +6,7 @@ from es_aws_functions import general_functions
 
 import imputation_functions as imp_func
 
+# Why is this here. It isn't in any other section?
 lambda_client = boto3.client("lambda", region_name="eu-west-2")
 s3 = boto3.resource("s3")
 
@@ -28,13 +29,23 @@ def lambda_handler(event, context):
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
-        # Declare event vars
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
         movement_type = event["RuntimeVariables"]["movement_type"]
         json_data = event["RuntimeVariables"]["data"]
         questions_list = event["RuntimeVariables"]["questions_list"]
         current_period = event["RuntimeVariables"]["current_period"]
         period_column = event["RuntimeVariables"]["period_column"]
         previous_period = event["RuntimeVariables"]["previous_period"]
+
+        logger.info("Retrieved configuration variables.")
 
         # Get relative calculation function
         calculation = getattr(imp_func, movement_type)
