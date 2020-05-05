@@ -21,11 +21,11 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
         # Get envrionment variables
-        json_data = event['RuntimeVariables']["data"]
-        regionless_code = event['RuntimeVariables']["regionless_code"]
-        region_column = event['RuntimeVariables']["region_column"]
+        json_data = event["RuntimeVariables"]["data"]
+        regionless_code = event["RuntimeVariables"]["regionless_code"]
+        region_column = event["RuntimeVariables"]["region_column"]
 
         # Get 2 copies of the data
         original_dataframe = pd.DataFrame(json_data)
@@ -48,5 +48,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output

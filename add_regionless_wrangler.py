@@ -7,7 +7,7 @@ from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -36,9 +36,9 @@ def lambda_handler(event, context):
 
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
-        schema = EnvironSchema()
+        schema = EnvironmentSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
@@ -49,24 +49,24 @@ def lambda_handler(event, context):
         bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        run_environment = config['run_environment']
+        run_environment = config["run_environment"]
 
         # Runtime Variables
-        factors_parameters = event['RuntimeVariables']["factors_parameters"]
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        region_column = factors_parameters['RuntimeVariables']['region_column']
-        regionless_code = factors_parameters['RuntimeVariables']['regionless_code']
-        sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        factors_parameters = event["RuntimeVariables"]["factors_parameters"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        region_column = factors_parameters["RuntimeVariables"]["region_column"]
+        regionless_code = factors_parameters["RuntimeVariables"]["regionless_code"]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
         # Set up clients
-        sqs = boto3.client('sqs', 'eu-west-2')
+        sqs = boto3.client("sqs", "eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded this step
@@ -99,8 +99,8 @@ def lambda_handler(event, context):
         json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         # Save
         aws_functions.save_data(bucket_name, out_file_name,
@@ -116,7 +116,7 @@ def lambda_handler(event, context):
             logger.info(aws_functions.delete_data(bucket_name, in_file_name, location))
             logger.info("Successfully deleted input data.")
 
-        aws_functions.send_sns_message(checkpoint, sns_topic_arn, 'Add a all-GB region.')
+        aws_functions.send_sns_message(checkpoint, sns_topic_arn, "Add a all-GB region.")
         logger.info("Successfully sent message to sns.")
 
     except Exception as e:

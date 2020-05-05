@@ -23,10 +23,10 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
-        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
-        questions_list = event['RuntimeVariables']['questions_list']
+        input_data = pd.DataFrame(event["RuntimeVariables"]["data"])
+        questions_list = event["RuntimeVariables"]["questions_list"]
         # Produce columns
         atypical_columns = imp_func.produce_columns("atyp_", questions_list)
         movement_columns = imp_func.produce_columns("movement_", questions_list)
@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully finished calculations of atypicals.")
 
-        json_out = atypicals_df.to_json(orient='records')
+        json_out = atypicals_df.to_json(orient="records")
 
         final_output = {"data": json_out}
 
@@ -57,7 +57,7 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
 
 

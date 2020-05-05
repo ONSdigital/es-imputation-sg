@@ -7,7 +7,7 @@ from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Class to set up the environment variables schema.
     """
@@ -38,13 +38,13 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
         # Set up clients
-        sqs = boto3.client('sqs', 'eu-west-2')
-        lambda_client = boto3.client('lambda', 'eu-west-2')
+        sqs = boto3.client("sqs", "eu-west-2")
+        lambda_client = boto3.client("lambda", "eu-west-2")
 
         # Set up Environment variables Schema.
-        schema = EnvironSchema()
+        schema = EnvironmentSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment parameters: {errors}")
@@ -52,21 +52,21 @@ def lambda_handler(event, context):
         logger.info("Validated params")
 
         # Environment Variables
-        bucket_name = config['bucket_name']
-        checkpoint = config['checkpoint']
-        method_name = config['method_name']
-        run_environment = config['run_environment']
+        bucket_name = config["bucket_name"]
+        checkpoint = config["checkpoint"]
+        method_name = config["method_name"]
+        run_environment = config["run_environment"]
 
         # Runtime Variables
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        questions_list = event['RuntimeVariables']['questions_list']
-        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        distinct_values = event["RuntimeVariables"]["distinct_values"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -81,12 +81,12 @@ def lambda_handler(event, context):
 
         # Add means columns
         for question in questions_list:
-            data.drop(['movement_' + question + '_count'], axis=1, inplace=True)
-            data.drop(['movement_' + question + '_sum'], axis=1, inplace=True)
-            data.drop(['atyp_' + question, 'iqrs_' + question], axis=1, inplace=True)
-            data['mean_' + question] = 0.0
+            data.drop(["movement_" + question + "_count"], axis=1, inplace=True)
+            data.drop(["movement_" + question + "_sum"], axis=1, inplace=True)
+            data.drop(["atyp_" + question, "iqrs_" + question], axis=1, inplace=True)
+            data["mean_" + question] = 0.0
 
-        data_json = data.to_json(orient='records')
+        data_json = data.to_json(orient="records")
 
         payload = {
             "RuntimeVariables": {
@@ -103,11 +103,11 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully invoked method.")
 
-        json_response = json.loads(returned_data.get('Payload').read().decode("UTF-8"))
+        json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,
@@ -123,7 +123,7 @@ def lambda_handler(event, context):
             logger.info("Successfully deleted input data from s3.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn,
-                                       'Imputation - Recalculate Means.')
+                                       "Imputation - Recalculate Means.")
         logger.info("Successfully sent message to sns.")
 
     except Exception as e:

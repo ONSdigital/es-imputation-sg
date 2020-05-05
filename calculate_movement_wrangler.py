@@ -8,7 +8,7 @@ from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -33,7 +33,7 @@ def lambda_handler(event, context):
     current_module = "Imputation Movement - Wrangler."
     logger = logging.getLogger(current_module)
     logger.setLevel(10)
-    error_message = ''
+    error_message = ""
     checkpoint = 0
     # Define run_id outside of try block
     run_id = 0
@@ -41,44 +41,44 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
         # Set up clients
-        sqs = boto3.client('sqs', region_name='eu-west-2')
-        lambda_client = boto3.client('lambda', region_name="eu-west-2")
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        lambda_client = boto3.client("lambda", region_name="eu-west-2")
         logger.info("Setting-up environment configs")
 
-        schema = EnvironSchema()
+        schema = EnvironmentSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
         logger.info("Validated params")
 
         # Environment Variables
-        bucket_name = config['bucket_name']
-        checkpoint = config['checkpoint']
-        method_name = config['method_name']
-        response_type = config['response_type']
+        bucket_name = config["bucket_name"]
+        checkpoint = config["checkpoint"]
+        method_name = config["method_name"]
+        response_type = config["response_type"]
 
         # Runtime Variables
-        current_data = event['RuntimeVariables']['current_data']
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        movement_type = event['RuntimeVariables']["movement_type"]
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        out_file_name_skip = event['RuntimeVariables']['out_file_name_skip']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        outgoing_message_group_id_skip = event['RuntimeVariables'][
+        current_data = event["RuntimeVariables"]["current_data"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        movement_type = event["RuntimeVariables"]["movement_type"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        out_file_name_skip = event["RuntimeVariables"]["out_file_name_skip"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        outgoing_message_group_id_skip = event["RuntimeVariables"][
             "outgoing_message_group_id_skip"]
-        period = event['RuntimeVariables']['period']
-        period_column = event['RuntimeVariables']['period_column']
-        periodicity = event['RuntimeVariables']['periodicity']
-        previous_data = event['RuntimeVariables']['previous_data']
-        questions_list = event['RuntimeVariables']['questions_list']
-        reference = event['RuntimeVariables']['unique_identifier'][0]
-        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        period = event["RuntimeVariables"]["period"]
+        period_column = event["RuntimeVariables"]["period_column"]
+        periodicity = event["RuntimeVariables"]["periodicity"]
+        previous_data = event["RuntimeVariables"]["previous_data"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        reference = event["RuntimeVariables"]["unique_identifier"][0]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -91,15 +91,15 @@ def lambda_handler(event, context):
                                                                        periodicity)
         logger.info("Completed reading data from s3")
         previous_period_data = data[
-            data[period_column].astype('str') == str(previous_period)]
+            data[period_column].astype("str") == str(previous_period)]
         data = data[
-            data[period_column].astype('str') == str(period)]
+            data[period_column].astype("str") == str(period)]
         logger.info("Split input data")
 
         # Create a Dataframe where the response column
         # value is set as 1 i.e non responders
         filtered_non_responders = data.loc[(data[response_type] == 1) &
-                                           (data[period_column].astype('str') ==
+                                           (data[period_column].astype("str") ==
                                             str(period))]
 
         logger.info("Successfully created filtered non responders DataFrame")
@@ -111,11 +111,11 @@ def lambda_handler(event, context):
 
             # Save previous period data to s3 for apply to pick up later
             aws_functions.save_to_s3(bucket_name, previous_data,
-                                     previous_period_data.to_json(orient='records'),
+                                     previous_period_data.to_json(orient="records"),
                                      location)
             # Save raw data to s3 for apply to pick up later
             aws_functions.save_to_s3(bucket_name, current_data,
-                                     data.to_json(orient='records'), location)
+                                     data.to_json(orient="records"), location)
             logger.info("Successfully sent data.")
 
             # Ensure that only responder_ids with a response
@@ -134,9 +134,9 @@ def lambda_handler(event, context):
             logger.info("Successfully filtered and merged the previous period data")
 
             for question in questions_list:
-                merged_data['movement_' + question] = 0.0
+                merged_data["movement_" + question] = 0.0
 
-            json_ordered_data = merged_data.to_json(orient='records')
+            json_ordered_data = merged_data.to_json(orient="records")
 
             json_payload = {
                 "RuntimeVariables": {
@@ -157,11 +157,11 @@ def lambda_handler(event, context):
 
             logger.info("Successfully invoked method.")
 
-            json_response = json.loads(imputed_data.get('Payload').read().decode("UTF-8"))
+            json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
             logger.info("JSON extracted from method response.")
 
-            if not json_response['success']:
-                raise exception_classes.MethodFailure(json_response['error'])
+            if not json_response["success"]:
+                raise exception_classes.MethodFailure(json_response["error"])
 
             imputation_run_type = "Calculate Movement."
             aws_functions.save_data(bucket_name, out_file_name,
@@ -190,7 +190,7 @@ def lambda_handler(event, context):
                 sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
             aws_functions.send_sns_message(checkpoint, sns_topic_arn,
-                                           'Imputation - Did not run')
+                                           "Imputation - Did not run")
             logger.info("Successfully sent message to sns")
 
         if receipt_handler:
@@ -198,7 +198,7 @@ def lambda_handler(event, context):
 
         aws_functions.send_sns_message(
             checkpoint, sns_topic_arn,
-            'Imputation - ' + imputation_run_type)
+            "Imputation - " + imputation_run_type)
 
         logger.info("Successfully sent the SNS message")
 

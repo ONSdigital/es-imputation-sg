@@ -23,11 +23,11 @@ def lambda_handler(event, context):
         logger.info("IQRS Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
         # Environment variables
-        questions_list = event['RuntimeVariables']['questions_list']
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        distinct_values = event["RuntimeVariables"]["distinct_values"]
+        input_data = pd.DataFrame(event["RuntimeVariables"]["data"])
         movement_columns = produce_columns("movement_", questions_list)
         iqrs_columns = produce_columns("iqrs_", questions_list)
         logger.info("Successfully retrieved data from event.")
@@ -41,7 +41,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully finished calculations of IQRS.")
 
-        json_out = iqrs_df.to_json(orient='records')
+        json_out = iqrs_df.to_json(orient="records")
         final_output = {"data": json_out}
 
     except Exception as e:
@@ -53,7 +53,7 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
 
 

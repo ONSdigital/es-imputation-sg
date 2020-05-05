@@ -23,19 +23,19 @@ def lambda_handler(event, context):
         logger.info("Calculate Factors Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
         # set up variables
-        factors_parameters = event['RuntimeVariables'][
+        factors_parameters = event["RuntimeVariables"][
             "factors_parameters"]["RuntimeVariables"]
-        questions_list = event['RuntimeVariables']["questions_list"]
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        df = pd.DataFrame(event['RuntimeVariables']["data"])
-        survey_column = factors_parameters['survey_column']
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        distinct_values = event["RuntimeVariables"]["distinct_values"]
+        df = pd.DataFrame(event["RuntimeVariables"]["data"])
+        survey_column = factors_parameters["survey_column"]
         # Get relative calculation function
         calculation = getattr(imp_func, factors_parameters["factors_type"])
 
         # Pass the distinct values to the factors function in its parameters
-        factors_parameters['distinct_values'] = distinct_values
+        factors_parameters["distinct_values"] = distinct_values
 
         # Some surveys will need to use the regional mean, extract them ahead of time
         if "regional_mean" in factors_parameters:
@@ -45,7 +45,7 @@ def lambda_handler(event, context):
             # produce column names
             means_columns = imp_func.produce_columns("mean_", questions_list)
             counts_columns = imp_func.\
-                produce_columns("movement_", questions_list, suffix='_count')
+                produce_columns("movement_", questions_list, suffix="_count")
             gb_columns = \
                 means_columns +\
                 counts_columns +\
@@ -92,5 +92,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output

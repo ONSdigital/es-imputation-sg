@@ -429,29 +429,29 @@ def test_client_error(which_lambda, which_runtime_variables,
     "expected_message,assertion",
     [
         (lambda_regionless_wrangler_function, wrangler_regionless_runtime_variables,
-         generic_environment_variables, "add_regionless_wrangler.EnvironSchema",
+         generic_environment_variables, "add_regionless_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_apply_wrangler_function, wrangler_apply_runtime_variables_1,
-         generic_environment_variables, "apply_factors_wrangler.EnvironSchema",
+         generic_environment_variables, "apply_factors_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_atypicals_wrangler_function, wrangler_atypicals_runtime_variables,
-         generic_environment_variables, "atypicals_wrangler.EnvironSchema",
+         generic_environment_variables, "atypicals_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_factors_wrangler_function, wrangler_factors_runtime_variables,
          generic_environment_variables,
-         "calculate_imputation_factors_wrangler.EnvironSchema",
+         "calculate_imputation_factors_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_means_wrangler_function, wrangler_means_runtime_variables,
-         generic_environment_variables, "calculate_means_wrangler.EnvironSchema",
+         generic_environment_variables, "calculate_means_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_movement_wrangler_function, wrangler_movement_runtime_variables,
-         generic_environment_variables, "calculate_movement_wrangler.EnvironSchema",
+         generic_environment_variables, "calculate_movement_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_iqrs_wrangler_function, wrangler_iqrs_runtime_variables,
-         generic_environment_variables, "iqrs_wrangler.EnvironSchema",
+         generic_environment_variables, "iqrs_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_recalc_wrangler_function, wrangler_recalc_runtime_variables,
-         generic_environment_variables, "recalculate_means_wrangler.EnvironSchema",
+         generic_environment_variables, "recalculate_means_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_regionless_method_function, method_regionless_runtime_variables,
          False, "add_regionless_method.pd.DataFrame",
@@ -520,7 +520,7 @@ def test_general_error(which_lambda, which_runtime_variables,
 def test_incomplete_read_error(which_lambda, which_runtime_variables,
                                which_environment_variables, file_list,
                                lambda_name, expected_message):
-    with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+    with mock.patch(lambda_name + ".aws_functions.get_dataframe",
                     side_effect=test_generic_library.replacement_get_dataframe):
         test_generic_library.incomplete_read_error(which_lambda,
                                                    which_runtime_variables,
@@ -606,7 +606,7 @@ def test_key_error(which_lambda, which_environment_variables,
 def test_method_error(which_lambda, which_runtime_variables, which_environment_variables,
                       file_list, lambda_name):
 
-    with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+    with mock.patch(lambda_name + ".aws_functions.get_dataframe",
                     side_effect=test_generic_library.replacement_get_dataframe):
         test_generic_library.wrangler_method_error(which_lambda,
                                                    which_runtime_variables,
@@ -703,9 +703,9 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
 
 
 @mock_s3
-@mock.patch('calculate_movement_wrangler.aws_functions.save_data',
+@mock.patch("calculate_movement_wrangler.aws_functions.save_data",
             side_effect=test_generic_library.replacement_save_data)
-@mock.patch('calculate_movement_wrangler.aws_functions.get_dataframe',
+@mock.patch("calculate_movement_wrangler.aws_functions.get_dataframe",
             side_effect=test_generic_library.replacement_get_dataframe)
 def test_wrangler_skip(mock_put_s3, mock_get_s3):
     """
@@ -748,7 +748,7 @@ def test_wrangler_skip(mock_put_s3, mock_get_s3):
 
 
 @mock_s3
-@mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3',
+@mock.patch("calculate_movement_wrangler.aws_functions.save_to_s3",
             side_effect=test_generic_library.replacement_save_to_s3)
 @pytest.mark.parametrize(
     "which_lambda,which_environment_variables,which_runtime_variables," +
@@ -827,7 +827,7 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
 
     with mock.patch.dict(which_lambda.os.environ,
                          which_environment_variables):
-        with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+        with mock.patch(lambda_name + ".aws_functions.get_dataframe",
                         side_effect=test_generic_library.replacement_get_dataframe):
 
             with mock.patch(lambda_name + ".boto3.client") as mock_client:
@@ -867,7 +867,7 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
 
 
 @mock_s3
-@mock.patch('calculate_movement_wrangler.aws_functions.save_to_s3',
+@mock.patch("calculate_movement_wrangler.aws_functions.save_to_s3",
             side_effect=test_generic_library.replacement_save_to_s3)
 @pytest.mark.parametrize(
     "which_lambda,which_environment_variables,which_runtime_variables," +
@@ -947,9 +947,9 @@ def test_wrangler_success_returned(mock_put_s3, which_lambda, which_environment_
 
     with mock.patch.dict(which_lambda.os.environ,
                          which_environment_variables):
-        with mock.patch(lambda_name + '.aws_functions.save_data',
+        with mock.patch(lambda_name + ".aws_functions.save_data",
                         side_effect=test_generic_library.replacement_save_data):
-            with mock.patch(lambda_name + '.aws_functions.get_dataframe',
+            with mock.patch(lambda_name + ".aws_functions.get_dataframe",
                             side_effect=test_generic_library.replacement_get_dataframe):
 
                 with mock.patch(lambda_name + ".boto3.client") as mock_client:
@@ -1052,8 +1052,8 @@ def test_calc_iqrs():
         test_data_in = file_1.read()
     input_data = pd.DataFrame(json.loads(test_data_in), dtype=float)
 
-    q_list = method_iqrs_runtime_variables['RuntimeVariables']['questions_list']
-    distinct_values = method_iqrs_runtime_variables['RuntimeVariables']["distinct_values"]
+    q_list = method_iqrs_runtime_variables["RuntimeVariables"]["questions_list"]
+    distinct_values = method_iqrs_runtime_variables["RuntimeVariables"]["distinct_values"]
 
     movement_columns = lambda_imputation_function.produce_columns("movement_",
                                                                   q_list)
@@ -1141,7 +1141,7 @@ def test_calc_atypicals():
     input_data = pd.DataFrame(json.loads(test_data_in))
 
     quest_list = method_atypicals_runtime_variables[
-        'RuntimeVariables']['questions_list']
+        "RuntimeVariables"]["questions_list"]
 
     # Produce columns
     atypical_columns = lambda_imputation_function.produce_columns("atyp_", quest_list)
@@ -1197,13 +1197,13 @@ def test_movement_calculation_b(which_current, which_previous, answer):
     "which_prefix,which_columns,which_additional,which_suffix,answer",
     [
         ("A_", ["One", "Two"], [], "",
-         ['A_One', 'A_Two']),
+         ["A_One", "A_Two"]),
         ("B_", ["One", "Two"], [], "_X",
-         ['B_One_X', 'B_Two_X']),
+         ["B_One_X", "B_Two_X"]),
         ("C_", ["One", "Two"], ["Three", "Four"], "",
-         ['C_One', 'C_Two', 'Three', 'Four']),
+         ["C_One", "C_Two", "Three", "Four"]),
         ("D_", ["One", "Two"], ["Three", "Four"], "_Z",
-         ['D_One_Z', 'D_Two_Z', 'Three', 'Four'])
+         ["D_One_Z", "D_Two_Z", "Three", "Four"])
     ])
 def test_produce_columns(which_prefix, which_columns, which_additional, which_suffix,
                          answer):

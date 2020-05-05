@@ -10,7 +10,7 @@ from marshmallow import Schema, fields
 import imputation_functions as imp_func
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -41,9 +41,9 @@ def lambda_handler(event, context):
 
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
-        schema = EnvironSchema()
+        schema = EnvironmentSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
@@ -54,23 +54,23 @@ def lambda_handler(event, context):
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Environment variables
-        bucket_name = config['bucket_name']
+        bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        run_environment = config['run_environment']
+        run_environment = config["run_environment"]
 
         # Runtime Variables
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        factors_parameters = event['RuntimeVariables']["factors_parameters"]
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        period_column = event['RuntimeVariables']["period_column"]
-        questions_list = event['RuntimeVariables']['questions_list']
-        sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        distinct_values = event["RuntimeVariables"]["distinct_values"]
+        factors_parameters = event["RuntimeVariables"]["factors_parameters"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        period_column = event["RuntimeVariables"]["period_column"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -110,10 +110,10 @@ def lambda_handler(event, context):
             calculate_factors.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
-        output_df = pd.read_json(json_response['data'], dtype=False)
+        output_df = pd.read_json(json_response["data"], dtype=False)
         distinct_values.append(period_column)
         columns_to_keep = imp_func.produce_columns(
                                              "imputation_factor_",
@@ -121,7 +121,7 @@ def lambda_handler(event, context):
                                              distinct_values
                                             )
 
-        final_df = output_df[columns_to_keep].drop_duplicates().to_json(orient='records')
+        final_df = output_df[columns_to_keep].drop_duplicates().to_json(orient="records")
         aws_functions.save_data(bucket_name, out_file_name,
                                 final_df, sqs_queue_url,
                                 outgoing_message_group_id, location)

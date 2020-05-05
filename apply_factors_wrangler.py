@@ -10,7 +10,7 @@ from marshmallow import Schema, fields
 from imputation_functions import produce_columns
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -40,42 +40,42 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
-        schema = EnvironSchema()
+        schema = EnvironmentSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
 
         logger.info("Validated params")
 
-        sqs = boto3.client('sqs', 'eu-west-2')
+        sqs = boto3.client("sqs", "eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Environment Variables
         bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        response_type = config['response_type']
-        run_environment = config['run_environment']
+        response_type = config["response_type"]
+        run_environment = config["run_environment"]
 
         # Runtime Variables
-        current_data = event['RuntimeVariables']['current_data']
-        distinct_values = event['RuntimeVariables']["distinct_values"]
+        current_data = event["RuntimeVariables"]["current_data"]
+        distinct_values = event["RuntimeVariables"]["distinct_values"]
         factors_parameters = event["RuntimeVariables"]["factors_parameters"]
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        previous_data = event['RuntimeVariables']['previous_data']
-        questions_list = event['RuntimeVariables']['questions_list']
-        reference = event['RuntimeVariables']['unique_identifier'][0]
-        region_column = factors_parameters["RuntimeVariables"]['region_column']
-        regionless_code = factors_parameters["RuntimeVariables"]['regionless_code']
-        sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        sum_columns = event['RuntimeVariables']["sum_columns"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        previous_data = event["RuntimeVariables"]["previous_data"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        reference = event["RuntimeVariables"]["unique_identifier"][0]
+        region_column = factors_parameters["RuntimeVariables"]["region_column"]
+        regionless_code = factors_parameters["RuntimeVariables"]["regionless_code"]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
+        sum_columns = event["RuntimeVariables"]["sum_columns"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -193,8 +193,8 @@ def lambda_handler(event, context):
         json_response = json.loads(imputed_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         imputed_non_responders = pd.read_json(json_response["data"], dtype=False)
 
@@ -236,7 +236,7 @@ def lambda_handler(event, context):
             logger.info("Successfully deleted input data.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn,
-                                       'Imputation - Apply Factors.')
+                                       "Imputation - Apply Factors.")
         logger.info("Successfully sent message to sns.")
 
     except Exception as e:

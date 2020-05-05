@@ -9,7 +9,7 @@ from marshmallow import Schema, fields
 import imputation_functions as imp_func
 
 
-class EnvironSchema(Schema):
+class EnvironmentSchema(Schema):
     """
     Schema to ensure that environment variables are present and in the correct format.
     :return: None
@@ -41,12 +41,12 @@ def lambda_handler(event, context):
 
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
         # Environment Variables.
-        sqs = boto3.client('sqs', region_name="eu-west-2")
-        lambda_client = boto3.client('lambda', region_name="eu-west-2")
-        config, errors = EnvironSchema().load(os.environ)
+        sqs = boto3.client("sqs", region_name="eu-west-2")
+        lambda_client = boto3.client("lambda", region_name="eu-west-2")
+        config, errors = EnvironmentSchema().load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment params: {errors}")
         logger.info("Validated params")
@@ -55,17 +55,17 @@ def lambda_handler(event, context):
         bucket_name = config["bucket_name"]
         checkpoint = config["checkpoint"]
         method_name = config["method_name"]
-        run_environment = config['run_environment']
+        run_environment = config["run_environment"]
 
         # Runtime Variables
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        questions_list = event['RuntimeVariables']['questions_list']
-        sns_topic_arn = event['RuntimeVariables']["sns_topic_arn"]
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        in_file_name = event["RuntimeVariables"]["in_file_name"]
+        incoming_message_group_id = event["RuntimeVariables"]["incoming_message_group_id"]
+        location = event["RuntimeVariables"]["location"]
+        out_file_name = event["RuntimeVariables"]["out_file_name"]
+        outgoing_message_group_id = event["RuntimeVariables"]["outgoing_message_group_id"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
+        sns_topic_arn = event["RuntimeVariables"]["sns_topic_arn"]
+        sqs_queue_url = event["RuntimeVariables"]["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -82,7 +82,7 @@ def lambda_handler(event, context):
 
         logger.info("Atypicals columns successfully added")
 
-        data_json = data.to_json(orient='records')
+        data_json = data.to_json(orient="records")
 
         payload = {
             "RuntimeVariables": {
@@ -100,11 +100,11 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully invoked method.")
 
-        json_response = json.loads(wrangled_data.get('Payload').read().decode("UTF-8"))
+        json_response = json.loads(wrangled_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,

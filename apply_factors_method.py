@@ -20,12 +20,12 @@ def lambda_handler(event, context):
         logger.info("Apply Factors Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
-        json_data = event['RuntimeVariables']["data"]
-        sum_columns = event['RuntimeVariables']["sum_columns"]
+        run_id = event["RuntimeVariables"]["run_id"]
+        json_data = event["RuntimeVariables"]["data"]
+        sum_columns = event["RuntimeVariables"]["sum_columns"]
         working_dataframe = pd.DataFrame(json_data)
 
-        questions_list = event['RuntimeVariables']["questions_list"]
+        questions_list = event["RuntimeVariables"]["questions_list"]
 
         for question in questions_list:
             # Loop through each question value, impute based on factor and previous value
@@ -53,7 +53,7 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
 
 
@@ -61,11 +61,11 @@ def sum_data_columns(input_row, sum_columns):
     # Calculate all sum columns.
     for sum_column in sum_columns:
         new_sum = 0
-        for data_column in sum_column['data']:
-            if sum_column['data'][data_column] == "+":
+        for data_column in sum_column["data"]:
+            if sum_column["data"][data_column] == "+":
                 new_sum += input_row[data_column]
-            elif sum_column['data'][data_column] == "-":
+            elif sum_column["data"][data_column] == "-":
                 new_sum -= input_row[data_column]
-        input_row[sum_column['column_name']] = int(new_sum)
+        input_row[sum_column["column_name"]] = int(new_sum)
 
     return input_row
