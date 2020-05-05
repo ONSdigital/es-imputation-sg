@@ -22,6 +22,27 @@ class EnvironmentSchema(Schema):
     run_environment = fields.Str(required=True)
 
 
+class RuntimeSchema(Schema):
+    current_data = fields.Str(required=True)
+    distinct_values = fields.List(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    previous_data = fields.Str(required=True)
+    questions_list = fields.List(required=True)
+    unique_identifier = fields.List(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
+    sum_columns = fields.List(required=True)
+
+
+class FactorsSchema(Schema):
+    regionless_column = fields.Str(required=True)
+    regionless_code = fields.Str(required=True)
+
+
 def lambda_handler(event, context):
     """
     This wrangler is used to prepare data for the apply factors statistical method.
@@ -55,6 +76,13 @@ def lambda_handler(event, context):
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
 
+        factors_parameters = runtime_variables["factors_parameters"]
+
+        factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
         logger.info("Validated parameters.")
 
         # Environment Variables
@@ -67,7 +95,6 @@ def lambda_handler(event, context):
         # Runtime Variables
         current_data = runtime_variables["current_data"]
         distinct_values = runtime_variables["distinct_values"]
-        factors_parameters = runtime_variables["factors_parameters"]
         in_file_name = runtime_variables["in_file_name"]
         incoming_message_group_id = runtime_variables["incoming_message_group_id"]
         location = runtime_variables["location"]
@@ -76,8 +103,8 @@ def lambda_handler(event, context):
         previous_data = runtime_variables["previous_data"]
         questions_list = runtime_variables["questions_list"]
         reference = runtime_variables["unique_identifier"][0]
-        region_column = factors_parameters["RuntimeVariables"]["region_column"]
-        regionless_code = factors_parameters["RuntimeVariables"]["regionless_code"]
+        region_column = factors["region_column"]
+        regionless_code = factors["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sqs_queue_url = runtime_variables["queue_url"]
         sum_columns = runtime_variables["sum_columns"]

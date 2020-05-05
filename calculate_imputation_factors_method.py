@@ -25,7 +25,8 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"]) # Factors Parameters Class? Or In Wrangler?
+        # Factors Parameters Class? Or In Wrangler? ££££££££££££££££££££££££££££££££££££££
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
         if errors:
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")

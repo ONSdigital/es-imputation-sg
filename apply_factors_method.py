@@ -2,6 +2,13 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(required=True)
+    questions_list = fields.List(required=True)
+    sum_columns = fields.List(required=True)
 
 
 def lambda_handler(event, context):
