@@ -2,6 +2,13 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(required=True)
+    regionless_code = fields.Str(required=True)
+    region_column = fields.Str(required=True)
 
 
 def lambda_handler(event, context):

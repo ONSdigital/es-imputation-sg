@@ -8,14 +8,26 @@ from marshmallow import Schema, fields
 
 
 class EnvironmentSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
+
+
+class RuntimeSchema(Schema):
+    factors_parameters = fields.Dict(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
+
+
+class FactorsSchema(Schema):
+    regionless_column = fields.Str(required=True)
+    regionless_code = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -48,6 +60,13 @@ def lambda_handler(event, context):
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
 
+        factors_parameters = runtime_variables["factors_parameters"]
+
+        factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
         logger.info("Validated parameters.")
 
         # Environment Variables
@@ -57,14 +76,13 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
-        factors_parameters = runtime_variables["factors_parameters"]
         in_file_name = runtime_variables["in_file_name"]
         incoming_message_group_id = runtime_variables["incoming_message_group_id"]
         location = runtime_variables["location"]
         out_file_name = runtime_variables["out_file_name"]
         outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
-        region_column = factors_parameters["RuntimeVariables"]["region_column"]
-        regionless_code = factors_parameters["RuntimeVariables"]["regionless_code"]
+        region_column = factors["region_column"]
+        regionless_code = factors["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sqs_queue_url = runtime_variables["queue_url"]
 
