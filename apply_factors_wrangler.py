@@ -11,10 +11,6 @@ from imputation_functions import produce_columns
 
 
 class EnvironmentSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
@@ -25,6 +21,7 @@ class EnvironmentSchema(Schema):
 class RuntimeSchema(Schema):
     current_data = fields.Str(required=True)
     distinct_values = fields.List(required=True)
+    factors_parameters = fields.Dict(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group_id = fields.Str(required=True)
     location = fields.Str(required=True)
