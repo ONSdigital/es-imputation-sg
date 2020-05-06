@@ -2,8 +2,15 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(required=True)
+    distinct_values = fields.List(required=True)
+    questions_list = fields.List(required=True)
 
 
 def lambda_handler(event, context):
