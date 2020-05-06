@@ -9,14 +9,30 @@ from marshmallow import Schema, fields
 
 
 class EnvironmentSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     response_type = fields.Str(required=True)
+
+
+class RuntimeSchema(Schema):
+    current_data = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    movement_type = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    out_file_name_skip = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    outgoing_message_group_id_skip = fields.Str(required=True)
+    period = fields.Str(required=True)
+    period_column = fields.Str(required=True)
+    periodicity = fields.Str(required=True)
+    previous_data = fields.Str(required=True)
+    questions_list = fields.List(required=True)
+    reference = fields.List(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):

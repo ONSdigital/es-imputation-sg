@@ -3,10 +3,21 @@ import logging
 import boto3
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
 
-# Why is this here. It isn't in any other section?
+
+class RuntimeSchema(Schema):
+    movement_type = fields.Str(required=True)
+    data = fields.Str(required=True)
+    questions_list = fields.List(required=True)
+    current_period = fields.Str(required=True)
+    period_column = fields.Str(required=True)
+    previous_period = fields.Str(required=True)
+
+
+# Why is this here. It isn't in any other section????????????????
 lambda_client = boto3.client("lambda", region_name="eu-west-2")
 s3 = boto3.resource("s3")
 
