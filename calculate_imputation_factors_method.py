@@ -1,5 +1,5 @@
 import logging
-##### Come back here later move factors params to the runtime setup!!! Wrangler Too.
+##### Come back here later move factors params to the runtime setup!!!
 import pandas as pd
 from es_aws_functions import general_functions
 

@@ -11,14 +11,24 @@ import imputation_functions as imp_func
 
 
 class EnvironmentSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
+
+
+class RuntimeSchema(Schema):
+    distinct_values = fields.List(required=True)
+    factors_parameters = fields.Dict(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    period_column = fields.Str(required=True)
+    questions_list = fields.List(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -58,7 +68,7 @@ def lambda_handler(event, context):
 
         logger.info("Validated parameters.")
 
-        # Environment variables
+        # Environment Variables
         bucket_name = environment_variables["bucket_name"]
         checkpoint = environment_variables["checkpoint"]
         method_name = environment_variables["method_name"]
