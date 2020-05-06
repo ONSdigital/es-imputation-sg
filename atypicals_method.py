@@ -3,8 +3,14 @@ import logging
 import numpy as np
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(requested=True)
+    questions_list = fields.List(requested=True)
 
 
 def lambda_handler(event, context):
