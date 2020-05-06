@@ -2,8 +2,15 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 from imputation_functions import produce_columns
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(required=True)
+    distinct_values = fields.List(required=True)
+    questions_list = fields.List(required=True)
 
 
 def lambda_handler(event, context):
@@ -33,13 +40,14 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        questions_list = runtime_variables["questions_list"]
         distinct_values = runtime_variables["distinct_values"]
         input_data = pd.DataFrame(runtime_variables["data"])
-        movement_columns = produce_columns("movement_", questions_list)
-        iqrs_columns = produce_columns("iqrs_", questions_list)
+        questions_list = runtime_variables["questions_list"]
 
         logger.info("Retrieved configuration variables.")
+
+        movement_columns = produce_columns("movement_", questions_list)
+        iqrs_columns = produce_columns("iqrs_", questions_list)
 
         iqrs_df = calc_iqrs(
             input_data,
