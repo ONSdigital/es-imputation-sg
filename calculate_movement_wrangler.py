@@ -29,10 +29,10 @@ class RuntimeSchema(Schema):
     period_column = fields.Str(required=True)
     periodicity = fields.Str(required=True)
     previous_data = fields.Str(required=True)
-    questions_list = fields.List(required=True)
-    reference = fields.List(required=True)
+    questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     queue_url = fields.Str(required=True)
+    unique_identifier = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):

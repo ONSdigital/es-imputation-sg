@@ -8,10 +8,10 @@ import imputation_functions as imp_func
 
 
 class RuntimeSchema(Schema):
-    data = fields.Str(required=True)
-    distinct_values = fields.List(required=True)
+    data = fields.List(fields.Dict, required=True)
+    distinct_values = fields.List(fields.String, required=True)
     factors_parameters = fields.Dict(required=True)
-    questions_list = fields.List(required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 class FactorsSchema(Schema):
@@ -46,12 +46,14 @@ def lambda_handler(event, context):
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
 
-        factors_parameters = runtime_variables["factors_parameters"]
+        # THIS NEEDS MORE WORK!!!!!
+        factors = runtime_variables["factors_parameters"]["RuntimeVariables"]
+        #factors_parameters = runtime_variables["factors_parameters"]
 
-        factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
-        if errors:
-            logger.error(f"Error validating runtime params: {errors}")
-            raise ValueError(f"Error validating runtime params: {errors}")
+        #factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
+        #if errors:
+        #    logger.error(f"Error validating runtime params: {errors}")
+        #    raise ValueError(f"Error validating runtime params: {errors}")
 
         logger.info("Validated parameters.")
 

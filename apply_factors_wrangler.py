@@ -20,7 +20,7 @@ class EnvironmentSchema(Schema):
 
 class RuntimeSchema(Schema):
     current_data = fields.Str(required=True)
-    distinct_values = fields.List(required=True)
+    distinct_values = fields.List(fields.String, required=True)
     factors_parameters = fields.Dict(required=True)
     in_file_name = fields.Str(required=True)
     incoming_message_group_id = fields.Str(required=True)
@@ -28,16 +28,16 @@ class RuntimeSchema(Schema):
     out_file_name = fields.Str(required=True)
     outgoing_message_group_id = fields.Str(required=True)
     previous_data = fields.Str(required=True)
-    questions_list = fields.List(required=True)
-    unique_identifier = fields.List(required=True)
+    questions_list = fields.List(fields.String, required=True)
+    unique_identifier = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     queue_url = fields.Str(required=True)
-    sum_columns = fields.List(required=True)     # Nest some stuff here.
+    sum_columns = fields.List(fields.Dict, required=True)     # Nest some stuff here.
 
 
 class FactorsSchema(Schema):
-    regionless_column = fields.Str(required=True)
-    regionless_code = fields.Str(required=True)
+    region_column = fields.Str(required=True)
+    regionless_code = fields.Int(required=True)
 
 
 def lambda_handler(event, context):

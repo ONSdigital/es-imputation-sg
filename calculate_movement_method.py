@@ -10,8 +10,8 @@ import imputation_functions as imp_func
 
 class RuntimeSchema(Schema):
     movement_type = fields.Str(required=True)
-    data = fields.Str(required=True)
-    questions_list = fields.List(required=True)
+    data = fields.List(fields.Dict, required=True)
+    questions_list = fields.List(fields.String, required=True)
     current_period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     previous_period = fields.Str(required=True)

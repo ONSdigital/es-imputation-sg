@@ -8,9 +8,9 @@ from imputation_functions import produce_columns
 
 
 class RuntimeSchema(Schema):
-    data = fields.Str(required=True)
-    distinct_values = fields.List(required=True)
-    questions_list = fields.List(required=True)
+    data = fields.List(fields.Dict, required=True)
+    distinct_values = fields.List(fields.String, required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):

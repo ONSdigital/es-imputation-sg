@@ -454,26 +454,25 @@ def test_client_error(which_lambda, which_runtime_variables,
          generic_environment_variables, "recalculate_means_wrangler.EnvironmentSchema",
          "Exception", test_generic_library.wrangler_assert),
         (lambda_regionless_method_function, method_regionless_runtime_variables,
-         False, "add_regionless_method.pd.DataFrame",
+         False, "add_regionless_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_apply_method_function, method_apply_runtime_variables,
-         False, "apply_factors_method.pd.DataFrame",
+         False, "apply_factors_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_atypicals_method_function, method_atypicals_runtime_variables,
-         False, "atypicals_method.pd.DataFrame",
+         False, "atypicals_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_factors_method_function, method_factors_runtime_variables,
-         False,
-         "calculate_imputation_factors_method.pd.DataFrame",
+         False, "calculate_imputation_factors_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_means_method_function, method_means_runtime_variables,
-         False, "calculate_means_method.pd.DataFrame",
+         False, "calculate_means_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_movement_method_function, method_movement_runtime_variables,
-         False, "calculate_movement_method.pd.DataFrame",
+         False, "calculate_movement_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert),
         (lambda_iqrs_method_function, method_iqrs_runtime_variables,
-         False, "iqrs_method.pd.DataFrame",
+         False, "iqrs_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert)
     ])
 def test_general_error(which_lambda, which_runtime_variables,
@@ -619,28 +618,30 @@ def test_method_error(which_lambda, which_runtime_variables, which_environment_v
 #    The Methods Have No Validation. When Add More Marshmallow Add Methods Into Tests.   #
 ##########################################################################################
 @pytest.mark.parametrize(
-    "which_lambda,expected_message,assertion",
+    "which_lambda,expected_message,assertion,which_environment_variables",
     [
         (lambda_regionless_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_apply_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_atypicals_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_factors_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_means_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_movement_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_iqrs_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert),
+         test_generic_library.wrangler_assert, {}),
         (lambda_recalc_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert)
+         test_generic_library.wrangler_assert, {})
     ])
-def test_value_error(which_lambda, expected_message, assertion):
+def test_value_error(which_lambda, expected_message,
+                     assertion, which_environment_variables):
     test_generic_library.value_error(
-        which_lambda, expected_message, assertion)
+        which_lambda, expected_message, assertion,
+        environment_variables=which_environment_variables)
 
 ##########################################################################################
 #                                     Specific                                           #

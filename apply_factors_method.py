@@ -6,9 +6,9 @@ from marshmallow import Schema, fields
 
 
 class RuntimeSchema(Schema):
-    data = fields.Str(required=True)
-    questions_list = fields.List(required=True)
-    sum_columns = fields.List(required=True)
+    data = fields.List(fields.Dict, required=True)
+    questions_list = fields.List(fields.String, required=True)
+    sum_columns = fields.List(fields.Dict, required=True)
 
 
 def lambda_handler(event, context):

@@ -9,8 +9,8 @@ import imputation_functions as imp_func
 
 
 class RuntimeSchema(Schema):
-    data = fields.Str(requested=True)
-    questions_list = fields.List(requested=True)
+    data = fields.List(fields.Dict, required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
