@@ -32,7 +32,7 @@ class RuntimeSchema(Schema):
     unique_identifier = fields.List(required=True)
     sns_topic_arn = fields.Str(required=True)
     queue_url = fields.Str(required=True)
-    sum_columns = fields.List(required=True)
+    sum_columns = fields.List(required=True)     # Nest some stuff here.
 
 
 class FactorsSchema(Schema):
