@@ -1,9 +1,25 @@
 import logging
-##### Come back here later move factors params to the runtime setup!!!
+
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.Str(required=True)
+    distinct_values = fields.List(required=True)
+    factors_parameters = fields.Dict(required=True)
+    questions_list = fields.List(required=True)
+
+
+class FactorsSchema(Schema):
+    factors_type = fields.Str(required=True)
+    region_column = fields.Str(required=True)
+    regionless_code = fields.Int(required=True)
+    survey_column = fields.Str(required=True)
+    regional_mean = fields.Str(required=False)
 
 
 def lambda_handler(event, context):
@@ -25,8 +41,14 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        # Factors Parameters Class? Or In Wrangler? ££££££££££££££££££££££££££££££££££££££
         runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        factors_parameters = runtime_variables["factors_parameters"]
+
+        factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
         if errors:
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
@@ -34,35 +56,37 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
-        factors_parameters = runtime_variables[
-            "factors_parameters"]["RuntimeVariables"]
-        questions_list = runtime_variables["questions_list"]
-        distinct_values = runtime_variables["distinct_values"]
         df = pd.DataFrame(runtime_variables["data"])
-        survey_column = factors_parameters["survey_column"]
+        distinct_values = runtime_variables["distinct_values"]
+        factors_type = factors["factors_type"]
+        questions_list = runtime_variables["questions_list"]
+        region_column = factors["region_column"]
+        regionless_code = factors["regionless_code"]
+        survey_column = factors["survey_column"]
 
         logger.info("Retrieved configuration variables.")
 
         # Get relative calculation function
-        calculation = getattr(imp_func, factors_parameters["factors_type"])
+        calculation = getattr(imp_func, factors_type)
 
         # Pass the distinct values to the factors function in its parameters
-        factors_parameters["distinct_values"] = distinct_values
+        factors["distinct_values"] = distinct_values
 
         # Some surveys will need to use the regional mean, extract them ahead of time
-        if "regional_mean" in factors_parameters:
+        if "regional_mean" in factors:
+            regional_mean = factors["regional_mean"]
+
             # split to get only regionless data
-            gb_rows = df.loc[df[factors_parameters["region_column"]] ==
-                             factors_parameters["regionless_code"]]
+            gb_rows = df.loc[df[region_column] == regionless_code]
+
             # produce column names
             means_columns = imp_func.produce_columns("mean_", questions_list)
             counts_columns = imp_func.\
                 produce_columns("movement_", questions_list, suffix="_count")
-            gb_columns = \
-                means_columns +\
-                counts_columns +\
-                distinct_values +\
-                [survey_column]
+            gb_columns = means_columns +\
+                         counts_columns +\
+                         distinct_values +\
+                         [survey_column]
 
             factor_columns = imp_func.\
                 produce_columns("imputation_factor_",
@@ -71,21 +95,19 @@ def lambda_handler(event, context):
 
             # select only gb columns and then drop duplicates, leaving one row per strata
             gb_rows = gb_rows[gb_columns].drop_duplicates()
-            factors_parameters[factors_parameters["regional_mean"]] = ""
+            factors[regional_mean] = ""
 
             # calculate gb factors ahead of time
             gb_rows = gb_rows.apply(
-                lambda x: calculation(x, questions_list, factors_parameters), axis=1)
+                lambda x: calculation(x, questions_list, factors), axis=1)
 
             # reduce gb_rows to distinct_values, survey, and the factors
-            gb_factors = \
-                gb_rows[factor_columns]
+            gb_factors = gb_rows[factor_columns]
 
             # add gb_factors to factors parameters to send to calculation
-            factors_parameters[factors_parameters["regional_mean"]] = \
-                gb_factors
+            factors[regional_mean] = gb_factors
 
-        df = df.apply(lambda x: calculation(x, questions_list, factors_parameters),
+        df = df.apply(lambda x: calculation(x, questions_list, factors),
                       axis=1)
         logger.info("Calculated Factors for " + str(questions_list))
 
