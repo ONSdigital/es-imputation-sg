@@ -1094,25 +1094,6 @@ def test_iqr_sum(input_file, quest, prepared_data):
 
 
 @pytest.mark.parametrize(
-    "input_data,prepared_data",
-    [
-        ([{"A": 0, "B": 0, "C": 0}], True),
-        ([{"A": 1, "B": 2, "C": 3}], False)
-    ])
-def test_do_check(input_data, prepared_data):
-
-    quest = ["A", "B", "C"]
-    working_dataframe = pd.DataFrame(input_data)
-
-    working_dataframe["zero_data"] = working_dataframe.apply(
-        lambda x: lambda_apply_wrangler_function.do_check(x, quest), axis=1)
-
-    produced_data = working_dataframe["zero_data"][0]
-
-    assert produced_data == prepared_data
-
-
-@pytest.mark.parametrize(
     "columns,prepared_data",
     [
         ([{"column_name": "D", "data": {"A": "+", "B": "+", "C": "+"}}], 9),
