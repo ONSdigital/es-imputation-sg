@@ -207,14 +207,9 @@ def lambda_handler(event, context):
         final_imputed = pd.concat([current_responders, imputed_non_responders])
         logger.info("Successfully joined imputed data with responder data")
 
-        final_imputed["zero_data"] = final_imputed.apply(
-            lambda x: do_check(x, questions_list), axis=1)
-        final_imputed = final_imputed[~final_imputed["zero_data"]]
-
         # Create A List Of Factor Columns To Drop
         cols_to_drop = produce_columns("imputation_factor_", questions_list,
-                                       produce_columns("prev_", questions_list,
-                                                       ["zero_data"]))
+                                       produce_columns("prev_", questions_list))
 
         filtered_data = final_imputed.drop(cols_to_drop, axis=1)
 
@@ -249,13 +244,3 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
     return {"success": True, "checkpoint": checkpoint}
-
-
-def do_check(x, questions_list):
-    total_data = 0
-    for question in questions_list:
-        total_data += x[question]
-    if total_data == 0:
-        return True
-    else:
-        return False
