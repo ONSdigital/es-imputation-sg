@@ -14,14 +14,6 @@ class RuntimeSchema(Schema):
     questions_list = fields.List(fields.String, required=True)
 
 
-class FactorsSchema(Schema):
-    factors_type = fields.Str(required=True)
-    region_column = fields.Str(required=True)
-    regionless_code = fields.Int(required=True)
-    survey_column = fields.Str(required=True)
-    regional_mean = fields.Str(required=False)
-
-
 def lambda_handler(event, context):
     """
     Calculates imputation factor for each question, in each aggregated group.
@@ -46,25 +38,24 @@ def lambda_handler(event, context):
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
 
-        # THIS NEEDS MORE WORK!!!!!
-        factors = runtime_variables["factors_parameters"]["RuntimeVariables"]
-        #factors_parameters = runtime_variables["factors_parameters"]
+        # Pick Correct Schema
+        factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
+        factors_type = factors_parameters["factors_type"]
+        factors_name = ''.join(word.title() for word in factors_type.split('_'))
+        factors_name += "Schema"
+        factors_schema = getattr(imp_func, factors_name)
 
-        #factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
-        #if errors:
-        #    logger.error(f"Error validating runtime params: {errors}")
-        #    raise ValueError(f"Error validating runtime params: {errors}")
+        factors, errors = factors_schema().load(factors_parameters)
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
 
         logger.info("Validated parameters.")
 
         # Runtime Variables
         df = pd.DataFrame(runtime_variables["data"])
         distinct_values = runtime_variables["distinct_values"]
-        factors_type = factors["factors_type"]
         questions_list = runtime_variables["questions_list"]
-        region_column = factors["region_column"]
-        regionless_code = factors["regionless_code"]
-        survey_column = factors["survey_column"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -76,7 +67,10 @@ def lambda_handler(event, context):
 
         # Some surveys will need to use the regional mean, extract them ahead of time
         if "regional_mean" in factors:
+            region_column = factors["region_column"]
             regional_mean = factors["regional_mean"]
+            regionless_code = factors["regionless_code"]
+            survey_column = factors["survey_column"]
 
             # split to get only regionless data
             gb_rows = df.loc[df[region_column] == regionless_code]

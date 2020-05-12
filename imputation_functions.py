@@ -1,6 +1,31 @@
 import pandas as pd
-
+from marshmallow import Schema, fields
 # Should We Be Adding Marshmallow Checks Here As Well?
+
+
+class FactorsSchema(Schema):
+    region_column = fields.Str(required=True)
+    regional_mean = fields.Str(required=False)
+    regionless_code = fields.Int(required=True)
+    survey_column = fields.Str(required=True)
+
+
+class FactorsCalculationASchema(FactorsSchema):
+    first_imputation_factor = fields.Int(required=True)
+    first_threshold = fields.Int(required=True)
+    percentage_movement = fields.Bool(required=True)
+    second_imputation_factor = fields.Int(required=True)
+    second_threshold = fields.Int(required=True)
+    third_threshold = fields.Int(required=True)
+
+
+class FactorsCalculationBSchema(FactorsSchema):
+    threshold = fields.Int(required=True)
+
+
+class ExtendedFactorsCalculationASchema(FactorsCalculationASchema):
+    distinct_values = fields.List(fields.String, required=True)
+    third_imputation_factors = fields.Int(required=True)
 
 
 def movement_calculation_a(current_value, previous_value):
