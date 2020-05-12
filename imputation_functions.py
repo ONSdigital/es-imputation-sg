@@ -78,18 +78,24 @@ def factors_calculation_a(row, questions, parameters):
 
     :return: row of DataFrame
     """
-    # extract the parameters:
-    first_threshold = parameters["first_threshold"]
-    second_threshold = parameters["second_threshold"]
-    third_threshold = parameters["third_threshold"]
-    first_imputation_factor = parameters["first_imputation_factor"]
-    second_imputation_factor = parameters["second_imputation_factor"]
-    third_imputation_factors = parameters["third_imputation_factors"]
-    region_column = parameters["region_column"]
-    regionless_code = parameters["regionless_code"]
-    survey_column = parameters["survey_column"]
-    percentage_movement = parameters["percentage_movement"]
-    distinct_values = parameters["distinct_values"]
+
+    runtime_variables, errors = ExtendedFactorsCalculationASchema().load(parameters)
+    if errors:
+        raise ValueError(f"Error validating factors params: {errors}")
+
+    # RuntimeVariables
+    first_threshold = runtime_variables["first_threshold"]
+    second_threshold = runtime_variables["second_threshold"]
+    third_threshold = runtime_variables["third_threshold"]
+    first_imputation_factor = runtime_variables["first_imputation_factor"]
+    second_imputation_factor = runtime_variables["second_imputation_factor"]
+    third_imputation_factors = runtime_variables["third_imputation_factors"]
+    region_column = runtime_variables["region_column"]
+    regionless_code = runtime_variables["regionless_code"]
+    survey_column = runtime_variables["survey_column"]
+    percentage_movement = runtime_variables["percentage_movement"]
+    distinct_values = runtime_variables["distinct_values"]
+
     for question in questions:
         if row[region_column] == regionless_code:
             if row[survey_column] == "066":
@@ -162,8 +168,13 @@ def factors_calculation_b(row, questions, parameters):
 
     :return: row of DataFrame
     """
-    # extract the parameters:
-    threshold = parameters["threshold"]
+    runtime_variables, errors = FactorsCalculationBSchema().load(parameters)
+    if errors:
+        raise ValueError(f"Error validating factors params: {errors}")
+
+    # RuntimeVariables
+    threshold = runtime_variables["threshold"]
+
     for question in questions:
         if row["movement_" + question + "_count"] < int(threshold):
             row["imputation_factor_" + question] = row["mean_" + question]
