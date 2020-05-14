@@ -19,13 +19,12 @@ class FactorsCalculationASchema(FactorsSchema):
     third_threshold = fields.Int(required=True)
 
 
-class FactorsCalculationBSchema(FactorsSchema):
+class FactorsCalculationBSchema(Schema):
     threshold = fields.Int(required=True)
 
 
 class ExtendedFactorsCalculationASchema(FactorsCalculationASchema):
     distinct_values = fields.List(fields.String, required=True)
-    third_imputation_factors = fields.Int(required=True)
 
 
 def movement_calculation_a(current_value, previous_value):
@@ -50,7 +49,7 @@ def movement_calculation_b(current_value, previous_value):
     return number
 
 
-def factors_calculation_a(row, questions, parameters):
+def factors_calculation_a(row, questions, runtime_variables):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -79,9 +78,9 @@ def factors_calculation_a(row, questions, parameters):
     :return: row of DataFrame
     """
 
-    runtime_variables, errors = ExtendedFactorsCalculationASchema().load(parameters)
-    if errors:
-        raise ValueError(f"Error validating factors params: {errors}")
+    #runtime_variables, errors = ExtendedFactorsCalculationASchema().load(parameters, partial=True)
+    #if errors:
+    #    raise ValueError(f"Error validating factors params: {errors}")
 
     # RuntimeVariables
     first_threshold = runtime_variables["first_threshold"]
