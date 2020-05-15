@@ -25,6 +25,7 @@ class FactorsCalculationBSchema(Schema):
 
 class ExtendedFactorsCalculationASchema(FactorsCalculationASchema):
     distinct_values = fields.List(fields.String, required=True)
+    third_imputation_factors = fields.Field(required=True)
 
 
 def movement_calculation_a(current_value, previous_value):
@@ -49,7 +50,7 @@ def movement_calculation_b(current_value, previous_value):
     return number
 
 
-def factors_calculation_a(row, questions, runtime_variables):
+def factors_calculation_a(row, questions, parameters):
     """
     Calculates the imputation factors for the DataFrame on row by row basis.
     - Calculates imputation factor for each question, in each aggregated group,
@@ -78,11 +79,12 @@ def factors_calculation_a(row, questions, runtime_variables):
     :return: row of DataFrame
     """
 
-    #runtime_variables, errors = ExtendedFactorsCalculationASchema().load(parameters, partial=True)
-    #if errors:
-    #    raise ValueError(f"Error validating factors params: {errors}")
+    runtime_variables, errors = ExtendedFactorsCalculationASchema().load(parameters)
+    if errors:
+        raise ValueError(f"Error validating factors params: {errors}")
 
     # RuntimeVariables
+    distinct_values = runtime_variables["distinct_values"]
     first_threshold = runtime_variables["first_threshold"]
     second_threshold = runtime_variables["second_threshold"]
     third_threshold = runtime_variables["third_threshold"]
@@ -93,7 +95,6 @@ def factors_calculation_a(row, questions, runtime_variables):
     regionless_code = runtime_variables["regionless_code"]
     survey_column = runtime_variables["survey_column"]
     percentage_movement = runtime_variables["percentage_movement"]
-    distinct_values = runtime_variables["distinct_values"]
 
     for question in questions:
         if row[region_column] == regionless_code:
