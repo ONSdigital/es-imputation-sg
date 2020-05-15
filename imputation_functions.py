@@ -1,6 +1,5 @@
 import pandas as pd
 from marshmallow import Schema, fields
-# Should We Be Adding Marshmallow Checks Here As Well?
 
 
 class FactorsSchema(Schema):
