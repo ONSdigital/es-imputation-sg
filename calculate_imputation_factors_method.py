@@ -42,8 +42,7 @@ def lambda_handler(event, context):
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         factors_type = factors_parameters["factors_type"]
         factors_name = ''.join(word.title() for word in factors_type.split('_'))
-        factors_name += "Schema"
-        factors_schema = getattr(imp_func, factors_name)
+        factors_schema = getattr(imp_func, factors_name + "Schema")
 
         factors, errors = factors_schema().load(factors_parameters)
         if errors:
@@ -79,10 +78,11 @@ def lambda_handler(event, context):
             means_columns = imp_func.produce_columns("mean_", questions_list)
             counts_columns = imp_func.\
                 produce_columns("movement_", questions_list, suffix="_count")
-            gb_columns = means_columns +\
-                         counts_columns +\
-                         distinct_values +\
-                         [survey_column]
+            gb_columns = \
+                means_columns +\
+                counts_columns +\
+                distinct_values +\
+                [survey_column]
 
             factor_columns = imp_func.\
                 produce_columns("imputation_factor_",
