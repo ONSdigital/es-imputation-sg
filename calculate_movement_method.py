@@ -1,6 +1,5 @@
 import logging
 
-import boto3
 import pandas as pd
 from es_aws_functions import general_functions
 from marshmallow import Schema, fields
@@ -15,11 +14,6 @@ class RuntimeSchema(Schema):
     current_period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     previous_period = fields.Str(required=True)
-
-
-# Why is this here. It isn't in any other section????????????????
-lambda_client = boto3.client("lambda", region_name="eu-west-2")
-s3 = boto3.resource("s3")
 
 
 def lambda_handler(event, context):
@@ -74,7 +68,7 @@ def lambda_handler(event, context):
 
             result_list = []
 
-            # .len is used so the correct amount of iterations for the loop.
+            # len is used so the correct amount of iterations for the loop.
             for i in range(0, len(sorted_current)):
 
                 # This check is too prevent the DivdebyZeroError.
