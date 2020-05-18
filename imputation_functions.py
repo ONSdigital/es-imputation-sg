@@ -62,7 +62,7 @@ def factors_calculation_a(row, questions, **kwargs):
 
     :param row: row of DataFrame
     :param questions: question names in columns
-    :param parameters: A dictionary of the following parameters:
+    :param kwargs: A dictionary of the following parameters:
         - first_threshold: One of three thresholds to compare the question count to.
         - second_threshold: One of three thresholds to compare the question count to.
         - third_threshold: One of three thresholds to compare the question count to.
@@ -84,53 +84,56 @@ def factors_calculation_a(row, questions, **kwargs):
     if errors:
         raise ValueError(f"Error validating factors params: {errors}")
 
-    rv = SimpleNamespace(**runtime_variables)
+    runtime_object = SimpleNamespace(**runtime_variables)
 
     for question in questions:
-        if row[rv.region_column] == rv.regionless_code:
-            if row[rv.survey_column] == "066":
-                if row["movement_" + question + "_count"] < int(rv.first_threshold):
+        if row[runtime_object.region_column] == runtime_object.regionless_code:
+            if row[runtime_object.survey_column] == "066":
+                if row["movement_" + question + "_count"] < int(
+                        runtime_object.first_threshold):
                     row["imputation_factor_" + question] =\
-                        float(rv.first_imputation_factor)
+                        float(runtime_object.first_imputation_factor)
                 else:
                     row["imputation_factor_" + question] =\
                         float(pd.to_numeric(row["mean_" + question]))
-            elif row[rv.survey_column] == "076":
-                if row["movement_" + question + "_count"] < int(rv.second_threshold):
+            elif row[runtime_object.survey_column] == "076":
+                if row["movement_" + question + "_count"] < int(
+                        runtime_object.second_threshold):
                     row["imputation_factor_" + question] =\
-                        float(rv.second_imputation_factor)
+                        float(runtime_object.second_imputation_factor)
                 else:
                     row["imputation_factor_" + question] =\
                         float(pd.to_numeric(row["mean_" + question]))
             else:
                 row["imputation_factor_" + question] = 0
             # check if the imputation factor needs to be adjusted
-            if rv.percentage_movement:
+            if runtime_object.percentage_movement:
                 row["imputation_factor_" + question] = \
                     row["imputation_factor_" + question] + 1
         else:
-            if row["movement_" + question + "_count"] < int(rv.third_threshold):
+            if row["movement_" + question + "_count"] < int(
+                    runtime_object.third_threshold):
                 factor_filter = ""
 
                 # Ignore region in matching columns (we need to find the all-gb data)
-                if rv.region_column in rv.distinct_values:
-                    rv.distinct_values.remove(rv.region_column)
+                if runtime_object.region_column in runtime_object.distinct_values:
+                    runtime_object.distinct_values.remove(runtime_object.region_column)
 
-                if len(rv.distinct_values) < 1:
+                if len(runtime_object.distinct_values) < 1:
                     row["imputation_factor_" + question] = \
                         float(pd.to_numeric(
-                            rv.third_imputation_factors["imputation_factor_" + question]
-                                .take([0])))
+                            runtime_object.third_imputation_factors[
+                                "imputation_factor_" + question].take([0])))
                 else:
                     # Find the correct mean (region or region+strata handling)
-                    for value in rv.distinct_values:
-                        if value != rv.distinct_values[0]:
+                    for value in runtime_object.distinct_values:
+                        if value != runtime_object.distinct_values[0]:
                             factor_filter += " & "
                         factor_filter += "(%s == '%s')" % (value, row[value])
 
                     row["imputation_factor_" + question] = \
                         float(pd.to_numeric(
-                            rv.third_imputation_factors.query(
+                            runtime_object.third_imputation_factors.query(
                                 str(factor_filter))["imputation_factor_" + question]
                             .take([0])))
 
@@ -139,7 +142,7 @@ def factors_calculation_a(row, questions, **kwargs):
                     float(pd.to_numeric(row["mean_" + question]))
 
                 # check if the imputation factor needs to be adjusted
-                if rv.percentage_movement:
+                if runtime_object.percentage_movement:
                     row["imputation_factor_" + question] =\
                         row["imputation_factor_" + question] + 1
 
@@ -155,7 +158,7 @@ def factors_calculation_b(row, questions, **kwargs):
 
     :param row: row of DataFrame
     :param questions: A list of question names
-    :param parameters: A dictionary of the following parameters:
+    :param kwargs: A dictionary of the following parameters:
         - threshold: The threshold to compare the question count to.
 
     :return: row of DataFrame
@@ -164,10 +167,10 @@ def factors_calculation_b(row, questions, **kwargs):
     if errors:
         raise ValueError(f"Error validating factors params: {errors}")
 
-    rv = SimpleNamespace(**runtime_variables)
+    runtime_object = SimpleNamespace(**runtime_variables)
 
     for question in questions:
-        if row["movement_" + question + "_count"] < int(rv.threshold):
+        if row["movement_" + question + "_count"] < int(runtime_object.threshold):
             row["imputation_factor_" + question] = row["mean_" + question]
         else:
             row["imputation_factor_" + question] = 0
