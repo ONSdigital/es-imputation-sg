@@ -5,10 +5,15 @@ from es_aws_functions import general_functions
 from marshmallow import Schema, fields
 
 
+class SumSchema(Schema):
+    column_name = fields.Str(required=True)
+    data = fields.Dict(required=True)
+
+
 class RuntimeSchema(Schema):
     data = fields.List(fields.Dict, required=True)
     questions_list = fields.List(fields.String, required=True)
-    sum_columns = fields.List(fields.Dict, required=True)
+    sum_columns = fields.Nested(SumSchema, many=True, required=True)
 
 
 def lambda_handler(event, context):
