@@ -95,7 +95,7 @@ def lambda_handler(event, context):
 
             # calculate gb factors ahead of time
             gb_rows = gb_rows.apply(
-                lambda x: calculation(x, questions_list, factors), axis=1)
+                lambda x: calculation(x, questions_list, **factors), axis=1)
 
             # reduce gb_rows to distinct_values, survey, and the factors
             gb_factors = gb_rows[factor_columns]
@@ -103,7 +103,7 @@ def lambda_handler(event, context):
             # add gb_factors to factors parameters to send to calculation
             factors[regional_mean] = gb_factors
 
-        df = df.apply(lambda x: calculation(x, questions_list, factors),
+        df = df.apply(lambda x: calculation(x, questions_list, **factors),
                       axis=1)
         logger.info("Calculated Factors for " + str(questions_list))
 

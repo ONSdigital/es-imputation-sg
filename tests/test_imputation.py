@@ -1042,7 +1042,7 @@ def test_factors_calculation_a(input_file, output_file, parameters):
 
     input_data = input_data.apply(
         lambda x: lambda_imputation_function.factors_calculation_a(
-            x, question_list, imputation_functions), axis=1)
+            x, question_list, **imputation_functions), axis=1)
 
     # This is for Int, Float mismatch correction.
     json_data = input_data.to_json(orient="records")
@@ -1066,9 +1066,11 @@ def test_factors_calculation_b():
         test_data_in = file_1.read()
     produced_data = pd.DataFrame(json.loads(test_data_in))
 
+    factors = {"threshold": 2}
+
     produced_data = produced_data.apply(
         lambda x: lambda_imputation_function.factors_calculation_b(
-            x, ["question_1"], {"threshold": 2}), axis=1)
+            x, ["question_1"], **factors), axis=1)
 
     with open("tests/fixtures/test_imputation_functions_factors_b_prepared_output.json",
               "r") as file_2:
