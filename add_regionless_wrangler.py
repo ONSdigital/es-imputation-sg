@@ -5,6 +5,7 @@ import os
 import boto3
 from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
+from marshmallow.validate import Equal
 
 
 class EnvironmentSchema(Schema):
@@ -14,8 +15,15 @@ class EnvironmentSchema(Schema):
     run_environment = fields.Str(required=True)
 
 
+class FactorsSchema(Schema):
+    region_column = fields.Str(required=True)
+    regionless_code = fields.Int(required=True)
+
+
 class RuntimeSchema(Schema):
-    factors_parameters = fields.Dict(required=True)
+    factors_parameters = fields.Dict(
+        keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
+        values=fields.Nested(FactorsSchema, required=True))
     in_file_name = fields.Str(required=True)
     incoming_message_group_id = fields.Str(required=True)
     location = fields.Str(required=True)
@@ -23,11 +31,6 @@ class RuntimeSchema(Schema):
     outgoing_message_group_id = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     queue_url = fields.Str(required=True)
-
-
-class FactorsSchema(Schema):
-    region_column = fields.Str(required=True)
-    regionless_code = fields.Int(required=True)
 
 
 def lambda_handler(event, context):
@@ -60,13 +63,6 @@ def lambda_handler(event, context):
             logger.error(f"Error validating runtime params: {errors}")
             raise ValueError(f"Error validating runtime params: {errors}")
 
-        factors_parameters = runtime_variables["factors_parameters"]
-
-        factors, errors = FactorsSchema().load(factors_parameters["RuntimeVariables"])
-        if errors:
-            logger.error(f"Error validating runtime params: {errors}")
-            raise ValueError(f"Error validating runtime params: {errors}")
-
         logger.info("Validated parameters.")
 
         # Environment Variables
@@ -76,13 +72,14 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
+        factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
         incoming_message_group_id = runtime_variables["incoming_message_group_id"]
         location = runtime_variables["location"]
         out_file_name = runtime_variables["out_file_name"]
         outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
-        region_column = factors["region_column"]
-        regionless_code = factors["regionless_code"]
+        region_column = factors_parameters["region_column"]
+        regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sqs_queue_url = runtime_variables["queue_url"]
 
