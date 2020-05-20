@@ -2,8 +2,15 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.List(fields.Dict, required=True)
+    distinct_values = fields.List(fields.String, required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
@@ -24,15 +31,23 @@ def lambda_handler(event, context):
         logger.info("Means Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
-        # Environment variables
-        json_data = event['RuntimeVariables']["data"]
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        questions_list = event['RuntimeVariables']["questions_list"]
+        run_id = event["RuntimeVariables"]["run_id"]
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
+        json_data = runtime_variables["data"]
+        distinct_values = runtime_variables["distinct_values"]
+        questions_list = runtime_variables["questions_list"]
+
+        logger.info("Retrieved configuration variables.")
 
         movement_columns = imp_func.produce_columns("movement_", questions_list)
-
-        logger.info("Validated params.")
 
         df = pd.DataFrame(json_data)
 
@@ -95,5 +110,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output

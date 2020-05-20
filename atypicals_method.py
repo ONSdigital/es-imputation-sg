@@ -3,8 +3,14 @@ import logging
 import numpy as np
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.List(fields.Dict, required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
@@ -23,17 +29,26 @@ def lambda_handler(event, context):
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
-        input_data = pd.DataFrame(event['RuntimeVariables']["data"])
-        questions_list = event['RuntimeVariables']['questions_list']
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
+        input_data = pd.DataFrame(runtime_variables["data"])
+        questions_list = runtime_variables["questions_list"]
+
+        logger.info("Retrieved configuration variables.")
+
         # Produce columns
         atypical_columns = imp_func.produce_columns("atyp_", questions_list)
         movement_columns = imp_func.produce_columns("movement_", questions_list)
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
         mean_columns = imp_func.produce_columns("mean_", questions_list)
-
-        logger.info("Successfully retrieved data from event.")
 
         atypicals_df = calc_atypicals(
             input_data,
@@ -44,7 +59,7 @@ def lambda_handler(event, context):
         )
         logger.info("Successfully finished calculations of atypicals.")
 
-        json_out = atypicals_df.to_json(orient='records')
+        json_out = atypicals_df.to_json(orient="records")
 
         final_output = {"data": json_out}
 
@@ -57,7 +72,7 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
 
 

@@ -9,15 +9,23 @@ from marshmallow import Schema, fields
 import imputation_functions as imp_func
 
 
-class EnvironSchema(Schema):
-    """
-    Schema to ensure that environment variables are present and in the correct format.
-    :return: None
-    """
+class EnvironmentSchema(Schema):
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
+
+
+class RuntimeSchema(Schema):
+    distinct_values = fields.List(fields.String, required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    questions_list = fields.List(fields.String, required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -40,33 +48,40 @@ def lambda_handler(event, context):
 
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
 
         # Set up clients
         sqs = boto3.client("sqs", region_name="eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
-        config, errors = EnvironSchema().load(os.environ)
+        environment_variables, errors = EnvironmentSchema().load(os.environ)
         if errors:
+            logger.error(f"Error validating environment params: {errors}")
             raise ValueError(f"Error validating environment params: {errors}")
-        logger.info("Validated params")
 
-        # Environment variables
-        bucket_name = config['bucket_name']
-        checkpoint = config['checkpoint']
-        method_name = config['method_name']
-        run_environment = config['run_environment']
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Environment Variables
+        bucket_name = environment_variables["bucket_name"]
+        checkpoint = environment_variables["checkpoint"]
+        method_name = environment_variables["method_name"]
+        run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        questions_list = event['RuntimeVariables']['questions_list']
-        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
+        distinct_values = runtime_variables["distinct_values"]
+        in_file_name = runtime_variables["in_file_name"]
+        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
+        location = runtime_variables["location"]
+        out_file_name = runtime_variables["out_file_name"]
+        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
+        questions_list = runtime_variables["questions_list"]
+        sns_topic_arn = runtime_variables["sns_topic_arn"]
+        sqs_queue_url = runtime_variables["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -104,8 +119,8 @@ def lambda_handler(event, context):
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         aws_functions.save_data(bucket_name, out_file_name,
                                 json_response["data"], sqs_queue_url,

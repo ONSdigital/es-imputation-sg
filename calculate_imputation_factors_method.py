@@ -2,8 +2,16 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import Schema, fields
 
 import imputation_functions as imp_func
+
+
+class RuntimeSchema(Schema):
+    data = fields.List(fields.Dict, required=True)
+    distinct_values = fields.List(fields.String, required=True)
+    factors_parameters = fields.Dict(required=True)
+    questions_list = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
@@ -23,29 +31,53 @@ def lambda_handler(event, context):
         logger.info("Calculate Factors Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
-        # set up variables
-        factors_parameters = event['RuntimeVariables'][
-            "factors_parameters"]["RuntimeVariables"]
-        questions_list = event['RuntimeVariables']["questions_list"]
-        distinct_values = event['RuntimeVariables']["distinct_values"]
-        df = pd.DataFrame(event['RuntimeVariables']["data"])
-        survey_column = factors_parameters['survey_column']
+        run_id = event["RuntimeVariables"]["run_id"]
+
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        # Pick Correct Schema
+        factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
+        factors_type = factors_parameters["factors_type"]
+        factors_name = ''.join(word.title() for word in factors_type.split('_'))
+        factors_schema = getattr(imp_func, factors_name + "Schema")
+
+        factors, errors = factors_schema().load(factors_parameters)
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
+
+        # Runtime Variables
+        df = pd.DataFrame(runtime_variables["data"])
+        distinct_values = runtime_variables["distinct_values"]
+        questions_list = runtime_variables["questions_list"]
+
+        logger.info("Retrieved configuration variables.")
+
         # Get relative calculation function
-        calculation = getattr(imp_func, factors_parameters["factors_type"])
+        calculation = getattr(imp_func, factors_type)
 
         # Pass the distinct values to the factors function in its parameters
-        factors_parameters['distinct_values'] = distinct_values
+        factors["distinct_values"] = distinct_values
 
         # Some surveys will need to use the regional mean, extract them ahead of time
-        if "regional_mean" in factors_parameters:
+        if "regional_mean" in factors:
+            region_column = factors["region_column"]
+            regional_mean = factors["regional_mean"]
+            regionless_code = factors["regionless_code"]
+            survey_column = factors["survey_column"]
+
             # split to get only regionless data
-            gb_rows = df.loc[df[factors_parameters["region_column"]] ==
-                             factors_parameters["regionless_code"]]
+            gb_rows = df.loc[df[region_column] == regionless_code]
+
             # produce column names
             means_columns = imp_func.produce_columns("mean_", questions_list)
             counts_columns = imp_func.\
-                produce_columns("movement_", questions_list, suffix='_count')
+                produce_columns("movement_", questions_list, suffix="_count")
             gb_columns = \
                 means_columns +\
                 counts_columns +\
@@ -59,21 +91,19 @@ def lambda_handler(event, context):
 
             # select only gb columns and then drop duplicates, leaving one row per strata
             gb_rows = gb_rows[gb_columns].drop_duplicates()
-            factors_parameters[factors_parameters["regional_mean"]] = ""
+            factors[regional_mean] = ""
 
             # calculate gb factors ahead of time
             gb_rows = gb_rows.apply(
-                lambda x: calculation(x, questions_list, factors_parameters), axis=1)
+                lambda x: calculation(x, questions_list, **factors), axis=1)
 
             # reduce gb_rows to distinct_values, survey, and the factors
-            gb_factors = \
-                gb_rows[factor_columns]
+            gb_factors = gb_rows[factor_columns]
 
             # add gb_factors to factors parameters to send to calculation
-            factors_parameters[factors_parameters["regional_mean"]] = \
-                gb_factors
+            factors[regional_mean] = gb_factors
 
-        df = df.apply(lambda x: calculation(x, questions_list, factors_parameters),
+        df = df.apply(lambda x: calculation(x, questions_list, **factors),
                       axis=1)
         logger.info("Calculated Factors for " + str(questions_list))
 
@@ -92,5 +122,5 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
