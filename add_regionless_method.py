@@ -2,10 +2,17 @@ import logging
 
 import pandas as pd
 from es_aws_functions import general_functions
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class RuntimeSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        logging.error(f"Error validating runtime params: {e}")
+        raise ValueError(f"Error validating runtime params: {e}")
+
     data = fields.List(fields.Dict, required=True)
     region_column = fields.Str(required=True)
     regionless_code = fields.Int(required=True)
@@ -30,10 +37,7 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
-        if errors:
-            logger.error(f"Error validating runtime params: {errors}")
-            raise ValueError(f"Error validating runtime params: {errors}")
+        runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
         logger.info("Validated parameters.")
 

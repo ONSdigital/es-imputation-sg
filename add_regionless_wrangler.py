@@ -4,11 +4,18 @@ import os
 
 import boto3
 from es_aws_functions import aws_functions, exception_classes, general_functions
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 from marshmallow.validate import Equal
 
 
 class EnvironmentSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        logging.error(f"Error validating environment params: {e}")
+        raise ValueError(f"Error validating environment params: {e}")
+
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
@@ -21,6 +28,13 @@ class FactorsSchema(Schema):
 
 
 class RuntimeSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        logging.error(f"Error validating runtime params: {e}")
+        raise ValueError(f"Error validating runtime params: {e}")
+
     factors_parameters = fields.Dict(
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
@@ -53,15 +67,9 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        environment_variables, errors = EnvironmentSchema().load(os.environ)
-        if errors:
-            logger.error(f"Error validating environment params: {errors}")
-            raise ValueError(f"Error validating environment params: {errors}")
+        environment_variables = EnvironmentSchema().load(os.environ)
 
-        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
-        if errors:
-            logger.error(f"Error validating runtime params: {errors}")
-            raise ValueError(f"Error validating runtime params: {errors}")
+        runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
         logger.info("Validated parameters.")
 

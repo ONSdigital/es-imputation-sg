@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 import pandas as pd
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class FactorsSchema(Schema):
@@ -12,6 +12,12 @@ class FactorsSchema(Schema):
 
 
 class FactorsCalculationASchema(FactorsSchema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        raise ValueError(f"Error validating runtime params: {e}")
+
     first_imputation_factor = fields.Int(required=True)
     first_threshold = fields.Int(required=True)
     percentage_movement = fields.Bool(required=True)
@@ -21,6 +27,12 @@ class FactorsCalculationASchema(FactorsSchema):
 
 
 class FactorsCalculationBSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        raise ValueError(f"Error validating runtime params: {e}")
+
     threshold = fields.Int(required=True)
 
 
@@ -80,9 +92,7 @@ def factors_calculation_a(row, questions, **kwargs):
     :return: row of DataFrame
     """
 
-    runtime_variables, errors = ExtendedFactorsCalculationASchema().load(kwargs)
-    if errors:
-        raise ValueError(f"Error validating factors params: {errors}")
+    runtime_variables = ExtendedFactorsCalculationASchema().load(kwargs)
 
     runtime_object = SimpleNamespace(**runtime_variables)
 
@@ -163,9 +173,7 @@ def factors_calculation_b(row, questions, **kwargs):
 
     :return: row of DataFrame
     """
-    runtime_variables, errors = FactorsCalculationBSchema().load(kwargs)
-    if errors:
-        raise ValueError(f"Error validating factors params: {errors}")
+    runtime_variables = FactorsCalculationBSchema().load(kwargs)
 
     runtime_object = SimpleNamespace(**runtime_variables)
 
