@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from es_aws_functions import exception_classes, test_generic_library
 from moto import mock_s3
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 import add_regionless_method as lambda_regionless_method_function
 import add_regionless_wrangler as lambda_regionless_wrangler_function
@@ -727,7 +727,8 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
     output = which_lambda.lambda_handler(
         which_runtime_variables, test_generic_library.context_object)
 
-    produced_data = pd.DataFrame(json.loads(output["data"]), dtype=float)
+    produced_data = pd.DataFrame(json.loads(output["data"]), dtype=float)\
+        .sort_index(axis=1)
 
     assert output["success"]
     assert_frame_equal(produced_data, prepared_data)
@@ -1046,7 +1047,7 @@ def test_factors_calculation_a(input_file, output_file, parameters):
 
     # This is for Int, Float mismatch correction.
     json_data = input_data.to_json(orient="records")
-    produced_data = pd.DataFrame(json.loads(json_data), dtype=float)
+    produced_data = pd.DataFrame(json.loads(json_data), dtype=float).sort_index(axis=1)
 
     with open(output_file, "r") as file_2:
         test_data_out = file_2.read()
@@ -1071,6 +1072,7 @@ def test_factors_calculation_b():
     produced_data = produced_data.apply(
         lambda x: lambda_imputation_function.factors_calculation_b(
             x, ["question_1"], **factors), axis=1)
+    produced_data = produced_data.sort_index(axis=1)
 
     with open("tests/fixtures/test_imputation_functions_factors_b_prepared_output.json",
               "r") as file_2:
@@ -1173,12 +1175,13 @@ def test_calc_atypicals():
 
     # This is for Int, Float mismatch correction.
     json_data = out_data.to_json(orient="records")
-    produced_data = pd.DataFrame(json.loads(json_data), dtype=float)
+    produced_data = pd.DataFrame(json.loads(json_data), dtype=float).sort_index(axis=1)
 
     with open("tests/fixtures/test_calc_atypicals_prepared_output.json",
               "r") as file_2:
         test_data_out = file_2.read()
-    prepared_data = pd.DataFrame(json.loads(test_data_out), dtype=float)
+    prepared_data = pd.DataFrame(json.loads(test_data_out), dtype=float)\
+        .sort_index(axis=1)
 
     assert_frame_equal(produced_data, prepared_data)
 

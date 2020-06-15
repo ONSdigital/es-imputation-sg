@@ -61,7 +61,7 @@ def lambda_handler(event, context):
 
         df = pd.DataFrame(json_data)
 
-        sorted_current = df[df[period_column].astype("str") == str(current_period)]
+        sorted_current = df[df[period_column].astype("str") == str(current_period)].copy()
         sorted_previous = df[df[period_column].astype("str") == str(previous_period)]
 
         for question in questions_list:
