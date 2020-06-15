@@ -23,6 +23,9 @@ class EnvironmentSchema(Schema):
 
 
 class FactorsSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     region_column = fields.Str(required=True)
     regionless_code = fields.Int(required=True)
 
