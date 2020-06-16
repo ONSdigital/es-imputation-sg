@@ -18,11 +18,11 @@ class FactorsCalculationASchema(FactorsSchema):
     def handle_error(self, e, data, **kwargs):
         raise ValueError(f"Error validating runtime params: {e}")
 
-    first_imputation_factor = fields.Int(required=True)
-    first_threshold = fields.Int(required=True)
+    first_imputation_factor = fields.Int()
+    first_threshold = fields.Int()
     percentage_movement = fields.Bool(required=True)
-    second_imputation_factor = fields.Int(required=True)
-    second_threshold = fields.Int(required=True)
+    second_imputation_factor = fields.Int()
+    second_threshold = fields.Int()
     third_threshold = fields.Int(required=True)
 
 
