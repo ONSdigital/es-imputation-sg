@@ -173,13 +173,9 @@ wrangler_apply_runtime_variables_1 = {
             }
         },
         "in_file_name": "test_wrangler_apply_input_1",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
-        "outgoing_message_group_id": "test_id1",
         "previous_data": "test_wrangler_movement_previous_data_prepared_output",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "sum_columns": [
@@ -211,13 +207,9 @@ wrangler_apply_runtime_variables_2 = {
             }
         },
         "in_file_name": "test_wrangler_apply_input_2",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
-        "outgoing_message_group_id": "test_id",
         "previous_data": "test_wrangler_movement_previous_data_prepared_output",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "sum_columns": [
@@ -241,12 +233,8 @@ wrangler_apply_runtime_variables_2 = {
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
         "in_file_name": "test_wrangler_atypicals_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_atypicals_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
@@ -257,13 +245,9 @@ wrangler_factors_runtime_variables = {
         "distinct_values": ["region", "strata"],
         "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_factors_output.json",
-        "outgoing_message_group_id": "test_id",
         "period_column": "period",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
@@ -273,12 +257,8 @@ wrangler_iqrs_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_iqrs_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_iqrs_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -288,12 +268,8 @@ wrangler_means_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_means_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_means_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -303,19 +279,14 @@ wrangler_movement_runtime_variables = {
     "RuntimeVariables": {
         "current_data": "test_wrangler_movement_current_data_output.json",
         "in_file_name": "test_wrangler_movement_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "movement_type": "movement_calculation_a",
         "out_file_name": "test_wrangler_movement_output.json",
         "out_file_name_skip": "test_wrangler_movement_skip_output.json",
-        "outgoing_message_group_id": "test_id",
-        "outgoing_message_group_id_skip": "test_id",
         "period": "201809",
         "period_column": "period",
         "periodicity": "03",
         "previous_data": "test_wrangler_movement_previous_data_output.json",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "unique_identifier": ["responder_id"]
@@ -326,12 +297,8 @@ wrangler_recalc_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_recalc_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_recalc_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -346,11 +313,7 @@ wrangler_regionless_runtime_variables = {
             }
         },
         "in_file_name": "test_wrangler_regionless_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_regionless_output.json",
-        "outgoing_message_group_id": "test_id",
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
