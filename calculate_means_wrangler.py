@@ -61,7 +61,6 @@ def lambda_handler(event, context):
         run_id = event["RuntimeVariables"]["run_id"]
 
         # Set up clients
-        sqs = boto3.client("sqs", region_name="eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         environment_variables = EnvironmentSchema().load(os.environ)

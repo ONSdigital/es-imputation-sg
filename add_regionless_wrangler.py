@@ -89,7 +89,6 @@ def lambda_handler(event, context):
         logger.info("Retrieved configuration variables.")
 
         # Set up clients
-        sqs = boto3.client("sqs", "eu-west-2")
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         # Get data from module that preceded this step
