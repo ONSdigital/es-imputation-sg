@@ -161,11 +161,7 @@ def lambda_handler(event, context):
             # Merged together so it can be sent via the payload to the method
             merged_data = pd.concat([data, previous_period_data])
 
-            # Make sure there is some data, non-responders were removed at this stage
-            if len(merged_data.index) > 0:
-                logger.info("Successfully filtered and merged the previous period data")
-            else:
-                raise exception_classes.LambdaFailure("No data left after filtering")
+            logger.info("Successfully filtered and merged the previous period data")
 
             for question in questions_list:
                 merged_data["movement_" + question] = 0.0
