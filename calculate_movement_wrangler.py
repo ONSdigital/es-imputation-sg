@@ -32,20 +32,15 @@ class RuntimeSchema(Schema):
 
     current_data = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
-    incoming_message_group_id = fields.Str(required=True)
-    location = fields.Str(required=True)
     movement_type = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     out_file_name_skip = fields.Str(required=True)
-    outgoing_message_group_id = fields.Str(required=True)
-    outgoing_message_group_id_skip = fields.Str(required=True)
     period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     periodicity = fields.Str(required=True)
     previous_data = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
     unique_identifier = fields.List(fields.String, required=True)
 
 
@@ -93,14 +88,9 @@ def lambda_handler(event, context):
         # Runtime Variables
         current_data = runtime_variables["current_data"]
         in_file_name = runtime_variables["in_file_name"]
-        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
-        location = runtime_variables["location"]
         movement_type = runtime_variables["movement_type"]
         out_file_name = runtime_variables["out_file_name"]
         out_file_name_skip = runtime_variables["out_file_name_skip"]
-        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
-        outgoing_message_group_id_skip = runtime_variables[
-            "outgoing_message_group_id_skip"]
         period = runtime_variables["period"]
         period_column = runtime_variables["period_column"]
         periodicity = runtime_variables["periodicity"]
@@ -108,14 +98,10 @@ def lambda_handler(event, context):
         questions_list = runtime_variables["questions_list"]
         reference = runtime_variables["unique_identifier"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-        sqs_queue_url = runtime_variables["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
-        data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
-                                                            in_file_name,
-                                                            incoming_message_group_id,
-                                                            location)
+        data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
 
         previous_period = general_functions.calculate_adjacent_periods(period,
                                                                        periodicity)
@@ -141,11 +127,10 @@ def lambda_handler(event, context):
 
             # Save previous period data to s3 for apply to pick up later
             aws_functions.save_to_s3(bucket_name, previous_data,
-                                     previous_period_data.to_json(orient="records"),
-                                     location)
+                                     previous_period_data.to_json(orient="records"))
             # Save raw data to s3 for apply to pick up later
             aws_functions.save_to_s3(bucket_name, current_data,
-                                     data.to_json(orient="records"), location)
+                                     data.to_json(orient="records"))
             logger.info("Successfully sent data.")
 
             # Ensure that only responder_ids with a response
@@ -198,9 +183,7 @@ def lambda_handler(event, context):
                 raise exception_classes.MethodFailure(json_response["error"])
 
             imputation_run_type = "Calculate Movement."
-            aws_functions.save_data(bucket_name, out_file_name,
-                                    json_response["data"], sqs_queue_url,
-                                    outgoing_message_group_id, location)
+            aws_functions.save_to_s3(bucket_name, out_file_name, json_response["data"])
 
             logger.info("Successfully sent the data to s3")
 
@@ -209,26 +192,14 @@ def lambda_handler(event, context):
             to_be_imputed = False
             imputation_run_type = "Has Not Run."
 
-            aws_functions.save_data(
-                bucket_name,
-                out_file_name_skip,
-                data.to_json(orient="records"),
-                sqs_queue_url,
-                outgoing_message_group_id_skip,
-                location
-            )
+            aws_functions.save_to_s3(bucket_name, out_file_name_skip,
+                                     data.to_json(orient="records"))
 
             logger.info("Successfully sent the unchanged data to s3")
-
-            if receipt_handler:
-                sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
             aws_functions.send_sns_message(checkpoint, sns_topic_arn,
                                            "Imputation - Did not run")
             logger.info("Successfully sent message to sns")
-
-        if receipt_handler:
-            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
 
         aws_functions.send_sns_message(
             checkpoint, sns_topic_arn,

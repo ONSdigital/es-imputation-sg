@@ -33,13 +33,9 @@ class RuntimeSchema(Schema):
 
     distinct_values = fields.List(fields.String, required=True)
     in_file_name = fields.Str(required=True)
-    incoming_message_group_id = fields.Str(required=True)
-    location = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    outgoing_message_group_id = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -82,20 +78,13 @@ def lambda_handler(event, context):
         # Runtime Variables
         distinct_values = runtime_variables["distinct_values"]
         in_file_name = runtime_variables["in_file_name"]
-        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
-        location = runtime_variables["location"]
         out_file_name = runtime_variables["out_file_name"]
-        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
         questions_list = runtime_variables["questions_list"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-        sqs_queue_url = runtime_variables["queue_url"]
 
         logger.info("Retrieved configuration variables.")
 
-        data, receipt_handler = aws_functions.get_dataframe(sqs_queue_url, bucket_name,
-                                                            in_file_name,
-                                                            incoming_message_group_id,
-                                                            location)
+        data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
         logger.info("Successfully retrieved data.")
         iqrs_columns = imp_func.produce_columns("iqrs_", questions_list)
         for col in iqrs_columns:
@@ -128,17 +117,11 @@ def lambda_handler(event, context):
         if not json_response["success"]:
             raise exception_classes.MethodFailure(json_response["error"])
 
-        aws_functions.save_data(bucket_name, out_file_name,
-                                json_response["data"], sqs_queue_url,
-                                outgoing_message_group_id, location)
+        aws_functions.save_to_s3(bucket_name, out_file_name, json_response["data"])
         logger.info("Successfully sent data to s3.")
 
-        if receipt_handler:
-            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
-            logger.info("Successfully deleted message from sqs.")
-
         if run_environment != "development":
-            logger.info(aws_functions.delete_data(bucket_name, in_file_name, location))
+            logger.info(aws_functions.delete_data(bucket_name, in_file_name))
             logger.info("Successfully deleted input data from s3.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn, "Imputation - IQRs.")
