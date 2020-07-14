@@ -25,10 +25,6 @@ import iqrs_method as lambda_iqrs_method_function
 import iqrs_wrangler as lambda_iqrs_wrangler_function
 import recalculate_means_wrangler as lambda_recalc_wrangler_function
 
-incomplete_runtime_variables = {
-    "RuntimeVariables": {"run_id": "run_id"}
-}
-
 factors_parameters = {
     "RuntimeVariables": {
         "factors_type": "factors_calculation_a",
@@ -611,59 +607,59 @@ def test_method_error(which_lambda, which_runtime_variables, which_environment_v
     "which_runtime_variables",
     [
         (lambda_regionless_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_regionless_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_regionless_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_apply_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_apply_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_apply_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_atypicals_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_atypicals_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_atypicals_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_factors_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_factors_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_factors_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_means_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_means_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_means_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_movement_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_movement_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_movement_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_iqrs_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_iqrs_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_iqrs_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}, incomplete_runtime_variables),
+         test_generic_library.method_assert, {}, None),
         (lambda_recalc_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
+         test_generic_library.wrangler_assert, {}, None),
         (lambda_recalc_wrangler_function, "Error validating runtime param",
          test_generic_library.wrangler_assert, generic_environment_variables,
-         incomplete_runtime_variables),
+         None),
         (lambda_factors_method_function, "Error validating runtime param",
          test_generic_library.method_assert, {},
          bad_method_factors_runtime_variables_a),
@@ -674,10 +670,16 @@ def test_method_error(which_lambda, which_runtime_variables, which_environment_v
 def test_value_error(which_lambda, expected_message,
                      assertion, which_environment_variables,
                      which_runtime_variables):
-    test_generic_library.value_error(
-        which_lambda, expected_message, assertion,
-        runtime_variables=which_runtime_variables,
-        environment_variables=which_environment_variables)
+    if(which_runtime_variables is not None):
+        test_generic_library.value_error(
+                which_lambda, expected_message, assertion,
+                runtime_variables=which_runtime_variables,
+                environment_variables=which_environment_variables)
+    else:
+        test_generic_library.value_error(
+            which_lambda, expected_message, assertion,
+            environment_variables=which_environment_variables)
+
 
 ##########################################################################################
 #                                     Specific                                           #
