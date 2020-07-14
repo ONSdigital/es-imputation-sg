@@ -173,13 +173,9 @@ wrangler_apply_runtime_variables_1 = {
             }
         },
         "in_file_name": "test_wrangler_apply_input_1",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
-        "outgoing_message_group_id": "test_id1",
         "previous_data": "test_wrangler_movement_previous_data_prepared_output",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "sum_columns": [
@@ -211,13 +207,9 @@ wrangler_apply_runtime_variables_2 = {
             }
         },
         "in_file_name": "test_wrangler_apply_input_2",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_apply_output.json",
-        "outgoing_message_group_id": "test_id",
         "previous_data": "test_wrangler_movement_previous_data_prepared_output",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "sum_columns": [
@@ -241,12 +233,8 @@ wrangler_apply_runtime_variables_2 = {
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
         "in_file_name": "test_wrangler_atypicals_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_atypicals_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
@@ -257,13 +245,9 @@ wrangler_factors_runtime_variables = {
         "distinct_values": ["region", "strata"],
         "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_factors_output.json",
-        "outgoing_message_group_id": "test_id",
         "period_column": "period",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
@@ -273,12 +257,8 @@ wrangler_iqrs_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_iqrs_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_iqrs_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -288,12 +268,8 @@ wrangler_means_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_means_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_means_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -303,19 +279,14 @@ wrangler_movement_runtime_variables = {
     "RuntimeVariables": {
         "current_data": "test_wrangler_movement_current_data_output.json",
         "in_file_name": "test_wrangler_movement_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "movement_type": "movement_calculation_a",
         "out_file_name": "test_wrangler_movement_output.json",
         "out_file_name_skip": "test_wrangler_movement_skip_output.json",
-        "outgoing_message_group_id": "test_id",
-        "outgoing_message_group_id_skip": "test_id",
         "period": "201809",
         "period_column": "period",
         "periodicity": "03",
         "previous_data": "test_wrangler_movement_previous_data_output.json",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "unique_identifier": ["responder_id"]
@@ -326,12 +297,8 @@ wrangler_recalc_runtime_variables = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_recalc_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_recalc_output.json",
-        "outgoing_message_group_id": "test_id",
         "questions_list": questions_list,
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
     }
@@ -346,11 +313,7 @@ wrangler_regionless_runtime_variables = {
             }
         },
         "in_file_name": "test_wrangler_regionless_input",
-        "incoming_message_group_id": "test_group",
-        "location": "",
         "out_file_name": "test_wrangler_regionless_output.json",
-        "outgoing_message_group_id": "test_id",
-        "queue_url": "Earl",
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn"
     }
@@ -519,14 +482,13 @@ def test_general_error(which_lambda, which_runtime_variables,
 def test_incomplete_read_error(which_lambda, which_runtime_variables,
                                which_environment_variables, file_list,
                                lambda_name, expected_message):
-    with mock.patch(lambda_name + ".aws_functions.get_dataframe",
-                    side_effect=test_generic_library.replacement_get_dataframe):
-        test_generic_library.incomplete_read_error(which_lambda,
-                                                   which_runtime_variables,
-                                                   which_environment_variables,
-                                                   file_list,
-                                                   lambda_name,
-                                                   expected_message)
+
+    test_generic_library.incomplete_read_error(which_lambda,
+                                               which_runtime_variables,
+                                               which_environment_variables,
+                                               file_list,
+                                               lambda_name,
+                                               expected_message)
 
 
 @pytest.mark.parametrize(
@@ -605,18 +567,13 @@ def test_key_error(which_lambda, which_environment_variables,
 def test_method_error(which_lambda, which_runtime_variables, which_environment_variables,
                       file_list, lambda_name):
 
-    with mock.patch(lambda_name + ".aws_functions.get_dataframe",
-                    side_effect=test_generic_library.replacement_get_dataframe):
-        test_generic_library.wrangler_method_error(which_lambda,
-                                                   which_runtime_variables,
-                                                   which_environment_variables,
-                                                   file_list,
-                                                   lambda_name)
+    test_generic_library.wrangler_method_error(which_lambda,
+                                               which_runtime_variables,
+                                               which_environment_variables,
+                                               file_list,
+                                               lambda_name)
 
 
-##########################################################################################
-#    The Methods Have No Validation. When Add More Marshmallow Add Methods Into Tests.   #
-##########################################################################################
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion,which_environment_variables",
     [
@@ -735,15 +692,12 @@ def test_method_success(which_lambda, which_runtime_variables, input_data, prepa
 
 
 @mock_s3
-@mock.patch("calculate_movement_wrangler.aws_functions.save_data",
-            side_effect=test_generic_library.replacement_save_data)
-@mock.patch("calculate_movement_wrangler.aws_functions.get_dataframe",
-            side_effect=test_generic_library.replacement_get_dataframe)
-def test_wrangler_skip(mock_put_s3, mock_get_s3):
+@mock.patch("calculate_movement_wrangler.aws_functions.save_to_s3",
+            side_effect=test_generic_library.replacement_save_to_s3)
+def test_wrangler_skip(mock_put_s3):
     """
     Runs the calculate_strata function that is called by the method.
     :param mock_put_s3: A replacement function for saving to s3 which saves locally.
-    :param mock_get_s3: A replacement function for loading from local s3.
     :return Test Pass/Fail
     """
     bucket_name = generic_environment_variables["bucket_name"]
@@ -859,24 +813,22 @@ def test_wrangler_success_passed(mock_put_s3, which_lambda, which_environment_va
 
     with mock.patch.dict(which_lambda.os.environ,
                          which_environment_variables):
-        with mock.patch(lambda_name + ".aws_functions.get_dataframe",
-                        side_effect=test_generic_library.replacement_get_dataframe):
 
-            with mock.patch(lambda_name + ".boto3.client") as mock_client:
-                mock_client_object = mock.Mock()
-                mock_client.return_value = mock_client_object
+        with mock.patch(lambda_name + ".boto3.client") as mock_client:
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
 
-                # Rather than mock the get/decode we tell the code that when the invoke is
-                # called pass the variables to this replacement function instead.
-                mock_client_object.invoke.side_effect = \
-                    test_generic_library.replacement_invoke
+            # Rather than mock the get/decode we tell the code that when the invoke is
+            # called pass the variables to this replacement function instead.
+            mock_client_object.invoke.side_effect = \
+                test_generic_library.replacement_invoke
 
-                # This stops the Error caused by the replacement function from stopping
-                # the test.
-                with pytest.raises(exception_classes.LambdaFailure):
-                    which_lambda.lambda_handler(
-                        which_runtime_variables, test_generic_library.context_object
-                    )
+            # This stops the Error caused by the replacement function from stopping
+            # the test.
+            with pytest.raises(exception_classes.LambdaFailure):
+                which_lambda.lambda_handler(
+                    which_runtime_variables, test_generic_library.context_object
+                )
 
     with open(method_data, "r") as file_1:
         test_data_prepared = file_1.read()
@@ -979,25 +931,23 @@ def test_wrangler_success_returned(mock_put_s3, which_lambda, which_environment_
 
     with mock.patch.dict(which_lambda.os.environ,
                          which_environment_variables):
-        with mock.patch(lambda_name + ".aws_functions.save_data",
-                        side_effect=test_generic_library.replacement_save_data):
-            with mock.patch(lambda_name + ".aws_functions.get_dataframe",
-                            side_effect=test_generic_library.replacement_get_dataframe):
+        with mock.patch(lambda_name + ".aws_functions.save_to_s3",
+                        side_effect=test_generic_library.replacement_save_to_s3):
 
-                with mock.patch(lambda_name + ".boto3.client") as mock_client:
-                    mock_client_object = mock.Mock()
-                    mock_client.return_value = mock_client_object
+            with mock.patch(lambda_name + ".boto3.client") as mock_client:
+                mock_client_object = mock.Mock()
+                mock_client.return_value = mock_client_object
 
-                    mock_client_object.invoke.return_value.get.return_value.read \
-                        .return_value.decode.return_value = json.dumps({
-                         "data": test_data_out,
-                         "success": True,
-                         "anomalies": []
-                        })
+                mock_client_object.invoke.return_value.get.return_value.read \
+                    .return_value.decode.return_value = json.dumps({
+                     "data": test_data_out,
+                     "success": True,
+                     "anomalies": []
+                    })
 
-                    output = which_lambda.lambda_handler(
-                        which_runtime_variables, test_generic_library.context_object
-                    )
+                output = which_lambda.lambda_handler(
+                    which_runtime_variables, test_generic_library.context_object
+                )
 
     with open("tests/fixtures/" +
               which_runtime_variables["RuntimeVariables"]["out_file_name"],

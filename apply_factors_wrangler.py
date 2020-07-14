@@ -48,15 +48,11 @@ class RuntimeSchema(Schema):
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
     in_file_name = fields.Str(required=True)
-    incoming_message_group_id = fields.Str(required=True)
-    location = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    outgoing_message_group_id = fields.Str(required=True)
     previous_data = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     unique_identifier = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
     sum_columns = fields.List(fields.Dict, required=True)
 
 
@@ -80,7 +76,7 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        sqs = boto3.client("sqs", "eu-west-2")
+        # Set up clients
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
 
         environment_variables = EnvironmentSchema().load(os.environ)
@@ -101,29 +97,24 @@ def lambda_handler(event, context):
         distinct_values = runtime_variables["distinct_values"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
-        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
-        location = runtime_variables["location"]
         out_file_name = runtime_variables["out_file_name"]
-        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
         previous_data = runtime_variables["previous_data"]
         questions_list = runtime_variables["questions_list"]
         reference = runtime_variables["unique_identifier"][0]
         region_column = factors_parameters["region_column"]
         regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-        sqs_queue_url = runtime_variables["queue_url"]
         sum_columns = runtime_variables["sum_columns"]
 
         logger.info("Retrieved configuration variables.")
 
         # Get factors data from calculate_factors
-        factors_dataframe, receipt_handler = aws_functions.get_dataframe(
-            sqs_queue_url, bucket_name, in_file_name, incoming_message_group_id, location)
+        factors_dataframe = aws_functions.read_dataframe_from_s3(
+            bucket_name, in_file_name)
         logger.info("Successfully retrieved factors data from s3")
 
         # Get data from module that preceded imputation
-        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data,
-                                                          location)
+        input_data = aws_functions.read_dataframe_from_s3(bucket_name, current_data)
 
         # Split out non responder data from input
         non_responder_dataframe = input_data[input_data[response_type] == 1]
@@ -131,8 +122,7 @@ def lambda_handler(event, context):
 
         # Read in previous period data for current period non-responders
         prev_period_data = aws_functions.read_dataframe_from_s3(bucket_name,
-                                                                previous_data,
-                                                                location)
+                                                                previous_data)
         logger.info("Successfully retrieved previous period data from s3")
         # Filter so we only have those that responded in prev
         prev_period_data = prev_period_data[prev_period_data[response_type] == 2]
@@ -252,19 +242,13 @@ def lambda_handler(event, context):
 
         message = filtered_data.to_json(orient="records")
 
-        aws_functions.save_data(bucket_name, out_file_name,
-                                message, sqs_queue_url,
-                                outgoing_message_group_id, location)
+        aws_functions.save_to_s3(bucket_name, out_file_name, message)
         logger.info("Successfully sent data to s3.")
 
-        if receipt_handler:
-            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handler)
-            logger.info("Successfully deleted message from sqs.")
-
         if run_environment != "development":
-            logger.info(aws_functions.delete_data(bucket_name, current_data, location))
-            logger.info(aws_functions.delete_data(bucket_name, previous_data, location))
-            logger.info(aws_functions.delete_data(bucket_name, in_file_name, location))
+            logger.info(aws_functions.delete_data(bucket_name, current_data))
+            logger.info(aws_functions.delete_data(bucket_name, previous_data))
+            logger.info(aws_functions.delete_data(bucket_name, in_file_name))
             logger.info("Successfully deleted input data.")
 
         aws_functions.send_sns_message(checkpoint, sns_topic_arn,
