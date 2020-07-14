@@ -69,7 +69,6 @@ def lambda_handler(event, context):
         environment_variables = EnvironmentSchema().load(os.environ)
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
-
         logger.info("Validated parameters.")
 
         # Environment Variables
@@ -80,15 +79,21 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         distinct_values = runtime_variables["distinct_values"]
-        factors_parameters = runtime_variables["factors_parameters"]
+        factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
+
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         period_column = runtime_variables["period_column"]
         questions_list = runtime_variables["questions_list"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-
         logger.info("Retrieved configuration variables.")
 
+        if ("regional_mean" in factors_parameters):
+            imp_func.ExtendedFactorsCalculationASchema().load(factors_parameters)
+        else:
+            imp_func.FactorsCalculationBSchema().load(factors_parameters)
+
+        logger.info("Validated factors parameters.")
         data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
 
         logger.info("Successfully retrieved data")

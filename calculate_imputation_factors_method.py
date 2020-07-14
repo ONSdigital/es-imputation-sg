@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
         # Pick Correct Schema
-        factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
+        factors_parameters = runtime_variables["factors_parameters"]
         factors_type = factors_parameters["factors_type"]
         factors_name = ''.join(word.title() for word in factors_type.split('_'))
         factors_schema = getattr(imp_func, factors_name + "Schema")
