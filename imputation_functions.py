@@ -92,9 +92,7 @@ def factors_calculation_a(row, questions, **kwargs):
     :return: row of DataFrame
     """
 
-    runtime_variables = ExtendedFactorsCalculationASchema().load(kwargs)
-
-    runtime_object = SimpleNamespace(**runtime_variables)
+    runtime_object = SimpleNamespace(**kwargs)
 
     for question in questions:
         if row[runtime_object.region_column] == runtime_object.regionless_code:
@@ -173,9 +171,8 @@ def factors_calculation_b(row, questions, **kwargs):
 
     :return: row of DataFrame
     """
-    runtime_variables = FactorsCalculationBSchema().load(kwargs)
 
-    runtime_object = SimpleNamespace(**runtime_variables)
+    runtime_object = SimpleNamespace(**kwargs)
 
     for question in questions:
         if row["movement_" + question + "_count"] < int(runtime_object.threshold):

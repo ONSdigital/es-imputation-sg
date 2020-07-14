@@ -25,6 +25,10 @@ import iqrs_method as lambda_iqrs_method_function
 import iqrs_wrangler as lambda_iqrs_wrangler_function
 import recalculate_means_wrangler as lambda_recalc_wrangler_function
 
+incomplete_runtime_variables = {
+    "RuntimeVariables": {"run_id": "run_id"}
+}
+
 factors_parameters = {
     "RuntimeVariables": {
         "factors_type": "factors_calculation_a",
@@ -118,6 +122,34 @@ method_factors_runtime_variables = {
         "distinct_values": ["region", "strata"],
         "factors_parameters": factors_parameters,
         "data": None,
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+bad_method_factors_runtime_variables_a = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "factors_parameters": {
+            "RuntimeVariables": {
+                "factors_type": "factors_calculation_a"
+            }
+        },
+        "data": [{"data": "data"}],
+        "questions_list": questions_list,
+        "run_id": "bob"
+    }
+}
+
+bad_method_factors_runtime_variables_b = {
+    "RuntimeVariables": {
+        "distinct_values": ["region", "strata"],
+        "factors_parameters": {
+            "RuntimeVariables": {
+                "factors_type": "factors_calculation_b",
+            }
+        },
+        "data": [{"data": "data"}],
         "questions_list": questions_list,
         "run_id": "bob"
     }
@@ -575,59 +607,76 @@ def test_method_error(which_lambda, which_runtime_variables, which_environment_v
 
 
 @pytest.mark.parametrize(
-    "which_lambda,expected_message,assertion,which_environment_variables",
+    "which_lambda,expected_message,assertion,which_environment_variables,"
+    "which_runtime_variables",
     [
         (lambda_regionless_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_regionless_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_regionless_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_apply_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_apply_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_apply_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_atypicals_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_atypicals_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_atypicals_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_factors_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_factors_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_factors_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_means_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_means_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_means_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_movement_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_movement_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_movement_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_iqrs_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_iqrs_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables),
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
         (lambda_iqrs_method_function, "Error validating runtime param",
-         test_generic_library.method_assert, {}),
+         test_generic_library.method_assert, {}, incomplete_runtime_variables),
         (lambda_recalc_wrangler_function, "Error validating environment param",
-         test_generic_library.wrangler_assert, {}),
+         test_generic_library.wrangler_assert, {}, incomplete_runtime_variables),
         (lambda_recalc_wrangler_function, "Error validating runtime param",
-         test_generic_library.wrangler_assert, generic_environment_variables)
+         test_generic_library.wrangler_assert, generic_environment_variables,
+         incomplete_runtime_variables),
+        (lambda_factors_method_function, "Error validating runtime param",
+         test_generic_library.method_assert, {},
+         bad_method_factors_runtime_variables_a),
+        (lambda_factors_method_function, "Error validating runtime param",
+         test_generic_library.method_assert, {},
+         bad_method_factors_runtime_variables_b)
     ])
 def test_value_error(which_lambda, expected_message,
-                     assertion, which_environment_variables):
+                     assertion, which_environment_variables,
+                     which_runtime_variables):
     test_generic_library.value_error(
         which_lambda, expected_message, assertion,
+        runtime_variables=which_runtime_variables,
         environment_variables=which_environment_variables)
 
 ##########################################################################################
@@ -731,6 +780,57 @@ def test_wrangler_skip(mock_put_s3):
 
     assert output
     assert_frame_equal(produced_data, prepared_data)
+
+
+@mock_s3
+@mock.patch("calculate_movement_wrangler.aws_functions.save_to_s3",
+            side_effect=test_generic_library.replacement_save_to_s3)
+@pytest.mark.parametrize(
+    "which_lambda,which_environment_variables,which_runtime_variables," +
+    "lambda_name,file_list",
+    [
+        (lambda_movement_wrangler_function, generic_environment_variables,
+         wrangler_movement_runtime_variables, "calculate_movement_wrangler",
+         ["test_wrangler_movement_no_data_left_input.json"])
+    ])
+def test_movement_no_data_left(mock_put_s3, which_lambda, which_environment_variables,
+                               which_runtime_variables, lambda_name,
+                               file_list):
+    """
+    Runs the wrangler function.
+    :param mock_put_s3: A replacement function for saving to s3 which saves locally.
+    :param which_lambda: Main function.
+    :param which_environment_variables: Environment Variables. - Dict.
+    :param which_runtime_variables: RuntimeVariables. - Dict.
+    :param lambda_name: Name of the py file. - String.
+    :param file_list: Files to be added to the fake S3. - List(String).
+    :param method_data: File name/location of the data
+                        to be passed out by the method. - String.
+    :param which_method_variables: Variables to compare against. - Dict.
+    :return Test Pass/Fail
+    """
+
+    bucket_name = which_environment_variables["bucket_name"]
+    client = test_generic_library.create_bucket(bucket_name)
+
+    # Take a copy of the runtime vars dict and change the filename
+    # This way we dont need a seperate dict just for this test
+    which_runtime_variables = deepcopy(which_runtime_variables)
+    which_runtime_variables['RuntimeVariables']['in_file_name'] = \
+        "test_wrangler_movement_no_data_left_input"
+    test_generic_library.upload_files(client, bucket_name, file_list)
+
+    with mock.patch.dict(which_lambda.os.environ,
+                         which_environment_variables):
+
+        with mock.patch(lambda_name + ".boto3.client") as mock_client:
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+            with pytest.raises(exception_classes.LambdaFailure) as e:
+                which_lambda.lambda_handler(
+                    which_runtime_variables, test_generic_library.context_object
+                )
+            assert "No data left" in str(e)
 
 
 @mock_s3
