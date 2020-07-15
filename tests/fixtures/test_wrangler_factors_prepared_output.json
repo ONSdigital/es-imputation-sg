@@ -7,9 +7,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 5,
-        "strata": "E",
-        "period": 201809
+        "strata": "E"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -19,9 +19,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 5,
-        "strata": "A",
-        "period": 201809
+        "strata": "A"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -31,9 +31,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 5,
-        "strata": "B1",
-        "period": 201809
+        "strata": "B1"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -43,9 +43,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 10,
-        "strata": "B2",
-        "period": 201809
+        "strata": "B2"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -55,9 +55,9 @@
         "imputation_factor_Q605_concreting_gravel": 1.1247035769,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 0.4,
+        "period": 201809,
         "region": 10,
-        "strata": "A",
-        "period": 201809
+        "strata": "A"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -67,9 +67,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 6,
-        "strata": "D",
-        "period": 201809
+        "strata": "D"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -79,9 +79,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 6,
-        "strata": "B1",
-        "period": 201809
+        "strata": "B1"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -91,9 +91,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 6,
-        "strata": "A",
-        "period": 201809
+        "strata": "A"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -103,9 +103,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 14,
-        "strata": "E",
-        "period": 201809
+        "strata": "E"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -115,9 +115,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 14,
-        "strata": "A",
-        "period": 201809
+        "strata": "A"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -127,9 +127,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 14,
-        "strata": "B1",
-        "period": 201809
+        "strata": "B1"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -139,9 +139,9 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 14,
-        "strata": "B2",
-        "period": 201809
+        "strata": "B2"
     },
     {
         "imputation_factor_Q601_asphalting_sand": 1,
@@ -151,8 +151,8 @@
         "imputation_factor_Q605_concreting_gravel": 1,
         "imputation_factor_Q606_other_gravel": 1,
         "imputation_factor_Q607_constructional_fill": 1,
+        "period": 201809,
         "region": 14,
-        "strata": "D",
-        "period": 201809
+        "strata": "D"
     }
 ]
