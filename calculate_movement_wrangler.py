@@ -17,7 +17,6 @@ class EnvironmentSchema(Schema):
         raise ValueError(f"Error validating environment params: {e}")
 
     bucket_name = fields.Str(required=True)
-    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     response_type = fields.Str(required=True)
 
@@ -52,14 +51,13 @@ def lambda_handler(event, context):
     has responded the calculate movements is skipped.
     :param event: Contains Runtime_variables, which contains the movement_type
     :param context: N/A
-    :return: Success & Checkpoint & Impute/Error - Type: JSON
+    :return: Success & Impute/Error - Type: JSON
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
     logger = logging.getLogger(current_module)
     logger.setLevel(10)
     error_message = ""
-    checkpoint = 0
     # Define run_id outside of try block
     run_id = 0
     try:
@@ -80,7 +78,6 @@ def lambda_handler(event, context):
 
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
-        checkpoint = environment_variables["checkpoint"]
         method_name = environment_variables["method_name"]
         response_type = environment_variables["response_type"]
 
@@ -196,13 +193,11 @@ def lambda_handler(event, context):
 
             logger.info("Successfully sent the unchanged data to s3")
 
-            aws_functions.send_sns_message(checkpoint, sns_topic_arn,
-                                           "Imputation - Did not run")
+            aws_functions.send_sns_message(sns_topic_arn, "Imputation - Did not run")
             logger.info("Successfully sent message to sns")
 
-        aws_functions.send_sns_message(
-            checkpoint, sns_topic_arn,
-            "Imputation - " + imputation_run_type)
+        aws_functions.send_sns_message(sns_topic_arn,
+                                       "Imputation - " + imputation_run_type)
 
         logger.info("Successfully sent the SNS message")
 
@@ -218,6 +213,5 @@ def lambda_handler(event, context):
 
     return {
         "success": True,
-        "checkpoint": checkpoint,
         "impute": to_be_imputed
     }

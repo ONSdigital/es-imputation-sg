@@ -43,7 +43,6 @@ factors_parameters = {
 
 generic_environment_variables = {
     "bucket_name": "test_bucket",
-    "checkpoint": "999",
     "method_name": "test_method",
     "response_type": "response_type",
     "run_environment": "temporary"
