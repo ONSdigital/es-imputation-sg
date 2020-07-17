@@ -135,4 +135,4 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
 
-    return {"success": True,}
+    return {"success": True}
