@@ -41,7 +41,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-add-regionless-method
       run_environment: ${self:custom.environmentType}
 
@@ -78,7 +77,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-apply-factors-method
       response_type: response_type
       run_environment: ${self:custom.environmentType}
@@ -116,7 +114,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-atypicals-method
       run_environment: ${self:custom.environmentType}
 
@@ -153,7 +150,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-calculate-factors-method
       run_environment: ${self:custom.environmentType}
 
@@ -190,7 +186,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
 
@@ -226,7 +221,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-calculate-movement-method
       response_type: response_type
 
@@ -263,7 +257,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-iqrs-method
       run_environment: ${self:custom.environmentType}
 
@@ -300,7 +293,6 @@ functions:
       app: results
     environment:
       bucket_name: spp-results-${self:custom.environment}
-      checkpoint: 3
       method_name: es-imputation-calculate-means-method
       run_environment: ${self:custom.environmentType}
 

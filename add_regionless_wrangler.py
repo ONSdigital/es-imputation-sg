@@ -17,7 +17,6 @@ class EnvironmentSchema(Schema):
         raise ValueError(f"Error validating environment params: {e}")
 
     bucket_name = fields.Str(required=True)
-    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
 
@@ -51,7 +50,7 @@ def lambda_handler(event, context):
     This wrangler is used to prepare data for the addition of regionless records.
     :param event: Contains all the variables which are required for the specific run.
     :param context: N/A
-    :return: Success & Checkpoint/Error - Type: JSON
+    :return: Success & None/Error - Type: JSON
     """
     current_module = "Add an all-GB region - Wrangler."
     error_message = ""
@@ -74,7 +73,6 @@ def lambda_handler(event, context):
 
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
-        checkpoint = environment_variables["checkpoint"]
         method_name = environment_variables["method_name"]
         run_environment = environment_variables["run_environment"]
 
@@ -127,7 +125,7 @@ def lambda_handler(event, context):
             logger.info(aws_functions.delete_data(bucket_name, in_file_name))
             logger.info("Successfully deleted input data.")
 
-        aws_functions.send_sns_message(checkpoint, sns_topic_arn, "Add a all-GB region.")
+        aws_functions.send_sns_message(sns_topic_arn, "Add a all-GB region.")
         logger.info("Successfully sent message to sns.")
 
     except Exception as e:
@@ -139,4 +137,4 @@ def lambda_handler(event, context):
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
-    return {"success": True, "checkpoint": checkpoint}
+    return {"success": True}
