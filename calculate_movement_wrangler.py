@@ -55,8 +55,7 @@ def lambda_handler(event, context):
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
-    logger = logging.getLogger(current_module)
-    logger.setLevel(10)
+    logger = general_functions.get_logger()
     error_message = ""
     # Define run_id outside of try block
     run_id = 0

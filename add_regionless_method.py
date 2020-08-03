@@ -28,8 +28,8 @@ def lambda_handler(event, context):
     """
     current_module = "Add an all-GB regions - Method"
     error_message = ""
-    logger = logging.getLogger("AllGB")
-    logger.setLevel(10)
+    logger = general_functions.get_logger()
+
     run_id = 0
     try:
         logger.info("Starting " + current_module)

@@ -33,7 +33,7 @@ def lambda_handler(event, context):
     :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Imputation Movement - Method"
-    logger = logging.getLogger("Starting " + current_module)
+    logger = general_functions.get_logger()
     error_message = ""
     final_output = {}
     run_id = 0

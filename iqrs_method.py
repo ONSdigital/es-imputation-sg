@@ -30,7 +30,7 @@ def lambda_handler(event, context):
     """
     current_module = "IQRS - Method"
     error_message = ""
-    logger = logging.getLogger("IQRS")
+    logger = general_functions.get_logger()
     run_id = 0
     try:
 

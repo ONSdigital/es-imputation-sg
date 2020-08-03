@@ -32,8 +32,7 @@ def lambda_handler(event, context):
     """
     current_module = "Apply Factors - Method"
     error_message = ""
-    logger = logging.getLogger("Apply")
-    logger.setLevel(10)
+    logger = general_functions.get_logger()
     run_id = 0
     try:
         logger.info("Apply Factors Method Begun")
