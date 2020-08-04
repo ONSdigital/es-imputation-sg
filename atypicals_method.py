@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Atypicals - Method."
     error_message = ""
-    logger = logging.getLogger("Atypicals")
+    logger = general_functions.get_logger()
     run_id = 0
     try:
 

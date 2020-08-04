@@ -32,7 +32,7 @@ def lambda_handler(event, context):
     """
     current_module = "Means - Method"
     error_message = ""
-    logger = logging.getLogger("Means")
+    logger = general_functions.get_logger()
     run_id = 0
     try:
         logger.info("Means Method Begun")

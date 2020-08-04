@@ -47,8 +47,7 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Atypicals - Wrangler."
     error_message = ""
-    logger = logging.getLogger("Atypicals")
-    logger.setLevel(10)
+    logger = general_functions.get_logger()
     # Define run_id outside of try block
     run_id = 0
     try:

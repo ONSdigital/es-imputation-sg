@@ -54,8 +54,7 @@ def lambda_handler(event, context):
     """
     current_module = "Add an all-GB region - Wrangler."
     error_message = ""
-    logger = logging.getLogger("AllGB")
-    logger.setLevel(10)
+    logger = general_functions.get_logger()
     # Define run_id outside of try block
     run_id = 0
     try:
