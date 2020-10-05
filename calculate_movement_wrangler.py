@@ -29,6 +29,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     current_data = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     movement_type = fields.Str(required=True)
@@ -41,6 +42,7 @@ class RuntimeSchema(Schema):
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     unique_identifier = fields.List(fields.String, required=True)
+    total_steps = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -58,6 +60,10 @@ def lambda_handler(event, context):
     logger = general_functions.get_logger()
     error_message = ""
     # Define run_id outside of try block
+
+    bpm_queue_url = None
+    current_step_num = "1"
+
     run_id = 0
     try:
         logger.info("Starting " + current_module)
@@ -81,6 +87,7 @@ def lambda_handler(event, context):
         response_type = environment_variables["response_type"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_data = runtime_variables["current_data"]
         in_file_name = runtime_variables["in_file_name"]
         movement_type = runtime_variables["movement_type"]
@@ -93,8 +100,14 @@ def lambda_handler(event, context):
         questions_list = runtime_variables["questions_list"]
         reference = runtime_variables["unique_identifier"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
+
+        # Send in progress status to BPM.
+        status = "IN PROGRESS"
+        aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                      current_step_num, total_steps)
 
         data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
 
@@ -154,6 +167,7 @@ def lambda_handler(event, context):
 
             json_payload = {
                 "RuntimeVariables": {
+                    "bpm_queue_url": bpm_queue_url,
                     "data": json.loads(json_ordered_data),
                     "movement_type": movement_type,
                     "questions_list": questions_list,
@@ -202,13 +216,19 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
+
+    # Send end status to BPM.
+    status = "DONE"
+    aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                  current_step_num, total_steps)
 
     return {
         "success": True,

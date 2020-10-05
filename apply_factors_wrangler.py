@@ -24,7 +24,6 @@ class EnvironmentSchema(Schema):
     response_type = fields.Str(required=True)
     run_environment = fields.Str(required=True)
 
-
 class FactorsSchema(Schema):
     class Meta:
         unknown = EXCLUDE
@@ -41,6 +40,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     current_data = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
     factors_parameters = fields.Dict(
@@ -53,6 +53,7 @@ class RuntimeSchema(Schema):
     unique_identifier = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     sum_columns = fields.List(fields.Dict, required=True)
+    total_steps = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -67,6 +68,10 @@ def lambda_handler(event, context):
     error_message = ""
     logger = general_functions.get_logger()
     # Define run_id outside of try block
+
+    bpm_queue_url = None
+    current_step_num = "1"
+
     run_id = 0
     try:
         logger.info("Starting " + current_module)
@@ -90,6 +95,7 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_data = runtime_variables["current_data"]
         distinct_values = runtime_variables["distinct_values"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
@@ -102,8 +108,14 @@ def lambda_handler(event, context):
         regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sum_columns = runtime_variables["sum_columns"]
+        total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
+
+        # Send in progress status to BPM.
+        status = "IN PROGRESS"
+        aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                      current_step_num, total_steps)
 
         # Get factors data from calculate_factors
         factors_dataframe = aws_functions.read_dataframe_from_s3(
@@ -198,6 +210,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
+                "bpm_queue_url": bpm_queue_url,
                 "data": json.loads(
                     non_responders_with_factors.to_json(orient="records")),
                 "questions_list": questions_list,
@@ -253,11 +266,18 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
+
+    # Send end status to BPM.
+    status = "DONE"
+    aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                  current_step_num, total_steps)
+
     return {"success": True}

@@ -16,9 +16,11 @@ class EnvironmentSchema(Schema):
         logging.error(f"Error validating environment params: {e}")
         raise ValueError(f"Error validating environment params: {e}")
 
+
     bucket_name = fields.Str(required=True)
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
+
 
 
 class FactorsSchema(Schema):
@@ -37,12 +39,14 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     factors_parameters = fields.Dict(
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
+    total_steps = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -56,6 +60,10 @@ def lambda_handler(event, context):
     error_message = ""
     logger = general_functions.get_logger()
     # Define run_id outside of try block
+
+    bpm_queue_url = None
+    current_step_num = "1"
+
     run_id = 0
     try:
         logger.info("Starting " + current_module)
@@ -76,12 +84,14 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         region_column = factors_parameters["region_column"]
         regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -95,6 +105,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
+                "bpm_queue_url":bpm_queue_url,
                 "data": json.loads(
                     input_data.to_json(orient="records")),
                 "regionless_code": regionless_code,
@@ -129,7 +140,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)

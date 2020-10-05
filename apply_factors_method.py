@@ -18,6 +18,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url =fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     questions_list = fields.List(fields.String, required=True)
     sum_columns = fields.Nested(SumSchema, many=True, required=True)
@@ -33,6 +34,9 @@ def lambda_handler(event, context):
     current_module = "Apply Factors - Method"
     error_message = ""
     logger = general_functions.get_logger()
+
+    bpm_queue_url = None
+
     run_id = 0
     try:
         logger.info("Apply Factors Method Begun")
@@ -45,6 +49,7 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         json_data = runtime_variables["data"]
         questions_list = runtime_variables["questions_list"]
         sum_columns = runtime_variables["sum_columns"]
@@ -72,7 +77,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)
