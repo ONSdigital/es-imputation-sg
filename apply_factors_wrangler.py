@@ -70,7 +70,7 @@ def lambda_handler(event, context):
     # Define run_id outside of try block
 
     bpm_queue_url = None
-    current_step_num = "1"
+    current_step_num = "3"
 
     run_id = 0
     try:
@@ -111,11 +111,6 @@ def lambda_handler(event, context):
         total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
-
-        # Send in progress status to BPM.
-        status = "IN PROGRESS"
-        aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
-                                      current_step_num, total_steps)
 
         # Get factors data from calculate_factors
         factors_dataframe = aws_functions.read_dataframe_from_s3(

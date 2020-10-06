@@ -39,7 +39,6 @@ class RuntimeSchema(Schema):
     period_column = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    total_steps = fields.Str(required=True)
 
 def lambda_handler(event, context):
     """
@@ -90,7 +89,6 @@ def lambda_handler(event, context):
         period_column = runtime_variables["period_column"]
         questions_list = runtime_variables["questions_list"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-        total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
 

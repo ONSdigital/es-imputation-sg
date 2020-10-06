@@ -225,11 +225,6 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
 
-    # Send end status to BPM.
-    status = "DONE"
-    aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
-                                  current_step_num, total_steps)
-
     return {
         "success": True,
         "impute": to_be_imputed

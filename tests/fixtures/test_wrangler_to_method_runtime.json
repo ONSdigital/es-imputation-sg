@@ -1,4 +1,5 @@
 {
+    "bpm_queue_url": "fake_bpm_queue_url",
     "data": null,
     "distinct_values": [
         "region",
