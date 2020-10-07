@@ -199,7 +199,7 @@ method_regionless_runtime_variables = {
 wrangler_apply_runtime_variables_1 = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region", "strata"],
         "factors_parameters": {
@@ -235,7 +235,7 @@ wrangler_apply_runtime_variables_1 = {
 wrangler_apply_runtime_variables_2 = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region"],
         "factors_parameters": {
@@ -271,7 +271,7 @@ wrangler_apply_runtime_variables_2 = {
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "in_file_name": "test_wrangler_atypicals_input",
         "out_file_name": "test_wrangler_atypicals_output.json",
         "questions_list": questions_list,
@@ -283,7 +283,7 @@ wrangler_atypicals_runtime_variables = {
 wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
@@ -298,7 +298,7 @@ wrangler_factors_runtime_variables = {
 wrangler_iqrs_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_iqrs_input",
         "out_file_name": "test_wrangler_iqrs_output.json",
@@ -311,7 +311,7 @@ wrangler_iqrs_runtime_variables = {
 wrangler_means_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_means_input",
         "out_file_name": "test_wrangler_means_output.json",
@@ -324,7 +324,7 @@ wrangler_means_runtime_variables = {
 wrangler_movement_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_output.json",
         "in_file_name": "test_wrangler_movement_input",
         "movement_type": "movement_calculation_a",
@@ -344,7 +344,7 @@ wrangler_movement_runtime_variables = {
 wrangler_recalc_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_recalc_input",
         "out_file_name": "test_wrangler_recalc_output.json",
@@ -357,7 +357,7 @@ wrangler_recalc_runtime_variables = {
 wrangler_regionless_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "3",
+        "total_steps": "4",
         "factors_parameters": {
             "RuntimeVariables": {
                 "region_column": "region",
