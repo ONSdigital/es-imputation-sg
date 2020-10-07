@@ -40,6 +40,7 @@ class RuntimeSchema(Schema):
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
 
+
 def lambda_handler(event, context):
     """
     Prepares data for and calls the Calculate imputation factors method by adding on the
@@ -56,7 +57,6 @@ def lambda_handler(event, context):
     # Define run_id outside of try block
 
     bpm_queue_url = None
-    current_step_num = "1"
 
     run_id = 0
     try:

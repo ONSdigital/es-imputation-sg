@@ -21,6 +21,7 @@ class EnvironmentSchema(Schema):
     method_name = fields.Str(required=True)
     run_environment = fields.Str(required=True)
 
+
 class RuntimeSchema(Schema):
     class Meta:
         unknown = EXCLUDE
@@ -50,9 +51,7 @@ def lambda_handler(event, context):
     logger = general_functions.get_logger()
     # Define run_id outside of try block
 
-
     bpm_queue_url = None
-    current_step_num = "1"
 
     run_id = 0
     try:

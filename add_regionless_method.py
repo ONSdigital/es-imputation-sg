@@ -13,7 +13,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
-    bpm_queue_url =fields.Str(required=True)
+    bpm_queue_url = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     region_column = fields.Str(required=True)
     regionless_code = fields.Int(required=True)

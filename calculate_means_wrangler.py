@@ -52,7 +52,6 @@ def lambda_handler(event, context):
     # Define run_id outside of try block
 
     bpm_queue_url = None
-    current_step_num = "1"
 
     run_id = 0
     try:

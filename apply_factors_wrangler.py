@@ -24,6 +24,7 @@ class EnvironmentSchema(Schema):
     response_type = fields.Str(required=True)
     run_environment = fields.Str(required=True)
 
+
 class FactorsSchema(Schema):
     class Meta:
         unknown = EXCLUDE
