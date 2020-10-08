@@ -59,12 +59,14 @@ def lambda_handler(event, context):
     current_module = "Imputation Movement - Wrangler."
     logger = general_functions.get_logger()
     error_message = ""
-    # Define run_id outside of try block
 
+    # Define run_id outside of try block
+    run_id = 0
+
+    # Set-up variables for status message
     bpm_queue_url = None
     current_step_num = "4"
 
-    run_id = 0
     try:
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation

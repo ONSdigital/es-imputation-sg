@@ -31,9 +31,12 @@ def lambda_handler(event, context):
     error_message = ""
     logger = general_functions.get_logger()
 
+    # Define run_id outside of try block
+    run_id = 0
+
+    # Set-up variables for status message
     bpm_queue_url = None
 
-    run_id = 0
     try:
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
