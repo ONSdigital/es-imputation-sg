@@ -84,6 +84,7 @@ questions_list = [
 
 method_apply_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
         "questions_list": questions_list,
         "run_id": "bob",
@@ -106,6 +107,7 @@ method_apply_runtime_variables = {
 
 method_atypicals_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
         "questions_list": questions_list,
         "run_id": "bob"
@@ -114,6 +116,7 @@ method_atypicals_runtime_variables = {
 
 method_factors_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "distinct_values": ["region", "strata"],
         "factors_parameters": factors_parameters,
         "data": None,
@@ -152,6 +155,7 @@ bad_method_factors_runtime_variables_b = {
 
 method_iqrs_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "distinct_values": ["region", "strata"],
         "data": None,
         "questions_list": questions_list,
@@ -161,6 +165,7 @@ method_iqrs_runtime_variables = {
 
 method_means_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "distinct_values": ["region", "strata"],
         "data": None,
         "questions_list": questions_list,
@@ -170,6 +175,7 @@ method_means_runtime_variables = {
 
 method_movement_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "current_period": "201809",
         "data": None,
         "movement_type": "movement_calculation_a",
@@ -182,6 +188,7 @@ method_movement_runtime_variables = {
 
 method_regionless_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
         "region_column": "region",
         "regionless_code": 14,
@@ -191,6 +198,8 @@ method_regionless_runtime_variables = {
 
 wrangler_apply_runtime_variables_1 = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region", "strata"],
         "factors_parameters": {
@@ -225,6 +234,8 @@ wrangler_apply_runtime_variables_1 = {
 
 wrangler_apply_runtime_variables_2 = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region"],
         "factors_parameters": {
@@ -259,6 +270,8 @@ wrangler_apply_runtime_variables_2 = {
 
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "in_file_name": "test_wrangler_atypicals_input",
         "out_file_name": "test_wrangler_atypicals_output.json",
         "questions_list": questions_list,
@@ -269,6 +282,8 @@ wrangler_atypicals_runtime_variables = {
 
 wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
@@ -282,6 +297,8 @@ wrangler_factors_runtime_variables = {
 
 wrangler_iqrs_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_iqrs_input",
         "out_file_name": "test_wrangler_iqrs_output.json",
@@ -293,6 +310,8 @@ wrangler_iqrs_runtime_variables = {
 
 wrangler_means_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_means_input",
         "out_file_name": "test_wrangler_means_output.json",
@@ -304,6 +323,8 @@ wrangler_means_runtime_variables = {
 
 wrangler_movement_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_output.json",
         "in_file_name": "test_wrangler_movement_input",
         "movement_type": "movement_calculation_a",
@@ -322,6 +343,8 @@ wrangler_movement_runtime_variables = {
 
 wrangler_recalc_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "distinct_values": ["region", "strata"],
         "in_file_name": "test_wrangler_recalc_input",
         "out_file_name": "test_wrangler_recalc_output.json",
@@ -333,6 +356,8 @@ wrangler_recalc_runtime_variables = {
 
 wrangler_regionless_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_bpm_queue_url",
+        "total_steps": "4",
         "factors_parameters": {
             "RuntimeVariables": {
                 "region_column": "region",
@@ -406,7 +431,8 @@ def movement_splitter(which_runtime_variables):
          generic_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert)
     ])
-def test_client_error(which_lambda, which_runtime_variables,
+@mock.patch('calculate_movement_wrangler.aws_functions.send_bpm_status')
+def test_client_error(send_bpm_status, which_lambda, which_runtime_variables,
                       which_environment_variables, which_data,
                       expected_message, assertion):
     test_generic_library.client_error(which_lambda, which_runtime_variables,
@@ -465,7 +491,8 @@ def test_client_error(which_lambda, which_runtime_variables,
          False, "iqrs_method.RuntimeSchema",
          "Exception", test_generic_library.method_assert)
     ])
-def test_general_error(which_lambda, which_runtime_variables,
+@mock.patch('calculate_movement_wrangler.aws_functions.send_bpm_status')
+def test_general_error(send_bpm_status, which_lambda, which_runtime_variables,
                        which_environment_variables, mockable_function,
                        expected_message, assertion):
     test_generic_library.general_error(which_lambda, which_runtime_variables,

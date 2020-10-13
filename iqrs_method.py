@@ -15,6 +15,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     distinct_values = fields.List(fields.String, required=True)
     questions_list = fields.List(fields.String, required=True)
@@ -31,7 +32,13 @@ def lambda_handler(event, context):
     current_module = "IQRS - Method"
     error_message = ""
     logger = general_functions.get_logger()
+
+    # Define run_id outside of try block
     run_id = 0
+
+    # Set-up variables for status message
+    bpm_queue_url = None
+
     try:
 
         logger.info("IQRS Method Begun")
@@ -44,6 +51,7 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         distinct_values = runtime_variables["distinct_values"]
         input_data = pd.DataFrame(runtime_variables["data"])
         questions_list = runtime_variables["questions_list"]
@@ -67,7 +75,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)

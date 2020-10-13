@@ -28,6 +28,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
@@ -49,8 +50,13 @@ def lambda_handler(event, context):
     current_module = "Imputation Recalculate Means - Wrangler."
     error_message = ""
     logger = general_functions.get_logger()
+
     # Define run_id outside of try block
     run_id = 0
+
+    # Set-up variables for status message
+    bpm_queue_url = None
+
     try:
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
@@ -72,6 +78,7 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         distinct_values = runtime_variables["distinct_values"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
@@ -95,6 +102,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
+                "bpm_queue_url": bpm_queue_url,
                 "data": json.loads(data_json),
                 "distinct_values": distinct_values,
                 "questions_list": questions_list,
@@ -126,7 +134,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)

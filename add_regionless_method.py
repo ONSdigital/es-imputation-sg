@@ -13,6 +13,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     region_column = fields.Str(required=True)
     regionless_code = fields.Int(required=True)
@@ -30,7 +31,12 @@ def lambda_handler(event, context):
     error_message = ""
     logger = general_functions.get_logger()
 
+    # Define run_id outside of try block
     run_id = 0
+
+    # Set-up variables for status message
+    bpm_queue_url = None
+
     try:
         logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
@@ -42,6 +48,7 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         json_data = runtime_variables["data"]
         regionless_code = runtime_variables["regionless_code"]
         region_column = runtime_variables["region_column"]
@@ -62,7 +69,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)

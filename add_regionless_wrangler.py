@@ -37,6 +37,7 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
     factors_parameters = fields.Dict(
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
@@ -55,8 +56,13 @@ def lambda_handler(event, context):
     current_module = "Add an all-GB region - Wrangler."
     error_message = ""
     logger = general_functions.get_logger()
+
     # Define run_id outside of try block
     run_id = 0
+
+    # Set-up variables for status message
+    bpm_queue_url = None
+
     try:
         logger.info("Starting " + current_module)
 
@@ -76,6 +82,7 @@ def lambda_handler(event, context):
         run_environment = environment_variables["run_environment"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
@@ -95,6 +102,7 @@ def lambda_handler(event, context):
 
         payload = {
             "RuntimeVariables": {
+                "bpm_queue_url": bpm_queue_url,
                 "data": json.loads(
                     input_data.to_json(orient="records")),
                 "regionless_code": regionless_code,
@@ -129,7 +137,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+                                                           run_id, context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)
