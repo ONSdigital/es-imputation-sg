@@ -16,10 +16,12 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
+    environment = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     distinct_values = fields.List(fields.String, required=True)
     factors_parameters = fields.Dict(required=True)
     questions_list = fields.List(fields.String, required=True)
+    survey = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -32,7 +34,6 @@ def lambda_handler(event, context):
     """
     current_module = "Calculate Factors - Method"
     error_message = ""
-    logger = general_functions.get_logger()
 
     # Define run_id outside of try block
     run_id = 0
@@ -41,7 +42,6 @@ def lambda_handler(event, context):
     bpm_queue_url = None
 
     try:
-        logger.info("Calculate Factors Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -56,15 +56,29 @@ def lambda_handler(event, context):
 
         factors = factors_schema().load(factors_parameters)
 
-        logger.info("Validated parameters.")
-
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
+        environment = runtime_variables["environment"]
         df = pd.DataFrame(runtime_variables["data"])
         distinct_values = runtime_variables["distinct_values"]
         questions_list = runtime_variables["questions_list"]
+        survey = runtime_variables["survey"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        return {"success": False, "error": error_message}
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        return {"success": False, "error": error_message}
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
 
         # Get relative calculation function
         calculation = getattr(imp_func, factors_type)

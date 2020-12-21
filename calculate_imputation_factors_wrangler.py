@@ -32,6 +32,7 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
+    environment = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
     factors_parameters = fields.Dict(required=True)
     in_file_name = fields.Str(required=True)
@@ -39,6 +40,7 @@ class RuntimeSchema(Schema):
     period_column = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
+    survey = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -51,7 +53,6 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Calculate Factors - Wrangler."
     error_message = ""
-    logger = general_functions.get_logger()
 
     # Define run_id outside of try block
     run_id = 0
@@ -60,8 +61,6 @@ def lambda_handler(event, context):
     bpm_queue_url = None
 
     try:
-        logger.info("Starting " + current_module)
-
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -73,8 +72,6 @@ def lambda_handler(event, context):
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
-        logger.info("Validated parameters.")
-
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
         method_name = environment_variables["method_name"]
@@ -82,6 +79,7 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
+        environment = runtime_variables["environment"]
         distinct_values = runtime_variables["distinct_values"]
         factors_parameters = runtime_variables["factors_parameters"]
         in_file_name = runtime_variables["in_file_name"]
@@ -89,8 +87,23 @@ def lambda_handler(event, context):
         period_column = runtime_variables["period_column"]
         questions_list = runtime_variables["questions_list"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        survey = runtime_variables['survey']
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
 
         data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
 
@@ -106,11 +119,13 @@ def lambda_handler(event, context):
         payload = {
             "RuntimeVariables": {
                 "bpm_queue_url": bpm_queue_url,
+                "environment": environment,
                 "data": json.loads(data.to_json(orient="records")),
                 "questions_list": questions_list,
                 "distinct_values": distinct_values,
                 "factors_parameters": factors_parameters,
-                "run_id": run_id
+                "run_id": run_id,
+                "survey": survey
             }
         }
 
