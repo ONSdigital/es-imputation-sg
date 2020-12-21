@@ -32,10 +32,12 @@ class RuntimeSchema(Schema):
 
     bpm_queue_url = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
+    survey = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -47,7 +49,6 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation IQRS - Wrangler."
     error_message = ""
-    logger = general_functions.get_logger()
 
     # Define run_id outside of try block
     run_id = 0
@@ -56,8 +57,6 @@ def lambda_handler(event, context):
     bpm_queue_url = None
 
     try:
-
-        logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -69,8 +68,6 @@ def lambda_handler(event, context):
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
-        logger.info("Validated parameters.")
-
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
         method_name = environment_variables["method_name"]
@@ -79,12 +76,29 @@ def lambda_handler(event, context):
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         distinct_values = runtime_variables["distinct_values"]
+        environment = runtime_variables["environment"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         questions_list = runtime_variables["questions_list"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        survey = runtime_variables['survey']
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+
+        logger.info("Started - retrieved configuration variables.")
 
         data = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
         logger.info("Successfully retrieved data.")
@@ -103,8 +117,10 @@ def lambda_handler(event, context):
                 "bpm_queue_url": bpm_queue_url,
                 "data": json.loads(data_json),
                 "distinct_values": distinct_values,
+                "environment": environment,
                 "questions_list": questions_list,
-                "run_id": run_id
+                "run_id": run_id,
+                "survey": survey
             }
         }
 

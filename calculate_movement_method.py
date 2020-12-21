@@ -16,12 +16,14 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
-    movement_type = fields.Str(required=True)
-    data = fields.List(fields.Dict, required=True)
-    questions_list = fields.List(fields.String, required=True)
     current_period = fields.Str(required=True)
+    data = fields.List(fields.Dict, required=True)
+    environment = fields.Str(required=True)
+    movement_type = fields.Str(required=True)
     period_column = fields.Str(required=True)
     previous_period = fields.Str(required=True)
+    questions_list = fields.List(fields.String, required=True)
+    survey = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -34,7 +36,6 @@ def lambda_handler(event, context):
     :return: Success - {"success": True/False, "data"/"error": "JSON String"/"Message"}
     """
     current_module = "Imputation Movement - Method"
-    logger = general_functions.get_logger()
     error_message = ""
     final_output = {}
 
@@ -51,18 +52,32 @@ def lambda_handler(event, context):
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
-        logger.info("Validated parameters.")
-
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        movement_type = runtime_variables["movement_type"]
-        json_data = runtime_variables["data"]
-        questions_list = runtime_variables["questions_list"]
         current_period = runtime_variables["current_period"]
+        environment = runtime_variables["environment"]
+        json_data = runtime_variables["data"]
+        movement_type = runtime_variables["movement_type"]
         period_column = runtime_variables["period_column"]
         previous_period = runtime_variables["previous_period"]
+        questions_list = runtime_variables["questions_list"]
+        survey = runtime_variables["survey"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        return {"success": False, "error": error_message}
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        return {"success": False, "error": error_message}
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
 
         # Get relative calculation function
         calculation = getattr(imp_func, movement_type)

@@ -86,6 +86,7 @@ method_apply_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
+        "environment": "sandbox",
         "questions_list": questions_list,
         "run_id": "bob",
         "sum_columns": [
@@ -101,7 +102,8 @@ method_apply_runtime_variables = {
                 "Q607_constructional_fill": "-"
               }
             }
-          ]
+          ],
+        "survey": "bmi_sg"
     }
 }
 
@@ -109,19 +111,23 @@ method_atypicals_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
+        "environment": "sandbox",
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
 method_factors_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "distinct_values": ["region", "strata"],
-        "factors_parameters": factors_parameters,
         "data": None,
+        "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
+        "factors_parameters": factors_parameters,
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
@@ -134,14 +140,17 @@ bad_method_factors_runtime_variables_a = {
             }
         },
         "data": [{"data": "data"}],
+        "environment": "sandbox",
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
 bad_method_factors_runtime_variables_b = {
     "RuntimeVariables": {
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "factors_parameters": {
             "RuntimeVariables": {
                 "factors_type": "factors_calculation_b",
@@ -149,7 +158,8 @@ bad_method_factors_runtime_variables_b = {
         },
         "data": [{"data": "data"}],
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
@@ -158,8 +168,10 @@ method_iqrs_runtime_variables = {
         "bpm_queue_url": "fake_bpm_queue_url",
         "distinct_values": ["region", "strata"],
         "data": None,
+        "environment": "sandbox",
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
@@ -168,8 +180,10 @@ method_means_runtime_variables = {
         "bpm_queue_url": "fake_bpm_queue_url",
         "distinct_values": ["region", "strata"],
         "data": None,
+        "environment": "sandbox",
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
@@ -178,11 +192,13 @@ method_movement_runtime_variables = {
         "bpm_queue_url": "fake_bpm_queue_url",
         "current_period": "201809",
         "data": None,
+        "environment": "sandbox",
         "movement_type": "movement_calculation_a",
         "period_column": "period",
         "previous_period": "201806",
         "questions_list": questions_list,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
@@ -190,18 +206,20 @@ method_regionless_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
         "data": None,
+        "environment": "sandbox",
         "region_column": "region",
         "regionless_code": 14,
-        "run_id": "bob"
+        "run_id": "bob",
+        "survey": "bmi_sg"
     }
 }
 
 wrangler_apply_runtime_variables_1 = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "factors_parameters": {
             "RuntimeVariables": {
                 "region_column": "region",
@@ -228,6 +246,8 @@ wrangler_apply_runtime_variables_1 = {
               }
             }
           ],
+        "survey": "bmi_sg",
+        "total_steps": "4",
         "unique_identifier": ["responder_id"]
     }
 }
@@ -235,9 +255,9 @@ wrangler_apply_runtime_variables_1 = {
 wrangler_apply_runtime_variables_2 = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_prepared_output",
         "distinct_values": ["region"],
+        "environment": "sandbox",
         "factors_parameters": {
             "RuntimeVariables": {
                 "region_column": "region",
@@ -264,6 +284,8 @@ wrangler_apply_runtime_variables_2 = {
               }
             }
           ],
+        "survey": "bmi_sg",
+        "total_steps": "4",
         "unique_identifier": ["responder_id"]
     }
 }
@@ -271,61 +293,69 @@ wrangler_apply_runtime_variables_2 = {
 wrangler_atypicals_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
+        "environment": "sandbox",
         "in_file_name": "test_wrangler_atypicals_input",
         "out_file_name": "test_wrangler_atypicals_output.json",
         "questions_list": questions_list,
         "run_id": "bob",
-        "sns_topic_arn": "fake_sns_arn"
+        "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 
 wrangler_factors_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "factors_parameters": deepcopy(factors_parameters),
         "in_file_name": "test_wrangler_factors_input",
         "out_file_name": "test_wrangler_factors_output.json",
         "period_column": "period",
         "questions_list": questions_list,
         "run_id": "bob",
-        "sns_topic_arn": "fake_sns_arn"
+        "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 
 wrangler_iqrs_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "in_file_name": "test_wrangler_iqrs_input",
         "out_file_name": "test_wrangler_iqrs_output.json",
         "questions_list": questions_list,
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 
 wrangler_means_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "in_file_name": "test_wrangler_means_input",
         "out_file_name": "test_wrangler_means_output.json",
         "questions_list": questions_list,
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 
 wrangler_movement_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "current_data": "test_wrangler_movement_current_data_output.json",
+        "environment": "sandbox",
         "in_file_name": "test_wrangler_movement_input",
         "movement_type": "movement_calculation_a",
         "out_file_name": "test_wrangler_movement_output.json",
@@ -337,6 +367,8 @@ wrangler_movement_runtime_variables = {
         "questions_list": questions_list,
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4",
         "unique_identifier": ["responder_id"]
     }
 }
@@ -344,20 +376,22 @@ wrangler_movement_runtime_variables = {
 wrangler_recalc_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
         "distinct_values": ["region", "strata"],
+        "environment": "sandbox",
         "in_file_name": "test_wrangler_recalc_input",
         "out_file_name": "test_wrangler_recalc_output.json",
         "questions_list": questions_list,
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 
 wrangler_regionless_runtime_variables = {
     "RuntimeVariables": {
         "bpm_queue_url": "fake_bpm_queue_url",
-        "total_steps": "4",
+        "environment": "sandbox",
         "factors_parameters": {
             "RuntimeVariables": {
                 "region_column": "region",
@@ -367,7 +401,9 @@ wrangler_regionless_runtime_variables = {
         "in_file_name": "test_wrangler_regionless_input",
         "out_file_name": "test_wrangler_regionless_output.json",
         "run_id": "bob",
-        "sns_topic_arn": "fake_sns_arn"
+        "sns_topic_arn": "fake_sns_arn",
+        "survey": "bmi_sg",
+        "total_steps": "4"
     }
 }
 

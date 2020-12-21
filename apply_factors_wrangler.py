@@ -44,6 +44,7 @@ class RuntimeSchema(Schema):
     bpm_queue_url = fields.Str(required=True)
     current_data = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(required=True)
     factors_parameters = fields.Dict(
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
@@ -54,6 +55,7 @@ class RuntimeSchema(Schema):
     unique_identifier = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     sum_columns = fields.List(fields.Dict, required=True)
+    survey = fields.Str(required=True)
     total_steps = fields.Str(required=True)
 
 
@@ -67,7 +69,6 @@ def lambda_handler(event, context):
     """
     current_module = "Imputation Apply Factors - Wrangler."
     error_message = ""
-    logger = general_functions.get_logger()
 
     # Define run_id outside of try block
     run_id = 0
@@ -77,7 +78,6 @@ def lambda_handler(event, context):
     current_step_num = "4"
 
     try:
-        logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -89,8 +89,6 @@ def lambda_handler(event, context):
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
-        logger.info("Validated parameters.")
-
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
         method_name = environment_variables["method_name"]
@@ -101,6 +99,7 @@ def lambda_handler(event, context):
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_data = runtime_variables["current_data"]
         distinct_values = runtime_variables["distinct_values"]
+        environment = runtime_variables["environment"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
@@ -111,9 +110,24 @@ def lambda_handler(event, context):
         regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sum_columns = runtime_variables["sum_columns"]
+        survey = runtime_variables["survey"]
         total_steps = runtime_variables["total_steps"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
 
         # Get factors data from calculate_factors
         factors_dataframe = aws_functions.read_dataframe_from_s3(
@@ -211,9 +225,11 @@ def lambda_handler(event, context):
                 "bpm_queue_url": bpm_queue_url,
                 "data": json.loads(
                     non_responders_with_factors.to_json(orient="records")),
+                "environment": environment,
                 "questions_list": questions_list,
+                "run_id": run_id,
                 "sum_columns": sum_columns,
-                "run_id": run_id
+                "survey": survey
             }
         }
 

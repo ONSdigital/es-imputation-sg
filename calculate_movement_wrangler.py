@@ -31,6 +31,7 @@ class RuntimeSchema(Schema):
 
     bpm_queue_url = fields.Str(required=True)
     current_data = fields.Str(required=True)
+    environment = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     movement_type = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
@@ -41,8 +42,9 @@ class RuntimeSchema(Schema):
     previous_data = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    unique_identifier = fields.List(fields.String, required=True)
+    survey = fields.Str(required=True)
     total_steps = fields.Str(required=True)
+    unique_identifier = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
@@ -57,7 +59,6 @@ def lambda_handler(event, context):
     """
     to_be_imputed = True
     current_module = "Imputation Movement - Wrangler."
-    logger = general_functions.get_logger()
     error_message = ""
 
     # Define run_id outside of try block
@@ -68,20 +69,16 @@ def lambda_handler(event, context):
     current_step_num = "4"
 
     try:
-        logger.info("Starting " + current_module)
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
         # Set up clients
         lambda_client = boto3.client("lambda", region_name="eu-west-2")
-        logger.info("Setting-up environment configs")
 
         environment_variables = EnvironmentSchema().load(os.environ)
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
-
-        logger.info("Validated parameters.")
 
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
@@ -91,6 +88,7 @@ def lambda_handler(event, context):
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_data = runtime_variables["current_data"]
+        environment = runtime_variables["environment"]
         in_file_name = runtime_variables["in_file_name"]
         movement_type = runtime_variables["movement_type"]
         out_file_name = runtime_variables["out_file_name"]
@@ -102,9 +100,24 @@ def lambda_handler(event, context):
         questions_list = runtime_variables["questions_list"]
         reference = runtime_variables["unique_identifier"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        survey = runtime_variables["survey"]
         total_steps = runtime_variables["total_steps"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
 
         # Send in progress status to BPM.
         status = "IN PROGRESS"
@@ -170,13 +183,15 @@ def lambda_handler(event, context):
             json_payload = {
                 "RuntimeVariables": {
                     "bpm_queue_url": bpm_queue_url,
-                    "data": json.loads(json_ordered_data),
-                    "movement_type": movement_type,
-                    "questions_list": questions_list,
                     "current_period": period,
+                    "data": json.loads(json_ordered_data),
+                    "environment": environment,
+                    "movement_type": movement_type,
                     "period_column": period_column,
                     "previous_period": previous_period,
-                    "run_id": run_id
+                    "questions_list": questions_list,
+                    "run_id": run_id,
+                    "survey": survey
                 }
             }
 

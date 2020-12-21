@@ -5,6 +5,7 @@
         "region",
         "strata"
     ],
+    "environment": "sandbox",
     "questions_list": [
         "Q601_asphalting_sand",
         "Q602_building_soft_sand",
@@ -14,5 +15,6 @@
         "Q606_other_gravel",
         "Q607_constructional_fill"
     ],
-    "run_id": "bob"
+    "run_id": "bob",
+    "survey": "bmi_sg"
 }
