@@ -30,8 +30,8 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
-    environment = fields.Str(required=True)
     current_data = fields.Str(required=True)
+    environment = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     movement_type = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
@@ -43,8 +43,8 @@ class RuntimeSchema(Schema):
     questions_list = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     survey = fields.Str(required=True)
-    unique_identifier = fields.List(fields.String, required=True)
     total_steps = fields.Str(required=True)
+    unique_identifier = fields.List(fields.String, required=True)
 
 
 def lambda_handler(event, context):
@@ -87,8 +87,8 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        environment = runtime_variables["environment"]
         current_data = runtime_variables["current_data"]
+        environment = runtime_variables["environment"]
         in_file_name = runtime_variables["in_file_name"]
         movement_type = runtime_variables["movement_type"]
         out_file_name = runtime_variables["out_file_name"]
@@ -183,13 +183,13 @@ def lambda_handler(event, context):
             json_payload = {
                 "RuntimeVariables": {
                     "bpm_queue_url": bpm_queue_url,
-                    "environment": environment,
-                    "data": json.loads(json_ordered_data),
-                    "movement_type": movement_type,
-                    "questions_list": questions_list,
                     "current_period": period,
+                    "data": json.loads(json_ordered_data),
+                    "environment": environment,
+                    "movement_type": movement_type,
                     "period_column": period_column,
                     "previous_period": previous_period,
+                    "questions_list": questions_list,
                     "run_id": run_id,
                     "survey": survey
                 }

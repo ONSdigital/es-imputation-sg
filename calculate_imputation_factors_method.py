@@ -16,9 +16,9 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
-    environment = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
     distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(required=True)
     factors_parameters = fields.Dict(required=True)
     questions_list = fields.List(fields.String, required=True)
     survey = fields.Str(required=True)
@@ -58,9 +58,9 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        environment = runtime_variables["environment"]
         df = pd.DataFrame(runtime_variables["data"])
         distinct_values = runtime_variables["distinct_values"]
+        environment = runtime_variables["environment"]
         questions_list = runtime_variables["questions_list"]
         survey = runtime_variables["survey"]
 

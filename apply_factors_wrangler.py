@@ -43,8 +43,8 @@ class RuntimeSchema(Schema):
 
     bpm_queue_url = fields.Str(required=True)
     current_data = fields.Str(required=True)
-    environment = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(required=True)
     factors_parameters = fields.Dict(
         keys=fields.String(validate=Equal(comparable="RuntimeVariables")),
         values=fields.Nested(FactorsSchema, required=True))
@@ -54,8 +54,8 @@ class RuntimeSchema(Schema):
     questions_list = fields.List(fields.String, required=True)
     unique_identifier = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    survey = fields.Str(required=True)
     sum_columns = fields.List(fields.Dict, required=True)
+    survey = fields.Str(required=True)
     total_steps = fields.Str(required=True)
 
 
@@ -97,9 +97,9 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        environment = runtime_variables["environment"]
         current_data = runtime_variables["current_data"]
         distinct_values = runtime_variables["distinct_values"]
+        environment = runtime_variables["environment"]
         factors_parameters = runtime_variables["factors_parameters"]["RuntimeVariables"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
@@ -110,8 +110,8 @@ def lambda_handler(event, context):
         regionless_code = factors_parameters["regionless_code"]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         sum_columns = runtime_variables["sum_columns"]
-        total_steps = runtime_variables["total_steps"]
         survey = runtime_variables["survey"]
+        total_steps = runtime_variables["total_steps"]
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module, run_id,
@@ -223,12 +223,12 @@ def lambda_handler(event, context):
         payload = {
             "RuntimeVariables": {
                 "bpm_queue_url": bpm_queue_url,
-                "environment": environment,
                 "data": json.loads(
                     non_responders_with_factors.to_json(orient="records")),
+                "environment": environment,
                 "questions_list": questions_list,
-                "sum_columns": sum_columns,
                 "run_id": run_id,
+                "sum_columns": sum_columns,
                 "survey": survey
             }
         }

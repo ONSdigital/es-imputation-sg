@@ -16,13 +16,13 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
+    current_period = fields.Str(required=True)
+    data = fields.List(fields.Dict, required=True)
     environment = fields.Str(required=True)
     movement_type = fields.Str(required=True)
-    data = fields.List(fields.Dict, required=True)
-    questions_list = fields.List(fields.String, required=True)
-    current_period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     previous_period = fields.Str(required=True)
+    questions_list = fields.List(fields.String, required=True)
     survey = fields.Str(required=True)
 
 
@@ -54,13 +54,13 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        environment = runtime_variables["environment"]
-        movement_type = runtime_variables["movement_type"]
-        json_data = runtime_variables["data"]
-        questions_list = runtime_variables["questions_list"]
         current_period = runtime_variables["current_period"]
+        environment = runtime_variables["environment"]
+        json_data = runtime_variables["data"]
+        movement_type = runtime_variables["movement_type"]
         period_column = runtime_variables["period_column"]
         previous_period = runtime_variables["previous_period"]
+        questions_list = runtime_variables["questions_list"]
         survey = runtime_variables["survey"]
 
     except Exception as e:

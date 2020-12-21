@@ -115,8 +115,8 @@ def lambda_handler(event, context):
         payload = {
             "RuntimeVariables": {
                 "bpm_queue_url": bpm_queue_url,
-                "environment": environment,
                 "data": json.loads(data_json),
+                "environment": environment,
                 "questions_list": questions_list,
                 "run_id": run_id,
                 "survey": survey

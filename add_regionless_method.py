@@ -14,8 +14,8 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
-    environment = fields.Str(required=True)
     data = fields.List(fields.Dict, required=True)
+    environment = fields.Str(required=True)
     region_column = fields.Str(required=True)
     regionless_code = fields.Int(required=True)
     survey = fields.Str(required=True)
@@ -49,9 +49,9 @@ def lambda_handler(event, context):
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         environment = runtime_variables['environment']
         json_data = runtime_variables["data"]
-        survey = runtime_variables['environment']
         regionless_code = runtime_variables["regionless_code"]
         region_column = runtime_variables["region_column"]
+        survey = runtime_variables['environment']
 
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module, run_id,

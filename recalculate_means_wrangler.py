@@ -29,8 +29,8 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     bpm_queue_url = fields.Str(required=True)
-    environment = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     questions_list = fields.List(fields.String, required=True)
@@ -77,8 +77,8 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
-        environment = runtime_variables["environment"]
         distinct_values = runtime_variables["distinct_values"]
+        environment = runtime_variables["environment"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         questions_list = runtime_variables["questions_list"]
@@ -117,9 +117,9 @@ def lambda_handler(event, context):
         payload = {
             "RuntimeVariables": {
                 "bpm_queue_url": bpm_queue_url,
-                "environment": environment,
                 "data": json.loads(data_json),
                 "distinct_values": distinct_values,
+                "environment": environment,
                 "questions_list": questions_list,
                 "run_id": run_id,
                 "survey": survey
