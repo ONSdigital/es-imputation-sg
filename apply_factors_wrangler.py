@@ -56,7 +56,7 @@ class RuntimeSchema(Schema):
     sns_topic_arn = fields.Str(required=True)
     sum_columns = fields.List(fields.Dict, required=True)
     survey = fields.Str(required=True)
-    total_steps = fields.Str(required=True)
+    total_steps = fields.Int(required=True)
 
 
 def lambda_handler(event, context):
@@ -75,7 +75,7 @@ def lambda_handler(event, context):
 
     # Set-up variables for status message
     bpm_queue_url = None
-    current_step_num = "4"
+    current_step_num = 4
 
     try:
         # Retrieve run_id before input validation

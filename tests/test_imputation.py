@@ -247,7 +247,7 @@ wrangler_apply_runtime_variables_1 = {
             }
           ],
         "survey": "bmi_sg",
-        "total_steps": "4",
+        "total_steps": 4,
         "unique_identifier": ["responder_id"]
     }
 }
@@ -285,7 +285,7 @@ wrangler_apply_runtime_variables_2 = {
             }
           ],
         "survey": "bmi_sg",
-        "total_steps": "4",
+        "total_steps": 4,
         "unique_identifier": ["responder_id"]
     }
 }
@@ -300,7 +300,7 @@ wrangler_atypicals_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
@@ -317,7 +317,7 @@ wrangler_factors_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
@@ -332,7 +332,7 @@ wrangler_iqrs_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
@@ -347,7 +347,7 @@ wrangler_means_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
@@ -368,7 +368,7 @@ wrangler_movement_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4",
+        "total_steps": 4,
         "unique_identifier": ["responder_id"]
     }
 }
@@ -384,7 +384,7 @@ wrangler_recalc_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
@@ -403,7 +403,7 @@ wrangler_regionless_runtime_variables = {
         "run_id": "bob",
         "sns_topic_arn": "fake_sns_arn",
         "survey": "bmi_sg",
-        "total_steps": "4"
+        "total_steps": 4
     }
 }
 
