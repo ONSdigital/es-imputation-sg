@@ -43,7 +43,7 @@ importlib-metadata==0.18
 isort==4.3.21
 ipdb==0.12
 ipython-genutils==0.2.0
-ipython==7.5.0
+ipython==7.16.3
 jedi==0.13.3
 jinja2==2.11.2
 jmespath==0.9.4
